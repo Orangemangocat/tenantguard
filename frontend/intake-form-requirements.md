@@ -1,4 +1,4 @@
-# TenantDefend Case Intake Form Requirements
+# TenantGuard Case Intake Form Requirements
 
 ## Form Structure Overview
 Multi-step guided intake form for landlord-tenant disputes in Tennessee

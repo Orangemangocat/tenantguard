@@ -1,8 +1,8 @@
-# TenantDefend - Complete Source Code
+# TenantGuard - Complete Source Code
 
 ## Overview
 
-TenantDefend is a comprehensive landlord-tenant legal platform designed for Davidson County, Tennessee. It connects tenants with qualified attorneys through a technology-enabled self-service platform that streamlines dispute resolution.
+TenantGuard is a comprehensive landlord-tenant legal platform designed for Davidson County, Tennessee. It connects tenants with qualified attorneys through a technology-enabled self-service platform that streamlines dispute resolution.
 
 ## Architecture
 
@@ -201,11 +201,11 @@ Comprehensive data handling with:
 - Edge 90+
 
 ## License
-Proprietary - TenantDefend Platform
+Proprietary - TenantGuard Platform
 
 ## Support
 For technical support or questions about the platform, contact the development team.
 
 ---
 
-**TenantDefend** - Transforming tenant legal representation in Tennessee.
+**TenantGuard** - Transforming tenant legal representation in Tennessee.

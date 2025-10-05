@@ -793,7 +793,7 @@ const CaseIntakeForm = ({ onClose }) => {
 
             <Card className="bg-blue-50 border-blue-200">
               <CardHeader>
-                <CardTitle className="text-blue-800">TenantDefend Cost Savings</CardTitle>
+                <CardTitle className="text-blue-800">TenantGuard Cost Savings</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-blue-700">
@@ -850,7 +850,7 @@ const CaseIntakeForm = ({ onClose }) => {
                 />
                 <Label htmlFor="attorneyMatchConsent" className="text-sm">
                   I consent to being matched with qualified attorneys and understand that 
-                  TenantDefend does not provide legal advice directly.
+                  TenantGuard does not provide legal advice directly.
                 </Label>
               </div>
             </div>
@@ -881,7 +881,7 @@ const CaseIntakeForm = ({ onClose }) => {
         <div className="bg-red-800 text-white p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">TenantDefend Case Intake</h1>
+              <h1 className="text-2xl font-bold">TenantGuard Case Intake</h1>
               <p className="text-red-100">Step {currentStep} of {totalSteps}</p>
             </div>
             <Button

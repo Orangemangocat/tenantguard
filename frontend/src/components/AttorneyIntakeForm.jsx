@@ -973,7 +973,7 @@ const AttorneyIntakeForm = ({ onClose }) => {
             </div>
 
             <div>
-              <Label htmlFor="motivation">Why do you want to join TenantDefend? *</Label>
+              <Label htmlFor="motivation">Why do you want to join TenantGuard? *</Label>
               <Textarea
                 id="motivation"
                 placeholder="Tell us about your motivation for joining our platform..."
@@ -1009,7 +1009,7 @@ const AttorneyIntakeForm = ({ onClose }) => {
                   checked={formData.termsAccepted}
                   onCheckedChange={(checked) => updateFormData('termsAccepted', checked)}
                 />
-                <Label htmlFor="termsAccepted">I accept the TenantDefend Terms of Service and Attorney Agreement *</Label>
+                <Label htmlFor="termsAccepted">I accept the TenantGuard Terms of Service and Attorney Agreement *</Label>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -1054,7 +1054,7 @@ const AttorneyIntakeForm = ({ onClose }) => {
         <div className="bg-red-800 text-white p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold">TenantDefend Attorney Application</h2>
+              <h2 className="text-2xl font-bold">TenantGuard Attorney Application</h2>
               <p className="text-red-100 mt-1">Step {currentStep} of {totalSteps}</p>
             </div>
             <Button

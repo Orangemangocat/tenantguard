@@ -1,8 +1,8 @@
-# TenantDefend Deployment Guide
+# TenantGuard Deployment Guide
 
 ## Server Requirements
 
-The TenantDefend platform requires a Linux server with the following specifications and software:
+The TenantGuard platform requires a Linux server with the following specifications and software:
 
 **Minimum Server Specifications:**
 - 2 CPU cores
@@ -183,7 +183,7 @@ Add the following configuration:
 
 ```ini
 [Unit]
-Description=TenantDefend Flask Application
+Description=TenantGuard Flask Application
 After=network.target
 
 [Service]
@@ -347,7 +347,7 @@ curl https://your-domain.com
 
 ## Security Considerations
 
-The TenantDefend platform implements several security measures including input validation, CORS configuration, and secure file handling. Regular security updates and monitoring are recommended for production deployments.
+The TenantGuard platform implements several security measures including input validation, CORS configuration, and secure file handling. Regular security updates and monitoring are recommended for production deployments.
 
 ## Maintenance
 
