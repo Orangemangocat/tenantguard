@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp } from 'lucide-react'
 import CaseIntakeForm from './components/CaseIntakeForm.jsx'
 import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
+import ContactPage from './components/ContactPage.jsx'
 import './App.css'
 
 // Import assets
@@ -17,6 +18,18 @@ function App() {
   const [activeTab, setActiveTab] = useState('tenant')
   const [showIntakeForm, setShowIntakeForm] = useState(false)
   const [showAttorneyForm, setShowAttorneyForm] = useState(false)
+  const [showContactPage, setShowContactPage] = useState(false)
+  const [currentPage, setCurrentPage] = useState('home')
+
+  const scrollToSection = (sectionId) => {
+    setCurrentPage('home')
+    setTimeout(() => {
+      const element = document.getElementById(sectionId)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+      }
+    }, 100)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
@@ -29,13 +42,15 @@ function App() {
               <span className="text-xl font-bold text-red-800">TenantGuard</span>
             </div>
             <nav className="hidden md:flex space-x-8">
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800"><a href="/">Home</a></Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800"><a href="/features">Features</a></Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800"><a href="/how">How It Works</a></Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800"><a href="/contact">Contact</a></Button>
+              <Button variant="ghost" className="text-gray-600 hover:text-red-800" onClick={() => { setCurrentPage('home'); window.scrollTo(0, 0) }}>Home</Button>
+              <Button variant="ghost" className="text-gray-600 hover:text-red-800" onClick={() => scrollToSection('features')}>Features</Button>
+              <Button variant="ghost" className="text-gray-600 hover:text-red-800" onClick={() => scrollToSection('how-it-works')}>How It Works</Button>
+              <Button variant="ghost" className="text-gray-600 hover:text-red-800" onClick={() => setShowContactPage(true)}>Contact</Button>
             </nav>
-            <Button className="bg-red-800 hover:bg-red-900 text-white" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
-            <Button className="bg-red-800 hover:bg-red-900 text-white" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
+            <div className="flex items-center gap-2">
+              <Button className="bg-red-800 hover:bg-red-900 text-white" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
+              <Button className="bg-red-800 hover:bg-red-900 text-white" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
+            </div>
           </div>
         </div>
       </header>
@@ -107,7 +122,7 @@ function App() {
       </section>
 
       {/* Platform Features */}
-      <section className="py-16">
+      <section id="features" className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Platform Features</h2>
@@ -199,7 +214,7 @@ function App() {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 bg-gray-50">
+      <section id="how-it-works" className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">How It Works</h2>
@@ -380,15 +395,45 @@ function App() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
+      <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center space-x-3">
-            <img src={logo} alt="TenantGuard" className="h-6 w-6" />
-            <span className="text-lg font-semibold">TenantGuard</span>
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <img src={logo} alt="TenantGuard" className="h-6 w-6" />
+                <span className="text-lg font-semibold">TenantGuard</span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                Transforming tenant legal representation in Tennessee.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Quick Links</h3>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><button onClick={() => { setCurrentPage('home'); window.scrollTo(0, 0) }} className="hover:text-white">Home</button></li>
+                <li><button onClick={() => scrollToSection('features')} className="hover:text-white">Features</button></li>
+                <li><button onClick={() => scrollToSection('how-it-works')} className="hover:text-white">How It Works</button></li>
+                <li><button onClick={() => setShowContactPage(true)} className="hover:text-white">Contact</button></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">For Users</h3>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><button onClick={() => setShowIntakeForm(true)} className="hover:text-white">Tenant Portal</button></li>
+                <li><button onClick={() => setShowAttorneyForm(true)} className="hover:text-white">Attorney Portal</button></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Contact</h3>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li>Davidson County, TN</li>
+                <li><a href="mailto:johnb@tenantguard.net" className="hover:text-white">johnb@tenantguard.net</a></li>
+              </ul>
+            </div>
           </div>
-          <p className="text-center text-gray-400 mt-4">
-            © 2025 TenantGuard. Transforming tenant legal representation in Tennessee.
-          </p>
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
+            <p>© 2025 TenantGuard. All rights reserved.</p>
+          </div>
         </div>
       </footer>
 
@@ -400,6 +445,11 @@ function App() {
       {/* Attorney Intake Form Modal */}
       {showAttorneyForm && (
         <AttorneyIntakeForm onClose={() => setShowAttorneyForm(false)} />
+      )}
+
+      {/* Contact Page Modal */}
+      {showContactPage && (
+        <ContactPage onClose={() => setShowContactPage(false)} />
       )}
     </div>
   )
