@@ -4,7 +4,7 @@ import json
 import uuid
 
 class Attorney:
-    def __init__(self, db_path='tenantdefend.db'):
+    def __init__(self, db_path='tenantguard.db'):
         self.db_path = db_path
         self.init_db()
     

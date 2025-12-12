@@ -29,13 +29,13 @@ function App() {
               <span className="text-xl font-bold text-red-800">TenantGuard</span>
             </div>
             <nav className="hidden md:flex space-x-8">
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800">Home</Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800">Features</Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800">How It Works</Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800">Benefits</Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800">Contact</Button>
+              <Button variant="ghost" className="text-gray-600 hover:text-red-800"><a href="/">Home</a></Button>
+              <Button variant="ghost" className="text-gray-600 hover:text-red-800"><a href="/features">Features</a></Button>
+              <Button variant="ghost" className="text-gray-600 hover:text-red-800"><a href="/how">How It Works</a></Button>
+              <Button variant="ghost" className="text-gray-600 hover:text-red-800"><a href="/contact">Contact</a></Button>
             </nav>
-            <Button className="bg-red-800 hover:bg-red-900 text-white">Get Started</Button>
+            <Button className="bg-red-800 hover:bg-red-900 text-white" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
+            <Button className="bg-red-800 hover:bg-red-900 text-white" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
           </div>
         </div>
       </header>
