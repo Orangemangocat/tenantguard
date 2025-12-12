@@ -387,7 +387,7 @@ function App() {
             <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100">
               Get Started as Tenant
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-red-800">
+            <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100 border-2 border-white">
               Join as Attorney
             </Button>
           </div>
