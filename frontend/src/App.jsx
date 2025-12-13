@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
@@ -6,7 +6,10 @@ import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, Trendin
 import CaseIntakeForm from './components/CaseIntakeForm.jsx'
 import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
 import ContactPage from './components/ContactPage.jsx'
+import { ThemeProvider } from './contexts/ThemeContext.jsx'
+import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import './App.css'
+import './theme.css'
 
 // Import assets
 import logo from './assets/logo.png'
@@ -32,24 +35,29 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <ThemeProvider>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white" style={{
+      backgroundColor: 'var(--color-background)',
+      transition: 'background-color 0.3s ease'
+    }}>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
               <img src={logo} alt="TenantGuard" className="h-8 w-8" />
-              <span className="text-xl font-bold text-red-800">TenantGuard</span>
+              <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard</span>
             </div>
             <nav className="hidden md:flex space-x-8">
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800" onClick={() => { setCurrentPage('home'); window.scrollTo(0, 0) }}>Home</Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800" onClick={() => scrollToSection('features')}>Features</Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800" onClick={() => scrollToSection('how-it-works')}>How It Works</Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-red-800" onClick={() => setShowContactPage(true)}>Contact</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => { setCurrentPage('home'); window.scrollTo(0, 0) }}>Home</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('features')}>Features</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('how-it-works')}>How It Works</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowContactPage(true)}>Contact</Button>
             </nav>
             <div className="flex items-center gap-2">
-              <Button className="bg-red-800 hover:bg-red-900 text-white" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
-              <Button className="bg-red-800 hover:bg-red-900 text-white" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
+              <ThemeSwitcher />
+              <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
+              <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
             </div>
           </div>
         </div>
@@ -58,21 +66,22 @@ function App() {
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <Badge variant="outline" className="mb-6 text-red-800 border-red-200">
+          <Badge variant="outline" style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primaryLight)' }} className="mb-6">
             Davidson County, Tennessee
           </Badge>
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>
             Transforming Tenant
-            <span className="text-red-800 block">Legal Representation</span>
+            <span className="block" style={{ color: 'var(--color-primary)' }}>Legal Representation</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl mb-8 max-w-3xl mx-auto" style={{ color: 'var(--color-textSecondary)' }}>
             Technology-enabled self-service platform connecting tenants with qualified attorneys 
             for streamlined landlord-tenant dispute resolution in Tennessee.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
-              className="bg-red-800 hover:bg-red-900 text-white"
+              style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
+              className="hover:opacity-90"
               onClick={() => setShowIntakeForm(true)}
             >
               Start Your Case <ArrowRight className="ml-2 h-4 w-4" />
@@ -80,7 +89,8 @@ function App() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-red-800 text-red-800 hover:bg-red-50"
+              style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', backgroundColor: 'transparent' }}
+              className="hover:opacity-80"
               onClick={() => setShowAttorneyForm(true)}
             >
               Attorney Portal
@@ -452,6 +462,7 @@ function App() {
         <ContactPage onClose={() => setShowContactPage(false)} />
       )}
     </div>
+    </ThemeProvider>
   )
 }
 
