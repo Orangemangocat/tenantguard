@@ -11,6 +11,9 @@ The goal of this repository is to ensure that any agent (or human) can take over
 ```
 tenantguard-knowledge-repo/
 ├── knowledge/               # Internal knowledge and reasoning
+│   ├── CHECKPOINTS/         # Daily checkpoint files
+│   │   ├── CHECKPOINT_TEMPLATE.md
+│   │   └── CHECKPOINT_YYYY-MM-DD.md (daily files)
 │   ├── INTERNAL_ASSUMPTIONS.md
 │   ├── INTERNAL_RULES_AND_HEURISTICS.md
 │   ├── DECISION_LOGIC_AND_TRADEOFFS.md
@@ -31,6 +34,9 @@ tenantguard-knowledge-repo/
 │   ├── HOW_TO_UPDATE_THIS_STRUCTURE.md
 │   ├── MANUS_BEHAVIOR_PROFILE.md
 │   └── EXPORT_INSTRUCTIONS.md
+├── DAILY_SYNC_PROMPT.md     # Prompt for daily knowledge sync
+├── DAILY_SYNC_CHECKLIST.md  # Checklist for daily sync process
+├── daily-sync.sh            # Automation script for daily sync
 ├── PROJECT_IDENTITY.md      # High-level project overview
 ├── PROJECT_CONTEXT.md       # Assumptions, rules, and patterns
 ├── PROJECT_DECISIONS.yaml   # Decision log in YAML format
@@ -112,14 +118,44 @@ This knowledge repository follows these principles:
 4. **Currency** - Documentation is kept up to date
 5. **Accessibility** - Written for humans new to the project
 
+## Daily Sync Process
+
+This repository uses a **daily sync workflow** to keep knowledge current and ensure continuity.
+
+### Quick Daily Sync
+
+1. **Run the daily sync prompt** (see `DAILY_SYNC_PROMPT.md`)
+2. **Review generated checkpoint** and updates
+3. **Run the sync script:**
+   ```bash
+   cd knowledge-repo
+   ./daily-sync.sh
+   ```
+4. **Verify on GitHub**
+
+### When to Sync
+
+- **Daily (Recommended):** At the end of each work session
+- **Weekly (Minimum):** If daily syncs aren't feasible
+- **After Major Events:** Deployments, decisions, milestones
+
+### What Gets Synced
+
+- Daily checkpoint files in `knowledge/CHECKPOINTS/`
+- Updates to core knowledge files
+- Project status updates
+- New artifacts and documentation
+
+See `DAILY_SYNC_CHECKLIST.md` for the complete process.
+
 ## Maintenance
 
 This repository should be updated:
 
+- **Daily or weekly** using the sync process (see above)
 - **After every major task or milestone**
 - **When important decisions are made**
 - **When new patterns or preferences emerge**
-- **At least monthly** for general review
 
 See `meta/HOW_TO_UPDATE_THIS_STRUCTURE.md` for detailed instructions.
 
