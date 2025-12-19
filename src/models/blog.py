@@ -18,6 +18,42 @@ class BlogPost(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     published_at = db.Column(db.DateTime)
     
+    def get_schema_markup(self):
+        """Generate Schema.org Article markup for SEO"""
+        return {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": self.title,
+            "description": self.excerpt or self.content[:200],
+            "author": {
+                "@type": "Person",
+                "name": self.author
+            },
+            "datePublished": self.published_at.isoformat() if self.published_at else None,
+            "dateModified": self.updated_at.isoformat(),
+            "publisher": {
+                "@type": "Organization",
+                "name": "TenantGuard",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://www.tenantguard.net/assets/logo.png"
+                }
+            },
+            "image": self.featured_image or "https://www.tenantguard.net/assets/logo.png",
+            "articleSection": self.category,
+            "keywords": self.tags
+        }
+    
+    def get_meta_title(self):
+        """Generate optimized meta title"""
+        return f"{self.title} | TenantGuard Blog"
+    
+    def get_meta_description(self):
+        """Generate optimized meta description"""
+        if self.excerpt:
+            return self.excerpt[:160]
+        return self.content[:160] + "..."
+    
     def to_dict(self):
         return {
             'id': self.id,
