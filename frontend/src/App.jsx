@@ -6,6 +6,9 @@ import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, Trendin
 import CaseIntakeForm from './components/CaseIntakeForm.jsx'
 import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
 import ContactPage from './components/ContactPage.jsx'
+import BlogList from './components/BlogList.jsx'
+import BlogPost from './components/BlogPost.jsx'
+import BlogAdmin from './components/BlogAdmin.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import './App.css'
@@ -23,6 +26,9 @@ function App() {
   const [showAttorneyForm, setShowAttorneyForm] = useState(false)
   const [showContactPage, setShowContactPage] = useState(false)
   const [currentPage, setCurrentPage] = useState('home')
+  const [showBlog, setShowBlog] = useState(false)
+  const [showBlogAdmin, setShowBlogAdmin] = useState(false)
+  const [selectedBlogPost, setSelectedBlogPost] = useState(null)
 
   const scrollToSection = (sectionId) => {
     setCurrentPage('home')
@@ -52,6 +58,7 @@ function App() {
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => { setCurrentPage('home'); window.scrollTo(0, 0) }}>Home</Button>
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('features')}>Features</Button>
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('how-it-works')}>How It Works</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowBlog(true)}>Blog</Button>
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowContactPage(true)}>Contact</Button>
             </nav>
             <div className="flex items-center gap-2">
@@ -460,6 +467,61 @@ function App() {
       {/* Contact Page Modal */}
       {showContactPage && (
         <ContactPage onClose={() => setShowContactPage(false)} />
+      )}
+
+      {/* Blog Pages */}
+      {showBlog && !selectedBlogPost && !showBlogAdmin && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto" style={{ backgroundColor: 'var(--color-background)' }}>
+          <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b sticky top-0 z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center py-4">
+                <div className="flex items-center space-x-3">
+                  <img src={logo} alt="TenantGuard" className="h-8 w-8" />
+                  <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard Blog</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={() => setShowBlogAdmin(true)}>Admin</Button>
+                  <Button onClick={() => setShowBlog(false)}>Close</Button>
+                </div>
+              </div>
+            </div>
+          </header>
+          <BlogList onPostClick={(slug) => setSelectedBlogPost(slug)} />
+        </div>
+      )}
+
+      {selectedBlogPost && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto" style={{ backgroundColor: 'var(--color-background)' }}>
+          <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b sticky top-0 z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center py-4">
+                <div className="flex items-center space-x-3">
+                  <img src={logo} alt="TenantGuard" className="h-8 w-8" />
+                  <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard Blog</span>
+                </div>
+                <Button onClick={() => { setSelectedBlogPost(null); setShowBlog(false) }}>Close</Button>
+              </div>
+            </div>
+          </header>
+          <BlogPost slug={selectedBlogPost} onBack={() => setSelectedBlogPost(null)} />
+        </div>
+      )}
+
+      {showBlogAdmin && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto" style={{ backgroundColor: 'var(--color-background)' }}>
+          <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b sticky top-0 z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center py-4">
+                <div className="flex items-center space-x-3">
+                  <img src={logo} alt="TenantGuard" className="h-8 w-8" />
+                  <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard Blog Admin</span>
+                </div>
+                <Button onClick={() => setShowBlogAdmin(false)}>Close</Button>
+              </div>
+            </div>
+          </header>
+          <BlogAdmin onBack={() => setShowBlogAdmin(false)} />
+        </div>
       )}
     </div>
     </ThemeProvider>
