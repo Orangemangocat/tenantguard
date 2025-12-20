@@ -6,7 +6,7 @@ Handles approval workflow for blog posts
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from src.models.user import db
-from src.models.blog_enhanced import BlogPostEnhanced
+from src.models.blog import BlogPost
 from src.routes.auth import token_required, admin_required
 
 blog_approval_bp = Blueprint('blog_approval', __name__)
@@ -25,7 +25,7 @@ def get_pending_posts(current_user):
         return jsonify({'error': 'Admin permission required'}), 403
     
     try:
-        pending_posts = BlogPostEnhanced.query.filter_by(status='pending_approval').order_by(BlogPostEnhanced.submitted_for_approval_at.desc()).all()
+        pending_posts = BlogPost.query.filter_by(status='pending_approval').order_by(BlogPost.submitted_for_approval_at.desc()).all()
         
         return jsonify({
             'pending_posts': [post.to_dict(include_workflow=True) for post in pending_posts],
@@ -42,7 +42,7 @@ def get_pending_post(current_user, post_id):
     """Get a specific pending post"""
     
     try:
-        post = BlogPostEnhanced.query.get(post_id)
+        post = BlogPost.query.get(post_id)
         if not post:
             return jsonify({'error': 'Post not found'}), 404
         
@@ -61,7 +61,7 @@ def approve_post(current_user, post_id):
     """Approve a pending post"""
     
     try:
-        post = BlogPostEnhanced.query.get(post_id)
+        post = BlogPost.query.get(post_id)
         if not post:
             return jsonify({'error': 'Post not found'}), 404
         
@@ -91,7 +91,7 @@ def reject_post(current_user, post_id):
     """Reject a pending post"""
     
     try:
-        post = BlogPostEnhanced.query.get(post_id)
+        post = BlogPost.query.get(post_id)
         if not post:
             return jsonify({'error': 'Post not found'}), 404
         
@@ -136,7 +136,7 @@ def bulk_approve_posts(current_user):
         
         for post_id in post_ids:
             try:
-                post = BlogPostEnhanced.query.get(post_id)
+                post = BlogPost.query.get(post_id)
                 if post and post.status == 'pending_approval':
                     post.approve(current_user.id, notes=notes, publish_immediately=publish_immediately)
                     approved_count += 1
@@ -162,22 +162,22 @@ def get_approval_statistics(current_user):
     """Get approval queue statistics"""
     
     try:
-        pending_count = BlogPostEnhanced.query.filter_by(status='pending_approval').count()
-        approved_count = BlogPostEnhanced.query.filter_by(status='approved').count()
-        rejected_count = BlogPostEnhanced.query.filter_by(status='rejected').count()
-        published_count = BlogPostEnhanced.query.filter_by(status='published').count()
+        pending_count = BlogPost.query.filter_by(status='pending_approval').count()
+        approved_count = BlogPost.query.filter_by(status='approved').count()
+        rejected_count = BlogPost.query.filter_by(status='rejected').count()
+        published_count = BlogPost.query.filter_by(status='published').count()
         
         # Get oldest pending post
-        oldest_pending = BlogPostEnhanced.query.filter_by(status='pending_approval').order_by(BlogPostEnhanced.submitted_for_approval_at.asc()).first()
+        oldest_pending = BlogPost.query.filter_by(status='pending_approval').order_by(BlogPost.submitted_for_approval_at.asc()).first()
         
         # Get recent approvals
-        recent_approvals = BlogPostEnhanced.query.filter(
-            BlogPostEnhanced.status.in_(['approved', 'published']),
-            BlogPostEnhanced.approved_at.isnot(None)
-        ).order_by(BlogPostEnhanced.approved_at.desc()).limit(5).all()
+        recent_approvals = BlogPost.query.filter(
+            BlogPost.status.in_(['approved', 'published']),
+            BlogPost.approved_at.isnot(None)
+        ).order_by(BlogPost.approved_at.desc()).limit(5).all()
         
         # Get recent rejections
-        recent_rejections = BlogPostEnhanced.query.filter_by(status='rejected').order_by(BlogPostEnhanced.rejected_at.desc()).limit(5).all()
+        recent_rejections = BlogPost.query.filter_by(status='rejected').order_by(BlogPost.rejected_at.desc()).limit(5).all()
         
         return jsonify({
             'pending_count': pending_count,
@@ -203,7 +203,7 @@ def submit_post_for_approval(current_user, post_id):
     """Submit a draft post for approval"""
     
     try:
-        post = BlogPostEnhanced.query.get(post_id)
+        post = BlogPost.query.get(post_id)
         if not post:
             return jsonify({'error': 'Post not found'}), 404
         
@@ -241,12 +241,12 @@ def create_and_submit_post(current_user):
         slug = re.sub(r'[^a-z0-9]+', '-', data['title'].lower()).strip('-')
         
         # Check if slug exists
-        existing_post = BlogPostEnhanced.query.filter_by(slug=slug).first()
+        existing_post = BlogPost.query.filter_by(slug=slug).first()
         if existing_post:
             slug = f"{slug}-{secrets.token_hex(4)}"
         
         # Create new post
-        post = BlogPostEnhanced(
+        post = BlogPost(
             title=data['title'],
             slug=slug,
             content=data['content'],

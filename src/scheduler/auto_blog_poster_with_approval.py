@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from src.models.user import db
-from src.models.blog_enhanced import BlogPostEnhanced
+from src.models.blog import BlogPost
 from src.models.blog_topic import BlogTopic, BlogSchedule
 from flask import Flask
 
@@ -37,7 +37,7 @@ def check_and_generate_post():
             return
         
         # Get the most recent published post
-        latest_post = BlogPostEnhanced.query.filter_by(status='published').order_by(BlogPostEnhanced.published_at.desc()).first()
+        latest_post = BlogPost.query.filter_by(status='published').order_by(BlogPost.published_at.desc()).first()
         
         # Determine if we should post
         should_post = False
@@ -90,7 +90,7 @@ def generate_post_from_topic(topic):
     slug = re.sub(r'[^a-z0-9]+', '-', topic.title.lower()).strip('-')
     
     # Check if slug exists
-    existing_post = BlogPostEnhanced.query.filter_by(slug=slug).first()
+    existing_post = BlogPost.query.filter_by(slug=slug).first()
     if existing_post:
         slug = f"{slug}-{secrets.token_hex(4)}"
     
@@ -123,7 +123,7 @@ This post is now pending admin approval before publication.
 """
     
     # Create post in pending_approval status
-    post = BlogPostEnhanced(
+    post = BlogPost(
         title=topic.title,
         slug=slug,
         content=post_content,
@@ -159,8 +159,8 @@ def generate_autonomous_post():
     
     with app.app_context():
         # Determine which category needs content
-        technical_count = BlogPostEnhanced.query.filter_by(status='published', category='technical').count()
-        research_count = BlogPostEnhanced.query.filter_by(status='published', category='market-research').count()
+        technical_count = BlogPost.query.filter_by(status='published', category='technical').count()
+        research_count = BlogPost.query.filter_by(status='published', category='market-research').count()
         
         # Balance categories
         category = 'technical' if technical_count <= research_count else 'market-research'
@@ -216,12 +216,12 @@ This post is pending admin approval before publication.
         slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
         
         # Check if slug exists
-        existing_post = BlogPostEnhanced.query.filter_by(slug=slug).first()
+        existing_post = BlogPost.query.filter_by(slug=slug).first()
         if existing_post:
             slug = f"{slug}-{secrets.token_hex(4)}"
         
         # Create post in pending_approval status
-        post = BlogPostEnhanced(
+        post = BlogPost(
             title=title,
             slug=slug,
             content=content,
