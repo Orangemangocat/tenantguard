@@ -14,6 +14,8 @@ from src.routes.contact import contact_bp
 from src.routes.blog import blog_bp
 from src.routes.sitemap import sitemap_bp
 from src.routes.blog_admin import blog_admin_bp
+from src.routes.auth import auth_bp
+from src.routes.blog_approval import blog_approval_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
@@ -28,6 +30,8 @@ app.register_blueprint(contact_bp)
 app.register_blueprint(blog_bp)
 app.register_blueprint(sitemap_bp)
 app.register_blueprint(blog_admin_bp)
+app.register_blueprint(auth_bp)
+app.register_blueprint(blog_approval_bp)
 
 # uncomment if you need to use database
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'tenantguard.db')}"
