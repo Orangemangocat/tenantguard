@@ -639,47 +639,62 @@ def create_user(current_user):
 
 
 @auth_bp.route('/auth/users/<int:user_id>', methods=['PUT'])
-@admin_required
+@token_required
 def update_user(current_user, user_id):
-    """Update user details (admin only)"""
+    """Update user details (self or admin)"""
     
     user = AuthUser.query.get(user_id)
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
+    # Check if user is updating their own profile or is an admin
+    is_self = (user.id == current_user.id)
+    is_admin = (current_user.role == 'admin')
+    
+    if not is_self and not is_admin:
+        return jsonify({'error': 'Permission denied'}), 403
+    
     data = request.json
     
-    # Update allowed fields
-    if 'email' in data:
-        # Check if new email is already taken
-        existing = AuthUser.query.filter_by(email=data['email']).first()
-        if existing and existing.id != user_id:
-            return jsonify({'error': 'Email already exists'}), 400
-        user.email = data['email']
-    
-    if 'username' in data:
-        # Check if new username is already taken
-        existing = AuthUser.query.filter_by(username=data['username']).first()
-        if existing and existing.id != user_id:
-            return jsonify({'error': 'Username already exists'}), 400
-        user.username = data['username']
-    
+    # Fields that users can update for themselves
     if 'full_name' in data:
         user.full_name = data['full_name']
     
-    if 'role' in data:
-        if data['role'] not in ['admin', 'editor', 'viewer']:
-            return jsonify({'error': 'Invalid role'}), 400
-        # Prevent changing own role
-        if user.id == current_user.id:
-            return jsonify({'error': 'Cannot change your own role'}), 400
-        user.role = data['role']
+    if 'bio' in data:
+        user.bio = data['bio']
     
-    if 'is_active' in data:
-        # Prevent deactivating self
-        if user.id == current_user.id and not data['is_active']:
-            return jsonify({'error': 'Cannot deactivate yourself'}), 400
-        user.is_active = data['is_active']
+    if 'avatar_url' in data:
+        user.avatar_url = data['avatar_url']
+    
+    # Admin-only fields
+    if is_admin:
+        if 'email' in data:
+            # Check if new email is already taken
+            existing = AuthUser.query.filter_by(email=data['email']).first()
+            if existing and existing.id != user_id:
+                return jsonify({'error': 'Email already exists'}), 400
+            user.email = data['email']
+        
+        if 'username' in data:
+            # Check if new username is already taken
+            existing = AuthUser.query.filter_by(username=data['username']).first()
+            if existing and existing.id != user_id:
+                return jsonify({'error': 'Username already exists'}), 400
+            user.username = data['username']
+        
+        if 'role' in data:
+            if data['role'] not in ['admin', 'editor', 'viewer']:
+                return jsonify({'error': 'Invalid role'}), 400
+            # Prevent changing own role
+            if user.id == current_user.id:
+                return jsonify({'error': 'Cannot change your own role'}), 400
+            user.role = data['role']
+        
+        if 'is_active' in data:
+            # Prevent deactivating self
+            if user.id == current_user.id and not data['is_active']:
+                return jsonify({'error': 'Cannot deactivate yourself'}), 400
+            user.is_active = data['is_active']
     
     db.session.commit()
     
