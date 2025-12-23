@@ -12,6 +12,7 @@ import BlogAdmin from './components/BlogAdmin.jsx'
 import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
+import AuthCallback from './components/AuthCallback.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import './App.css'
@@ -36,6 +37,15 @@ function App() {
   const [showRegister, setShowRegister] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
+  const [showAuthCallback, setShowAuthCallback] = useState(false)
+
+  // Check if we're on the OAuth callback page
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.has('access_token')) {
+      setShowAuthCallback(true)
+    }
+  }, [])
 
   const scrollToSection = (sectionId) => {
     setCurrentPage('home')
@@ -588,6 +598,20 @@ function App() {
             onClose={() => setShowAdminPanel(false)}
           />
         </div>
+      )}
+
+      {/* OAuth Callback Handler */}
+      {showAuthCallback && (
+        <AuthCallback onComplete={(success) => {
+          setShowAuthCallback(false)
+          if (success) {
+            // Reload user state after successful auth
+            const user = JSON.parse(localStorage.getItem('user') || 'null')
+            if (user) {
+              setCurrentUser(user)
+            }
+          }
+        }} />
       )}
     </div>
     </ThemeProvider>

@@ -216,14 +216,12 @@ def google_callback():
     jwt_token = user.generate_jwt_token()
     refresh_token = user.generate_refresh_token()
     
-    # Return tokens and user info
-    return jsonify({
-        'access_token': jwt_token,
-        'refresh_token': refresh_token,
-        'token_type': 'Bearer',
-        'expires_in': 3600,
-        'user': user.to_dict()
-    }), 200
+    # Redirect to frontend with tokens
+    # Frontend will receive tokens as URL parameters and store them
+    frontend_url = request.host_url.rstrip('/')
+    redirect_url = f"{frontend_url}/auth/callback?access_token={jwt_token}&refresh_token={refresh_token}&token_type=Bearer&expires_in=3600"
+    
+    return redirect(redirect_url)
 
 
 # ============================================================================
@@ -350,13 +348,11 @@ def github_callback():
     jwt_token = user.generate_jwt_token()
     refresh_token = user.generate_refresh_token()
     
-    return jsonify({
-        'access_token': jwt_token,
-        'refresh_token': refresh_token,
-        'token_type': 'Bearer',
-        'expires_in': 3600,
-        'user': user.to_dict()
-    }), 200
+    # Redirect to frontend with tokens
+    frontend_url = request.host_url.rstrip('/')
+    redirect_url = f"{frontend_url}/auth/callback?access_token={jwt_token}&refresh_token={refresh_token}&token_type=Bearer&expires_in=3600"
+    
+    return redirect(redirect_url)
 
 
 # ============================================================================
