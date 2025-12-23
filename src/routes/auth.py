@@ -118,7 +118,9 @@ def google_login():
     db.session.commit()
     
     # Build authorization URL
-    redirect_uri = request.host_url.rstrip('/') + '/auth/google/callback'
+    # Use HTTPS for production
+    base_url = request.host_url.replace('http://', 'https://').rstrip('/')
+    redirect_uri = base_url + '/auth/google/callback'
     
     auth_url = (
         f"{GOOGLE_AUTH_URL}?"
@@ -150,7 +152,9 @@ def google_callback():
     oauth_state.mark_used()
     
     # Exchange code for tokens
-    redirect_uri = request.host_url.rstrip('/') + '/auth/google/callback'
+    # Use HTTPS for production
+    base_url = request.host_url.replace('http://', 'https://').rstrip('/')
+    redirect_uri = base_url + '/auth/google/callback'
     
     token_data = {
         'code': code,
@@ -240,7 +244,9 @@ def github_login():
     db.session.add(oauth_state)
     db.session.commit()
     
-    redirect_uri = request.host_url.rstrip('/') + '/auth/github/callback'
+    # Use HTTPS for production
+    base_url = request.host_url.replace('http://', 'https://').rstrip('/')
+    redirect_uri = base_url + '/auth/github/callback'
     
     auth_url = (
         f"{GITHUB_AUTH_URL}?"
@@ -269,7 +275,9 @@ def github_callback():
     
     oauth_state.mark_used()
     
-    redirect_uri = request.host_url.rstrip('/') + '/auth/github/callback'
+    # Use HTTPS for production
+    base_url = request.host_url.replace('http://', 'https://').rstrip('/')
+    redirect_uri = base_url + '/auth/github/callback'
     
     token_data = {
         'code': code,
