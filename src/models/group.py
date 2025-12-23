@@ -8,7 +8,7 @@ enabling team-based collaboration and permission management.
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
-from src.models import db
+from src.models.user import db
 import re
 
 
