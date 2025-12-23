@@ -456,3 +456,120 @@ def toggle_user_activation(current_user, user_id):
     
     status = 'activated' if user.is_active else 'deactivated'
     return jsonify({'message': f'User {status} successfully', 'user': user.to_dict()}), 200
+
+
+@auth_bp.route('/auth/users', methods=['POST'])
+@admin_required
+def create_user(current_user):
+    """Create a new user (admin only)"""
+    
+    data = request.json
+    email = data.get('email')
+    username = data.get('username')
+    full_name = data.get('full_name', '')
+    role = data.get('role', 'viewer')
+    is_active = data.get('is_active', True)
+    
+    # Validation
+    if not email or not username:
+        return jsonify({'error': 'Email and username are required'}), 400
+    
+    if role not in ['admin', 'editor', 'viewer']:
+        return jsonify({'error': 'Invalid role'}), 400
+    
+    # Check if user already exists
+    if AuthUser.query.filter_by(email=email).first():
+        return jsonify({'error': 'Email already exists'}), 400
+    
+    if AuthUser.query.filter_by(username=username).first():
+        return jsonify({'error': 'Username already exists'}), 400
+    
+    # Create new user
+    new_user = AuthUser(
+        email=email,
+        username=username,
+        full_name=full_name,
+        role=role,
+        is_active=is_active,
+        is_verified=True,  # Admin-created users are pre-verified
+        oauth_provider=None,  # Local user
+        oauth_id=None
+    )
+    
+    db.session.add(new_user)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'User created successfully',
+        'user': new_user.to_dict()
+    }), 201
+
+
+@auth_bp.route('/auth/users/<int:user_id>', methods=['PUT'])
+@admin_required
+def update_user(current_user, user_id):
+    """Update user details (admin only)"""
+    
+    user = AuthUser.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    data = request.json
+    
+    # Update allowed fields
+    if 'email' in data:
+        # Check if new email is already taken
+        existing = AuthUser.query.filter_by(email=data['email']).first()
+        if existing and existing.id != user_id:
+            return jsonify({'error': 'Email already exists'}), 400
+        user.email = data['email']
+    
+    if 'username' in data:
+        # Check if new username is already taken
+        existing = AuthUser.query.filter_by(username=data['username']).first()
+        if existing and existing.id != user_id:
+            return jsonify({'error': 'Username already exists'}), 400
+        user.username = data['username']
+    
+    if 'full_name' in data:
+        user.full_name = data['full_name']
+    
+    if 'role' in data:
+        if data['role'] not in ['admin', 'editor', 'viewer']:
+            return jsonify({'error': 'Invalid role'}), 400
+        # Prevent changing own role
+        if user.id == current_user.id:
+            return jsonify({'error': 'Cannot change your own role'}), 400
+        user.role = data['role']
+    
+    if 'is_active' in data:
+        # Prevent deactivating self
+        if user.id == current_user.id and not data['is_active']:
+            return jsonify({'error': 'Cannot deactivate yourself'}), 400
+        user.is_active = data['is_active']
+    
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'User updated successfully',
+        'user': user.to_dict()
+    }), 200
+
+
+@auth_bp.route('/auth/users/<int:user_id>', methods=['DELETE'])
+@admin_required
+def delete_user(current_user, user_id):
+    """Delete a user (admin only)"""
+    
+    user = AuthUser.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    # Prevent deleting self
+    if user.id == current_user.id:
+        return jsonify({'error': 'Cannot delete yourself'}), 400
+    
+    db.session.delete(user)
+    db.session.commit()
+    
+    return jsonify({'message': 'User deleted successfully'}), 200
