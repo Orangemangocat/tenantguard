@@ -6,7 +6,7 @@ and deleting groups/teams, as well as managing group memberships.
 """
 
 from flask import Blueprint, request, jsonify
-from src.models import db
+from src.models.user import db
 from src.models.group import Group, GroupMember
 from src.models.auth_user import AuthUser
 from src.routes.auth import token_required
