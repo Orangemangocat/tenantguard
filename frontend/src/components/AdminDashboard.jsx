@@ -1,144 +1,99 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Grid, Card, CardContent, Tabs, Tab, AppBar, Toolbar, Button, Avatar, Menu, MenuItem } from '@mui/material';
-import { Dashboard as DashboardIcon, Article as ArticleIcon, People as PeopleIcon, Settings as SettingsIcon, ExitToApp as LogoutIcon } from '@mui/icons-material';
-import ApprovalQueue from './ApprovalQueue';
-import UserManagement from './UserManagement';
-import DashboardOverview from './DashboardOverview';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button.jsx';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
+import ApprovalQueue from './ApprovalQueue.jsx';
+import UserManagement from './UserManagement.jsx';
+import DashboardOverview from './DashboardOverview.jsx';
 
 /**
  * Main Admin Dashboard Component
- * Provides tabbed interface for blog approval, user management, and analytics
+ * Provides tabbed interface for admin functions
  */
-export default function AdminDashboard({ user, onLogout }) {
-  const [currentTab, setCurrentTab] = useState(0);
-  const [anchorEl, setAnchorEl] = useState(null);
+export default function AdminDashboard({ user, onLogout, onClose }) {
+  const [activeTab, setActiveTab] = useState('overview');
 
-  const handleTabChange = (event, newValue) => {
-    setCurrentTab(newValue);
-  };
-
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    handleMenuClose();
-    if (onLogout) {
-      onLogout();
-    }
-  };
-
-  // Check if user has admin permissions
   const isAdmin = user && user.role === 'admin';
   const isEditor = user && (user.role === 'admin' || user.role === 'editor');
 
   if (!user) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography variant="h5" color="error">
-          Please log in to access the admin panel
-        </Typography>
-      </Box>
+      <div className="flex items-center justify-center min-h-screen">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h2 className="text-xl font-bold text-red-600 mb-2">Access Denied</h2>
+            <p className="text-gray-600">Please log in to access the admin panel</p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
-      {/* Top App Bar */}
-      <AppBar position="static" sx={{ bgcolor: '#1a237e' }}>
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            TenantGuard Admin Panel
-          </Typography>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2">
-              {user.full_name || user.username}
-            </Typography>
-            <Box>
-              <Avatar
-                onClick={handleMenuOpen}
-                sx={{ 
-                  bgcolor: '#ff6f00', 
-                  cursor: 'pointer',
-                  '&:hover': { bgcolor: '#ff8f00' }
-                }}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-sm text-gray-600">Welcome, {user?.full_name || user?.username}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={onClose}>Close</Button>
+              <Button variant="outline" onClick={onLogout}>Logout</Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'overview'
+                  ? 'border-red-800 text-red-800'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Overview
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('approvals')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'approvals'
+                    ? 'border-red-800 text-red-800'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                {(user.full_name || user.username).charAt(0).toUpperCase()}
-              </Avatar>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
+                Blog Approvals
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'users'
+                    ? 'border-red-800 text-red-800'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                <MenuItem disabled>
-                  <Typography variant="body2" color="textSecondary">
-                    Role: {user.role}
-                  </Typography>
-                </MenuItem>
-                <MenuItem onClick={handleLogout}>
-                  <LogoutIcon sx={{ mr: 1 }} fontSize="small" />
-                  Logout
-                </MenuItem>
-              </Menu>
-            </Box>
-          </Box>
-        </Toolbar>
-      </AppBar>
+                User Management
+              </button>
+            )}
+          </nav>
+        </div>
+      </div>
 
-      {/* Main Content Area */}
-      <Box sx={{ p: 3 }}>
-        {/* Welcome Banner */}
-        <Paper sx={{ p: 3, mb: 3, bgcolor: 'white' }}>
-          <Typography variant="h4" gutterBottom>
-            Welcome, {user.full_name || user.username}!
-          </Typography>
-          <Typography variant="body1" color="textSecondary">
-            {isAdmin ? 'You have full administrative access to manage blog posts and users.' : 
-             isEditor ? 'You can create and submit blog posts for approval.' :
-             'You have read-only access to the system.'}
-          </Typography>
-        </Paper>
-
-        {/* Tabbed Navigation */}
-        <Paper sx={{ mb: 3 }}>
-          <Tabs 
-            value={currentTab} 
-            onChange={handleTabChange}
-            variant="fullWidth"
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab 
-              icon={<DashboardIcon />} 
-              label="Dashboard" 
-              iconPosition="start"
-            />
-            <Tab 
-              icon={<ArticleIcon />} 
-              label="Blog Approval" 
-              iconPosition="start"
-              disabled={!isAdmin}
-            />
-            <Tab 
-              icon={<PeopleIcon />} 
-              label="User Management" 
-              iconPosition="start"
-              disabled={!isAdmin}
-            />
-          </Tabs>
-        </Paper>
-
-        {/* Tab Content */}
-        <Box>
-          {currentTab === 0 && <DashboardOverview user={user} />}
-          {currentTab === 1 && isAdmin && <ApprovalQueue user={user} />}
-          {currentTab === 2 && isAdmin && <UserManagement user={user} />}
-        </Box>
-      </Box>
-    </Box>
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === 'overview' && <DashboardOverview user={user} />}
+        {activeTab === 'approvals' && isAdmin && <ApprovalQueue user={user} />}
+        {activeTab === 'users' && isAdmin && <UserManagement user={user} />}
+      </div>
+    </div>
   );
 }

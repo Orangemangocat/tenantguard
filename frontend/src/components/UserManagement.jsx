@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Select, MenuItem, FormControl, InputLabel, Chip, Alert, CircularProgress, Tooltip
-} from '@mui/material';
-import {
-  Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Block as BlockIcon,
-  CheckCircle as ActivateIcon, Refresh as RefreshIcon
-} from '@mui/icons-material';
+import { Button } from '@/components/ui/button.jsx';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
+import { Input } from '@/components/ui/input.jsx';
+import { Label } from '@/components/ui/label.jsx';
 
 /**
  * User Management Component
@@ -18,13 +13,10 @@ export default function UserManagement({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  
-  // Dialog states
-  const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState('create'); // 'create' or 'edit'
+  const [showDialog, setShowDialog] = useState(false);
+  const [dialogMode, setDialogMode] = useState('create');
   const [selectedUser, setSelectedUser] = useState(null);
   
-  // Form states
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -51,11 +43,11 @@ export default function UserManagement({ user }) {
         setUsers(data.users || []);
         setError(null);
       } else {
-        setError('Failed to fetch users');
+        throw new Error('Failed to fetch users');
       }
     } catch (err) {
       console.error('Error fetching users:', err);
-      setError('Error loading users');
+      setError('Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -63,8 +55,9 @@ export default function UserManagement({ user }) {
 
   const handleOpenDialog = (mode, userToEdit = null) => {
     setDialogMode(mode);
+    setSelectedUser(userToEdit);
+    
     if (mode === 'edit' && userToEdit) {
-      setSelectedUser(userToEdit);
       setFormData({
         email: userToEdit.email,
         username: userToEdit.username,
@@ -81,28 +74,25 @@ export default function UserManagement({ user }) {
         is_active: true
       });
     }
-    setOpenDialog(true);
+    
+    setShowDialog(true);
+    setError(null);
+    setSuccess(null);
   };
 
   const handleCloseDialog = () => {
-    setOpenDialog(false);
+    setShowDialog(false);
     setSelectedUser(null);
-    setFormData({
-      email: '',
-      username: '',
-      full_name: '',
-      role: 'viewer',
-      is_active: true
-    });
   };
 
-  const handleFormChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
     try {
-      const url = dialogMode === 'create' ? '/api/auth/users' : `/api/auth/users/${selectedUser.id}`;
+      const url = dialogMode === 'create' 
+        ? '/api/auth/users'
+        : `/api/auth/users/${selectedUser.id}`;
+      
       const method = dialogMode === 'create' ? 'POST' : 'PUT';
       
       const response = await fetch(url, {
@@ -114,18 +104,41 @@ export default function UserManagement({ user }) {
         body: JSON.stringify(formData)
       });
       
+      const data = await response.json();
+      
       if (response.ok) {
         setSuccess(`User ${dialogMode === 'create' ? 'created' : 'updated'} successfully`);
         handleCloseDialog();
         fetchUsers();
-        setTimeout(() => setSuccess(null), 3000);
       } else {
-        const data = await response.json();
-        setError(data.error || `Failed to ${dialogMode} user`);
+        throw new Error(data.error || 'Operation failed');
       }
     } catch (err) {
-      console.error(`Error ${dialogMode}ing user:`, err);
-      setError(`Error ${dialogMode}ing user`);
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Are you sure you want to delete this user?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/auth/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      });
+      
+      if (response.ok) {
+        setSuccess('User deleted successfully');
+        fetchUsers();
+      } else {
+        throw new Error('Failed to delete user');
+      }
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -143,249 +156,194 @@ export default function UserManagement({ user }) {
       if (response.ok) {
         setSuccess(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
         fetchUsers();
-        setTimeout(() => setSuccess(null), 3000);
       } else {
-        setError('Failed to update user status');
+        throw new Error('Failed to update user status');
       }
     } catch (err) {
-      console.error('Error toggling user status:', err);
-      setError('Error updating user status');
-    }
-  };
-
-  const handleDeleteUser = async (userId, userEmail) => {
-    if (!window.confirm(`Are you sure you want to delete user "${userEmail}"? This action cannot be undone.`)) {
-      return;
-    }
-    
-    try {
-      const response = await fetch(`/api/auth/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
-      });
-      
-      if (response.ok) {
-        setSuccess('User deleted successfully');
-        fetchUsers();
-        setTimeout(() => setSuccess(null), 3000);
-      } else {
-        setError('Failed to delete user');
-      }
-    } catch (err) {
-      console.error('Error deleting user:', err);
-      setError('Error deleting user');
-    }
-  };
-
-  const getRoleColor = (role) => {
-    switch (role) {
-      case 'admin': return 'error';
-      case 'editor': return 'warning';
-      case 'viewer': return 'info';
-      default: return 'default';
+      setError(err.message);
     }
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex items-center justify-center p-8">
+        <div className="text-gray-600">Loading users...</div>
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold">
-          User Management
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchUsers}
-          >
-            Refresh
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog('create')}
-          >
-            Add User
-          </Button>
-        </Box>
-      </Box>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
+          <p className="text-gray-600">Manage user accounts and permissions</p>
+        </div>
+        <Button onClick={() => handleOpenDialog('create')}>
+          Add New User
+        </Button>
+      </div>
 
       {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
           {error}
-        </Alert>
+        </div>
       )}
 
       {success && (
-        <Alert severity="success" onClose={() => setSuccess(null)} sx={{ mb: 2 }}>
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded">
           {success}
-        </Alert>
+        </div>
       )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-              <TableCell><strong>Email</strong></TableCell>
-              <TableCell><strong>Username</strong></TableCell>
-              <TableCell><strong>Full Name</strong></TableCell>
-              <TableCell><strong>Role</strong></TableCell>
-              <TableCell><strong>Status</strong></TableCell>
-              <TableCell><strong>Created</strong></TableCell>
-              <TableCell align="right"><strong>Actions</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <Typography variant="body2" color="textSecondary">
-                    No users found
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              users.map((u) => (
-                <TableRow key={u.id} hover>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>{u.username}</TableCell>
-                  <TableCell>{u.full_name || '-'}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={u.role.toUpperCase()} 
-                      color={getRoleColor(u.role)} 
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={u.is_active ? 'Active' : 'Inactive'} 
-                      color={u.is_active ? 'success' : 'default'} 
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {new Date(u.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Edit User">
-                      <IconButton
-                        size="small"
-                        color="primary"
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{u.username}</div>
+                      <div className="text-sm text-gray-500">{u.full_name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{u.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        u.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                        u.role === 'editor' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {u.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleOpenDialog('edit', u)}
                       >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    
-                    <Tooltip title={u.is_active ? 'Deactivate' : 'Activate'}>
-                      <IconButton
-                        size="small"
-                        color={u.is_active ? 'warning' : 'success'}
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleToggleActive(u.id, u.is_active)}
-                        disabled={u.id === user.id}
                       >
-                        {u.is_active ? <BlockIcon fontSize="small" /> : <ActivateIcon fontSize="small" />}
-                      </IconButton>
-                    </Tooltip>
-                    
-                    <Tooltip title="Delete User">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleDeleteUser(u.id, u.email)}
-                        disabled={u.id === user.id}
+                        {u.is_active ? 'Deactivate' : 'Activate'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteUser(u.id)}
+                        className="text-red-600 hover:text-red-700"
                       >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Create/Edit User Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {dialogMode === 'create' ? 'Create New User' : 'Edit User'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleFormChange('email', e.target.value)}
-              fullWidth
-              required
-              disabled={dialogMode === 'edit'}
-            />
-            
-            <TextField
-              label="Username"
-              value={formData.username}
-              onChange={(e) => handleFormChange('username', e.target.value)}
-              fullWidth
-              required
-            />
-            
-            <TextField
-              label="Full Name"
-              value={formData.full_name}
-              onChange={(e) => handleFormChange('full_name', e.target.value)}
-              fullWidth
-            />
-            
-            <FormControl fullWidth>
-              <InputLabel>Role</InputLabel>
-              <Select
-                value={formData.role}
-                onChange={(e) => handleFormChange('role', e.target.value)}
-                label="Role"
-              >
-                <MenuItem value="viewer">Viewer</MenuItem>
-                <MenuItem value="editor">Editor</MenuItem>
-                <MenuItem value="admin">Admin</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={formData.is_active}
-                onChange={(e) => handleFormChange('is_active', e.target.value)}
-                label="Status"
-              >
-                <MenuItem value={true}>Active</MenuItem>
-                <MenuItem value={false}>Inactive</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button 
-            onClick={handleSubmit} 
-            variant="contained"
-            disabled={!formData.email || !formData.username}
-          >
-            {dialogMode === 'create' ? 'Create' : 'Update'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      {/* User Dialog */}
+      {showDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>{dialogMode === 'create' ? 'Create New User' : 'Edit User'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) => setFormData({...formData, username: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Full Name</Label>
+                  <Input
+                    id="full_name"
+                    type="text"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <select
+                    id="role"
+                    value={formData.role}
+                    onChange={(e) => setFormData({...formData, role: e.target.value})}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="viewer">Viewer</option>
+                    <option value="editor">Editor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is_active"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                    className="rounded"
+                  />
+                  <Label htmlFor="is_active">Active</Label>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {dialogMode === 'create' ? 'Create' : 'Update'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 }

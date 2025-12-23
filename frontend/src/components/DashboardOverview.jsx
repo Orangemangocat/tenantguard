@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Card, CardContent, Typography, CircularProgress, Alert } from '@mui/material';
-import { Article, PendingActions, CheckCircle, Cancel, People } from '@mui/icons-material';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 
 /**
  * Dashboard Overview Component
@@ -49,194 +48,133 @@ export default function DashboardOverview({ user }) {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex items-center justify-center p-8">
+        <div className="text-gray-600">Loading dashboard statistics...</div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ mb: 2 }}>
+      <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
         {error}
-      </Alert>
+      </div>
     );
   }
 
-  const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
-    <Card sx={{ height: '100%', transition: '0.3s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 } }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Box sx={{ 
-            bgcolor: `${color}.light`, 
-            borderRadius: 2, 
-            p: 1.5, 
-            mr: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Icon sx={{ color: `${color}.main`, fontSize: 32 }} />
-          </Box>
-          <Box>
-            <Typography variant="h4" fontWeight="bold">
-              {value}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              {title}
-            </Typography>
-          </Box>
-        </Box>
-        {subtitle && (
-          <Typography variant="caption" color="textSecondary">
-            {subtitle}
-          </Typography>
-        )}
-      </CardContent>
-    </Card>
-  );
-
   return (
-    <Box>
-      <Typography variant="h5" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
-        Dashboard Overview
-      </Typography>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
+        <p className="text-gray-600">
+          {user.role === 'admin' 
+            ? 'You have full administrative access to manage blog posts and users.'
+            : user.role === 'editor'
+            ? 'You can create and submit blog posts for approval.'
+            : 'You have read-only access to the system.'}
+        </p>
+      </div>
 
-      <Grid container spacing={3}>
-        {/* Blog Statistics */}
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Posts"
-            value={stats?.blog?.total_posts || 0}
-            icon={Article}
-            color="primary"
-            subtitle="All blog posts"
-          />
-        </Grid>
+      {/* Statistics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Posts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900">
+              {stats?.blog?.total_posts || 0}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Published blog posts</p>
+          </CardContent>
+        </Card>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Published"
-            value={stats?.blog?.published_count || 0}
-            icon={CheckCircle}
-            color="success"
-            subtitle="Live on website"
-          />
-        </Grid>
-
-        {user.role === 'admin' && stats?.approval && (
+        {user.role === 'admin' && (
           <>
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Pending Approval"
-                value={stats.approval.pending_count || 0}
-                icon={PendingActions}
-                color="warning"
-                subtitle="Awaiting review"
-              />
-            </Grid>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Pending Approval</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-600">
+                  {stats?.approval?.pending_count || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Awaiting review</p>
+              </CardContent>
+            </Card>
 
-            <Grid item xs={12} sm={6} md={3}>
-              <StatCard
-                title="Rejected"
-                value={stats.approval.rejected_count || 0}
-                icon={Cancel}
-                color="error"
-                subtitle="Not approved"
-              />
-            </Grid>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Approved</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">
+                  {stats?.approval?.approved_count || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Ready to publish</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Days Since Last Post</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats?.blog?.days_since_last_post || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Auto-post at 5 days</p>
+              </CardContent>
+            </Card>
           </>
         )}
+      </div>
 
-        {/* Category Breakdown */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom fontWeight="bold">
-                Posts by Category
-              </Typography>
-              <Box sx={{ mt: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                  <Typography variant="body1">Technical Updates</Typography>
-                  <Typography variant="h6" color="primary.main" fontWeight="bold">
-                    {stats?.blog?.by_category?.technical || 0}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1">Market Research</Typography>
-                  <Typography variant="h6" color="secondary.main" fontWeight="bold">
-                    {stats?.blog?.by_category?.['market-research'] || 0}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Category Breakdown */}
+      {stats?.blog?.by_category && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Posts by Category</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {Object.entries(stats.blog.by_category).map(([category, count]) => (
+                <div key={category} className="flex justify-between items-center">
+                  <span className="text-gray-700">{category}</span>
+                  <span className="font-semibold text-gray-900">{count}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Recent Activity */}
-        {user.role === 'admin' && stats?.approval?.recent_approvals && (
-          <Grid item xs={12} md={6}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight="bold">
-                  Recent Approvals
-                </Typography>
-                {stats.approval.recent_approvals.length === 0 ? (
-                  <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
-                    No recent approvals
-                  </Typography>
-                ) : (
-                  <Box sx={{ mt: 2 }}>
-                    {stats.approval.recent_approvals.slice(0, 5).map((post, index) => (
-                      <Box 
-                        key={index} 
-                        sx={{ 
-                          py: 1, 
-                          borderBottom: index < 4 ? '1px solid #e0e0e0' : 'none' 
-                        }}
-                      >
-                        <Typography variant="body2" fontWeight="medium">
-                          {post.title}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                          Approved {new Date(post.approved_at).toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {/* Days Since Last Post */}
-        {stats?.blog?.days_since_last_post !== undefined && (
-          <Grid item xs={12} md={6}>
-            <Card sx={{ 
-              bgcolor: stats.blog.days_since_last_post > 5 ? 'error.light' : 
-                       stats.blog.days_since_last_post > 3 ? 'warning.light' : 
-                       'success.light'
-            }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight="bold">
-                  Days Since Last Post
-                </Typography>
-                <Typography variant="h3" fontWeight="bold">
-                  {stats.blog.days_since_last_post}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  {stats.blog.days_since_last_post > 5 ? 
-                    '⚠️ Overdue - Auto-posting enabled' :
-                    stats.blog.days_since_last_post > 3 ?
-                    '⏰ Due soon' :
-                    '✅ On schedule'}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </Box>
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>System Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700">Auto-posting</span>
+              <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm font-medium">
+                Enabled
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700">Max days between posts</span>
+              <span className="font-semibold text-gray-900">5 days</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700">Your role</span>
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm font-medium capitalize">
+                {user.role}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
