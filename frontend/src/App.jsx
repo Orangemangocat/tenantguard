@@ -570,6 +570,7 @@ function App() {
             setShowRegister(false)
             setShowLogin(true)
           }}
+          onClose={() => setShowRegister(false)}
         />
       )}
 
