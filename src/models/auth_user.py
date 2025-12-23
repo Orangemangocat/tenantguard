@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from src.models.user import db
 import jwt
 import os
+import hashlib
 
 class AuthUser(db.Model):
     __tablename__ = 'auth_users'
@@ -110,6 +111,17 @@ class AuthUser(db.Model):
     def can_manage_users(self):
         """Check if user can manage other users"""
         return self.role == 'admin'
+    
+    def set_password(self, password):
+        """Hash and set the user's password"""
+        # Use SHA-256 for password hashing (in production, use bcrypt or argon2)
+        self.password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    def check_password(self, password):
+        """Verify the user's password"""
+        if not self.password_hash:
+            return False
+        return self.password_hash == hashlib.sha256(password.encode()).hexdigest()
     
     def to_dict(self, include_sensitive=False):
         """Convert user to dictionary"""
