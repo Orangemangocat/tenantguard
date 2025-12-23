@@ -9,6 +9,9 @@ import ContactPage from './components/ContactPage.jsx'
 import BlogList from './components/BlogList.jsx'
 import BlogPost from './components/BlogPost.jsx'
 import BlogAdmin from './components/BlogAdmin.jsx'
+import Login from './components/Login.jsx'
+import Register from './components/Register.jsx'
+import AdminDashboard from './components/AdminDashboard.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import './App.css'
@@ -29,6 +32,10 @@ function App() {
   const [showBlog, setShowBlog] = useState(false)
   const [showBlogAdmin, setShowBlogAdmin] = useState(false)
   const [selectedBlogPost, setSelectedBlogPost] = useState(null)
+  const [showLogin, setShowLogin] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
+  const [showAdminPanel, setShowAdminPanel] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
 
   const scrollToSection = (sectionId) => {
     setCurrentPage('home')
@@ -63,6 +70,18 @@ function App() {
             </nav>
             <div className="flex items-center gap-2">
               <ThemeSwitcher />
+              {currentUser ? (
+                <>
+                  <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowAdminPanel(true)}>Admin</Button>
+                  <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => {
+                    setCurrentUser(null)
+                    localStorage.removeItem('access_token')
+                    localStorage.removeItem('refresh_token')
+                  }}>Logout</Button>
+                </>
+              ) : (
+                <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowLogin(true)}>Login</Button>
+              )}
               <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
               <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
             </div>
@@ -445,6 +464,7 @@ function App() {
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li>Davidson County, TN</li>
                 <li><a href="mailto:johnb@tenantguard.net" className="hover:text-white">johnb@tenantguard.net</a></li>
+                <li><a href="mailto:karlh@tenantguard.net" className="hover:text-white">karlh@tenantguard.net</a></li>
               </ul>
             </div>
           </div>
@@ -521,6 +541,51 @@ function App() {
             </div>
           </header>
           <BlogAdmin onBack={() => setShowBlogAdmin(false)} />
+        </div>
+      )}
+
+      {/* Login Modal */}
+      {showLogin && !currentUser && (
+        <Login 
+          onClose={() => setShowLogin(false)}
+          onSuccess={(user) => {
+            setCurrentUser(user)
+            setShowLogin(false)
+          }}
+          onSwitchToRegister={() => {
+            setShowLogin(false)
+            setShowRegister(true)
+          }}
+        />
+      )}
+
+      {/* Register Modal */}
+      {showRegister && !currentUser && (
+        <Register 
+          onSuccess={(user) => {
+            setCurrentUser(user)
+            setShowRegister(false)
+          }}
+          onSwitchToLogin={() => {
+            setShowRegister(false)
+            setShowLogin(true)
+          }}
+        />
+      )}
+
+      {/* Admin Panel */}
+      {showAdminPanel && currentUser && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+          <AdminDashboard 
+            user={currentUser} 
+            onLogout={() => {
+              setCurrentUser(null)
+              setShowAdminPanel(false)
+              localStorage.removeItem('access_token')
+              localStorage.removeItem('refresh_token')
+            }}
+            onClose={() => setShowAdminPanel(false)}
+          />
         </div>
       )}
     </div>
