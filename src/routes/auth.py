@@ -360,6 +360,131 @@ def github_callback():
 
 
 # ============================================================================
+# LOCAL AUTHENTICATION ROUTES
+# ============================================================================
+
+@auth_bp.route('/auth/register', methods=['POST'])
+def register():
+    """Register a new user with email and password"""
+    
+    data = request.json
+    
+    # Validate required fields
+    email = data.get('email')
+    username = data.get('username')
+    password = data.get('password')
+    full_name = data.get('full_name', '')
+    
+    if not email or not username or not password:
+        return jsonify({'error': 'Email, username, and password are required'}), 400
+    
+    # Validate email format
+    import re
+    email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    if not re.match(email_regex, email):
+        return jsonify({'error': 'Invalid email format'}), 400
+    
+    # Validate password strength
+    if len(password) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters long'}), 400
+    
+    # Check if user already exists
+    existing_user = AuthUser.query.filter(
+        (AuthUser.email == email) | (AuthUser.username == username)
+    ).first()
+    
+    if existing_user:
+        if existing_user.email == email:
+            return jsonify({'error': 'Email already registered'}), 400
+        else:
+            return jsonify({'error': 'Username already taken'}), 400
+    
+    # Create new user
+    user = AuthUser(
+        email=email,
+        username=username,
+        full_name=full_name,
+        role='viewer',  # Default role
+        is_verified=False,  # Require email verification in production
+        last_login=datetime.utcnow()
+    )
+    
+    # Set password (hashed)
+    user.set_password(password)
+    
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create user'}), 500
+    
+    # Generate JWT tokens
+    access_token = user.generate_jwt_token()
+    refresh_token = user.generate_refresh_token()
+    
+    return jsonify({
+        'message': 'User registered successfully',
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'token_type': 'Bearer',
+        'expires_in': 3600,
+        'user': user.to_dict()
+    }), 201
+
+
+@auth_bp.route('/auth/login', methods=['POST'])
+def login():
+    """Login with email/username and password"""
+    
+    data = request.json
+    
+    # Get credentials
+    identifier = data.get('email')  # Can be email or username
+    password = data.get('password')
+    
+    if not identifier or not password:
+        return jsonify({'error': 'Email/username and password are required'}), 400
+    
+    # Find user by email or username
+    user = AuthUser.query.filter(
+        (AuthUser.email == identifier) | (AuthUser.username == identifier)
+    ).first()
+    
+    if not user:
+        return jsonify({'error': 'Invalid credentials'}), 401
+    
+    # Check if user has a password (not OAuth-only user)
+    if not user.password_hash:
+        return jsonify({'error': 'This account uses OAuth login. Please sign in with Google or GitHub.'}), 400
+    
+    # Verify password
+    if not user.check_password(password):
+        return jsonify({'error': 'Invalid credentials'}), 401
+    
+    # Check if user is active
+    if not user.is_active:
+        return jsonify({'error': 'Account is deactivated'}), 403
+    
+    # Update last login
+    user.last_login = datetime.utcnow()
+    db.session.commit()
+    
+    # Generate JWT tokens
+    access_token = user.generate_jwt_token()
+    refresh_token = user.generate_refresh_token()
+    
+    return jsonify({
+        'message': 'Login successful',
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'token_type': 'Bearer',
+        'expires_in': 3600,
+        'user': user.to_dict()
+    }), 200
+
+
+# ============================================================================
 # JWT TOKEN ROUTES
 # ============================================================================
 
