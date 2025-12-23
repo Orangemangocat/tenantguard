@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Alert, Paper, Link } from '@mui/material';
+import { Button } from '@/components/ui/button.jsx';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx';
+import { Input } from '@/components/ui/input.jsx';
+import { Label } from '@/components/ui/label.jsx';
 
 /**
  * User Registration Form Component
@@ -52,145 +55,145 @@ export default function Register({ onSuccess, onSwitchToLogin }) {
     if (!validateForm()) {
       return;
     }
-    
+
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('/auth/register', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: formData.email,
           username: formData.username,
           full_name: formData.full_name,
           password: formData.password
-        })
+        }),
       });
-      
+
       const data = await response.json();
-      
-      if (response.ok) {
-        if (onSuccess) {
-          onSuccess(data);
-        }
-      } else {
-        setError(data.error || 'Registration failed');
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      // Store tokens
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+      }
+
+      // Call success callback with user data
+      if (onSuccess) {
+        onSuccess(data.user);
       }
     } catch (err) {
-      console.error('Registration error:', err);
-      setError('An error occurred during registration');
+      setError(err.message || 'An error occurred during registration');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      bgcolor: '#f5f5f5',
-      p: 2
-    }}>
-      <Paper sx={{ p: 4, maxWidth: 500, width: '100%' }}>
-        <Typography variant="h4" gutterBottom fontWeight="bold" textAlign="center">
-          Create Account
-        </Typography>
-        <Typography variant="body2" color="textSecondary" textAlign="center" sx={{ mb: 3 }}>
-          Join TenantGuard to access our platform
-        </Typography>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+          <CardDescription className="text-center">
+            Join TenantGuard to access your dashboard
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@example.com"
+                value={formData.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                required
+              />
+            </div>
 
-        <form onSubmit={handleSubmit}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label="Email Address"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              required
-              fullWidth
-              autoComplete="email"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="username">Username *</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="username"
+                value={formData.username}
+                onChange={(e) => handleChange('username', e.target.value)}
+                required
+              />
+            </div>
 
-            <TextField
-              label="Username"
-              value={formData.username}
-              onChange={(e) => handleChange('username', e.target.value)}
-              required
-              fullWidth
-              autoComplete="username"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Full Name</Label>
+              <Input
+                id="full_name"
+                type="text"
+                placeholder="John Doe"
+                value={formData.full_name}
+                onChange={(e) => handleChange('full_name', e.target.value)}
+              />
+            </div>
 
-            <TextField
-              label="Full Name (Optional)"
-              value={formData.full_name}
-              onChange={(e) => handleChange('full_name', e.target.value)}
-              fullWidth
-              autoComplete="name"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                required
+              />
+              <p className="text-sm text-gray-500">Minimum 8 characters</p>
+            </div>
 
-            <TextField
-              label="Password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleChange('password', e.target.value)}
-              required
-              fullWidth
-              autoComplete="new-password"
-              helperText="Minimum 8 characters"
-            />
-
-            <TextField
-              label="Confirm Password"
-              type="password"
-              value={formData.confirm_password}
-              onChange={(e) => handleChange('confirm_password', e.target.value)}
-              required
-              fullWidth
-              autoComplete="new-password"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="confirm_password">Confirm Password *</Label>
+              <Input
+                id="confirm_password"
+                type="password"
+                placeholder="••••••••"
+                value={formData.confirm_password}
+                onChange={(e) => handleChange('confirm_password', e.target.value)}
+                required
+              />
+            </div>
 
             <Button
               type="submit"
-              variant="contained"
-              size="large"
+              className="w-full"
               disabled={loading}
-              fullWidth
-              sx={{ mt: 2 }}
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </Button>
-          </Box>
-        </form>
 
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Typography variant="body2" color="textSecondary">
-            Already have an account?{' '}
-            <Link
-              component="button"
-              variant="body2"
-              onClick={onSwitchToLogin}
-              sx={{ cursor: 'pointer' }}
-            >
-              Sign In
-            </Link>
-          </Typography>
-        </Box>
-
-        <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid #e0e0e0' }}>
-          <Typography variant="caption" color="textSecondary" textAlign="center" display="block">
-            By creating an account, you agree to our Terms of Service and Privacy Policy
-          </Typography>
-        </Box>
-      </Paper>
-    </Box>
+            <div className="text-center text-sm">
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={onSwitchToLogin}
+                className="text-blue-600 hover:underline"
+              >
+                Sign in
+              </button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
