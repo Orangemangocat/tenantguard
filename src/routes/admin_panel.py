@@ -604,3 +604,276 @@ def reject_lawyer_application(app_id):
         return jsonify({'error': str(e)}), 500
     finally:
         conn.close()
+
+
+# ============================================
+# Additional CRUD Endpoints
+# ============================================
+
+# Create User
+@admin_panel_bp.route('/users', methods=['POST'])
+@admin_required
+def create_user():
+    """Create a new user"""
+    data = request.json
+    
+    # Validate required fields
+    required_fields = ['email', 'username']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({'error': f'{field} is required'}), 400
+    
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        
+        # Check if email already exists
+        cursor.execute("SELECT id FROM auth_users WHERE email = ?", (data['email'],))
+        if cursor.fetchone():
+            return jsonify({'error': 'Email already exists'}), 400
+        
+        # Check if username already exists
+        cursor.execute("SELECT id FROM auth_users WHERE username = ?", (data['username'],))
+        if cursor.fetchone():
+            return jsonify({'error': 'Username already exists'}), 400
+        
+        # Insert new user
+        now = datetime.now().isoformat()
+        cursor.execute("""
+            INSERT INTO auth_users (email, username, full_name, role, is_active, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data['email'],
+            data['username'],
+            data.get('full_name', ''),
+            data.get('role', 'user'),
+            1 if data.get('is_active', True) else 0,
+            now,
+            now
+        ))
+        conn.commit()
+        
+        return jsonify({'success': True, 'id': cursor.lastrowid})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+# Get single user details
+@admin_panel_bp.route('/users/<int:user_id>', methods=['GET'])
+@admin_required
+def get_user(user_id):
+    """Get a single user's details"""
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, email, username, full_name, role, is_active, 
+                   created_at, updated_at, last_login
+            FROM auth_users
+            WHERE id = ?
+        """, (user_id,))
+        
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': 'User not found'}), 404
+        
+        return jsonify(dict(row))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+# Create Blog Post
+@admin_panel_bp.route('/blog-posts', methods=['POST'])
+@admin_required
+def create_blog_post():
+    """Create a new blog post"""
+    data = request.json
+    
+    # Validate required fields
+    if not data.get('title'):
+        return jsonify({'error': 'Title is required'}), 400
+    if not data.get('content'):
+        return jsonify({'error': 'Content is required'}), 400
+    
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        
+        # Generate slug from title
+        import re
+        slug = re.sub(r'[^a-z0-9]+', '-', data['title'].lower()).strip('-')
+        
+        # Check if slug already exists
+        cursor.execute("SELECT id FROM blog_posts WHERE slug = ?", (slug,))
+        if cursor.fetchone():
+            # Add timestamp to make unique
+            slug = f"{slug}-{int(datetime.now().timestamp())}"
+        
+        now = datetime.now().isoformat()
+        status = data.get('status', 'draft')
+        published_at = now if status == 'published' else None
+        
+        cursor.execute("""
+            INSERT INTO blog_posts (title, slug, content, excerpt, author, status, category, created_at, updated_at, published_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data['title'],
+            slug,
+            data['content'],
+            data.get('excerpt', ''),
+            data.get('author', 'Admin'),
+            status,
+            data.get('category', 'general'),
+            now,
+            now,
+            published_at
+        ))
+        conn.commit()
+        
+        return jsonify({'success': True, 'id': cursor.lastrowid, 'slug': slug})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+# Get single blog post details
+@admin_panel_bp.route('/blog-posts/<int:post_id>', methods=['GET'])
+@admin_required
+def get_blog_post(post_id):
+    """Get a single blog post's details"""
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, title, slug, content, excerpt, author, status, category,
+                   created_at, updated_at, published_at
+            FROM blog_posts
+            WHERE id = ?
+        """, (post_id,))
+        
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': 'Blog post not found'}), 404
+        
+        return jsonify(dict(row))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+# Get single tenant case details
+@admin_panel_bp.route('/tenant-cases/<int:case_id>', methods=['GET'])
+@admin_required
+def get_tenant_case(case_id):
+    """Get a single tenant case's details"""
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, case_number, first_name, last_name, email, phone,
+                   rental_address, issue_type, urgency_level, status,
+                   issue_description, created_at, updated_at
+            FROM cases
+            WHERE id = ?
+        """, (case_id,))
+        
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': 'Case not found'}), 404
+        
+        case = dict(row)
+        case['tenant_name'] = f"{case.get('first_name', '')} {case.get('last_name', '')}".strip()
+        case['tenant_email'] = case.get('email')
+        case['tenant_phone'] = case.get('phone')
+        case['property_address'] = case.get('rental_address')
+        case['case_type'] = case.get('issue_type')
+        case['urgency'] = case.get('urgency_level')
+        case['description'] = case.get('issue_description')
+        
+        return jsonify(case)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+# Delete tenant case
+@admin_panel_bp.route('/tenant-cases/<int:case_id>', methods=['DELETE'])
+@admin_required
+def delete_tenant_case(case_id):
+    """Delete a tenant case"""
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        
+        # Check if case exists
+        cursor.execute("SELECT id FROM cases WHERE id = ?", (case_id,))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Case not found'}), 404
+        
+        # Delete the case
+        cursor.execute("DELETE FROM cases WHERE id = ?", (case_id,))
+        conn.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+# Get single lawyer application details
+@admin_panel_bp.route('/lawyer-applications/<int:app_id>', methods=['GET'])
+@admin_required
+def get_lawyer_application(app_id):
+    """Get a single lawyer application's details"""
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, application_id, first_name, last_name, email, phone, 
+                   bar_number, bar_state, years_experience, firm_name, firm_address,
+                   specializations, status, reviewer_notes, application_date, review_date
+            FROM attorneys
+            WHERE id = ?
+        """, (app_id,))
+        
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': 'Application not found'}), 404
+        
+        app = dict(row)
+        app['full_name'] = f"{app.get('first_name', '')} {app.get('last_name', '')}".strip()
+        app['rejection_reason'] = app.get('reviewer_notes')
+        app['created_at'] = app.get('application_date')
+        app['reviewed_at'] = app.get('review_date')
+        
+        return jsonify(app)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+# Delete lawyer application
+@admin_panel_bp.route('/lawyer-applications/<int:app_id>', methods=['DELETE'])
+@admin_required
+def delete_lawyer_application(app_id):
+    """Delete a lawyer application"""
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+        
+        # Check if application exists
+        cursor.execute("SELECT id FROM attorneys WHERE id = ?", (app_id,))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Application not found'}), 404
+        
+        # Delete the application
+        cursor.execute("DELETE FROM attorneys WHERE id = ?", (app_id,))
+        conn.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
