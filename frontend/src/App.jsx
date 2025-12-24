@@ -1,8 +1,16 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
-import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp } from 'lucide-react'
+import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, ChevronDown, User, LogOut, Settings } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu.jsx'
 import CaseIntakeForm from './components/CaseIntakeForm.jsx'
 import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
 import ContactPage from './components/ContactPage.jsx'
@@ -81,14 +89,50 @@ function App() {
             <div className="flex items-center gap-2">
               <ThemeSwitcher />
               {currentUser ? (
-                <>
-                  <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowAdminPanel(true)}>Admin</Button>
-                  <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => {
-                    setCurrentUser(null)
-                    localStorage.removeItem('access_token')
-                    localStorage.removeItem('refresh_token')
-                  }}>Logout</Button>
-                </>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      style={{ color: 'var(--color-textSecondary)' }} 
+                      className="hover:opacity-80 flex items-center gap-1"
+                    >
+                      <User className="h-4 w-4" />
+                      <span className="max-w-[150px] truncate">{currentUser.email || currentUser.name || 'User'}</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56" style={{ backgroundColor: 'var(--color-cardBg)', borderColor: 'var(--color-cardBorder)' }}>
+                    <DropdownMenuLabel style={{ color: 'var(--color-text)' }}>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{currentUser.name || 'User'}</p>
+                        <p className="text-xs leading-none" style={{ color: 'var(--color-textSecondary)' }}>
+                          {currentUser.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator style={{ backgroundColor: 'var(--color-cardBorder)' }} />
+                    <DropdownMenuItem 
+                      onClick={() => setShowAdminPanel(true)}
+                      className="cursor-pointer"
+                      style={{ color: 'var(--color-text)' }}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator style={{ backgroundColor: 'var(--color-cardBorder)' }} />
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setCurrentUser(null)
+                        localStorage.removeItem('access_token')
+                        localStorage.removeItem('refresh_token')
+                      }}
+                      className="cursor-pointer text-red-600 focus:text-red-600"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
                 <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowLogin(true)}>Login</Button>
               )}
