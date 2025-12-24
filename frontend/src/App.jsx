@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
@@ -37,6 +37,64 @@ function App() {
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
+
+  // Handle OAuth callback - extract tokens from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const accessToken = urlParams.get('access_token')
+    const refreshToken = urlParams.get('refresh_token')
+    
+    if (accessToken && window.location.pathname === '/auth/callback') {
+      // Store tokens
+      localStorage.setItem('access_token', accessToken)
+      if (refreshToken) {
+        localStorage.setItem('refresh_token', refreshToken)
+      }
+      
+      // Decode JWT to get user info
+      try {
+        const base64Url = accessToken.split('.')[1]
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+        const payload = JSON.parse(atob(base64))
+        setCurrentUser({
+          id: payload.user_id,
+          email: payload.email,
+          role: payload.role
+        })
+      } catch (e) {
+        console.error('Error decoding token:', e)
+      }
+      
+      // Clean up URL
+      window.history.replaceState({}, document.title, '/')
+    }
+  }, [])
+
+  // Check for existing token on page load
+  useEffect(() => {
+    const token = localStorage.getItem('access_token')
+    if (token && !currentUser) {
+      try {
+        const base64Url = token.split('.')[1]
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+        const payload = JSON.parse(atob(base64))
+        
+        // Check if token is expired
+        if (payload.exp * 1000 > Date.now()) {
+          setCurrentUser({
+            id: payload.user_id,
+            email: payload.email,
+            role: payload.role
+          })
+        } else {
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+        }
+      } catch (e) {
+        console.error('Error decoding stored token:', e)
+      }
+    }
+  }, [])
 
   const scrollToSection = (sectionId) => {
     setCurrentPage('home')
