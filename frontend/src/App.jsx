@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
@@ -12,13 +12,13 @@ import BlogAdmin from './components/BlogAdmin.jsx'
 import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
-import AuthCallback from './components/AuthCallback.jsx'
-import Navbar from './components/Navbar.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
+import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import './App.css'
 import './theme.css'
 
 // Import assets
+import logo from './assets/logo.png'
 import tenantSignupImage from './assets/tenant_signup_onboarding.png'
 import attorneyDashboardImage from './assets/attorney_dashboard.png'
 import workflowDiagramImage from './assets/workflow_diagram.png'
@@ -36,15 +36,7 @@ function App() {
   const [showRegister, setShowRegister] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
-  const [showAuthCallback, setShowAuthCallback] = useState(false)
-
-  // Check if we're on the OAuth callback page
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.has('access_token')) {
-      setShowAuthCallback(true)
-    }
-  }, [])
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
   const scrollToSection = (sectionId) => {
     setCurrentPage('home')
@@ -62,39 +54,60 @@ function App() {
       backgroundColor: 'var(--color-background)',
       transition: 'background-color 0.3s ease'
     }}>
-      {/* Navbar Component */}
-      <Navbar
-        currentUser={currentUser}
-        onLogin={() => setShowLogin(true)}
-        onLogout={() => setCurrentUser(null)}
-        onDashboard={() => setShowAdminPanel(true)}
-        onNavigate={(page) => {
-          switch (page) {
-            case 'home':
-              setCurrentPage('home')
-              setShowBlog(false)
-              setShowContactPage(false)
-              window.scrollTo(0, 0)
-              break
-            case 'features':
-              scrollToSection('features')
-              break
-            case 'how-it-works':
-              scrollToSection('how-it-works')
-              break
-            case 'blog':
-              setShowBlog(true)
-              break
-            case 'contact':
-              setShowContactPage(true)
-              break
-            default:
-              break
-          }
-        }}
-        onTenantClick={() => setShowIntakeForm(true)}
-        onAttorneyClick={() => setShowAttorneyForm(true)}
-      />
+      {/* Header */}
+      <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-3">
+              <img src={logo} alt="TenantGuard" className="h-8 w-8" />
+              <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard</span>
+            </div>
+            <nav className="hidden md:flex space-x-8">
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => { setCurrentPage('home'); window.scrollTo(0, 0) }}>Home</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('features')}>Features</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('how-it-works')}>How It Works</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowBlog(true)}>Blog</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowContactPage(true)}>Contact</Button>
+            </nav>
+            <div className="flex items-center gap-2">
+              <ThemeSwitcher />
+              {currentUser ? (
+                <div className="relative" onMouseEnter={() => setShowUserMenu(true)} onMouseLeave={() => setShowUserMenu(false)}>
+                  <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80">
+                    {currentUser.email || currentUser.username || 'User'}
+                  </Button>
+                  {showUserMenu && (
+                    <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit Profile</a>
+                      <a href="/my-tenant-case" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Tenant Submission</a>
+                      <a href="/my-lawyer-profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Lawyer Profile</a>
+                      {currentUser.role === 'admin' && (
+                        <a href="/admin-panel" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Panel</a>
+                      )}
+                      <div className="border-t border-gray-200 my-1"></div>
+                      <button
+                        onClick={() => {
+                          setCurrentUser(null)
+                          localStorage.removeItem('access_token')
+                          localStorage.removeItem('refresh_token')
+                          setShowUserMenu(false)
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowLogin(true)}>Login</Button>
+              )}
+              <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
+              <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
@@ -595,20 +608,6 @@ function App() {
             onClose={() => setShowAdminPanel(false)}
           />
         </div>
-      )}
-
-      {/* OAuth Callback Handler */}
-      {showAuthCallback && (
-        <AuthCallback onComplete={(success) => {
-          setShowAuthCallback(false)
-          if (success) {
-            // Reload user state after successful auth
-            const user = JSON.parse(localStorage.getItem('user') || 'null')
-            if (user) {
-              setCurrentUser(user)
-            }
-          }
-        }} />
       )}
     </div>
     </ThemeProvider>
