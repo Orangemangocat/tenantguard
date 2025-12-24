@@ -2,15 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
-import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, ChevronDown, User, LogOut, Settings } from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu.jsx'
+import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp } from 'lucide-react'
 import CaseIntakeForm from './components/CaseIntakeForm.jsx'
 import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
 import ContactPage from './components/ContactPage.jsx'
@@ -21,13 +13,12 @@ import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
 import AuthCallback from './components/AuthCallback.jsx'
+import Navbar from './components/Navbar.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
-import ThemeSwitcher from './components/ThemeSwitcher.jsx'
 import './App.css'
 import './theme.css'
 
 // Import assets
-import logo from './assets/logo.png'
 import tenantSignupImage from './assets/tenant_signup_onboarding.png'
 import attorneyDashboardImage from './assets/attorney_dashboard.png'
 import workflowDiagramImage from './assets/workflow_diagram.png'
@@ -71,77 +62,39 @@ function App() {
       backgroundColor: 'var(--color-background)',
       transition: 'background-color 0.3s ease'
     }}>
-      {/* Header */}
-      <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <img src={logo} alt="TenantGuard" className="h-8 w-8" />
-              <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard</span>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => { setCurrentPage('home'); window.scrollTo(0, 0) }}>Home</Button>
-              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('features')}>Features</Button>
-              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('how-it-works')}>How It Works</Button>
-              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowBlog(true)}>Blog</Button>
-              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowContactPage(true)}>Contact</Button>
-            </nav>
-            <div className="flex items-center gap-2">
-              <ThemeSwitcher />
-              {currentUser ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      style={{ color: 'var(--color-textSecondary)' }} 
-                      className="hover:opacity-80 flex items-center gap-1"
-                    >
-                      <User className="h-4 w-4" />
-                      <span className="max-w-[150px] truncate">{currentUser.email || currentUser.name || 'User'}</span>
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56" style={{ backgroundColor: 'var(--color-cardBg)', borderColor: 'var(--color-cardBorder)' }}>
-                    <DropdownMenuLabel style={{ color: 'var(--color-text)' }}>
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{currentUser.name || 'User'}</p>
-                        <p className="text-xs leading-none" style={{ color: 'var(--color-textSecondary)' }}>
-                          {currentUser.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator style={{ backgroundColor: 'var(--color-cardBorder)' }} />
-                    <DropdownMenuItem 
-                      onClick={() => setShowAdminPanel(true)}
-                      className="cursor-pointer"
-                      style={{ color: 'var(--color-text)' }}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator style={{ backgroundColor: 'var(--color-cardBorder)' }} />
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setCurrentUser(null)
-                        localStorage.removeItem('access_token')
-                        localStorage.removeItem('refresh_token')
-                      }}
-                      className="cursor-pointer text-red-600 focus:text-red-600"
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowLogin(true)}>Login</Button>
-              )}
-              <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
-              <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Navbar Component */}
+      <Navbar
+        currentUser={currentUser}
+        onLogin={() => setShowLogin(true)}
+        onLogout={() => setCurrentUser(null)}
+        onDashboard={() => setShowAdminPanel(true)}
+        onNavigate={(page) => {
+          switch (page) {
+            case 'home':
+              setCurrentPage('home')
+              setShowBlog(false)
+              setShowContactPage(false)
+              window.scrollTo(0, 0)
+              break
+            case 'features':
+              scrollToSection('features')
+              break
+            case 'how-it-works':
+              scrollToSection('how-it-works')
+              break
+            case 'blog':
+              setShowBlog(true)
+              break
+            case 'contact':
+              setShowContactPage(true)
+              break
+            default:
+              break
+          }
+        }}
+        onTenantClick={() => setShowIntakeForm(true)}
+        onAttorneyClick={() => setShowAttorneyForm(true)}
+      />
 
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
