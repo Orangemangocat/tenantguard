@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.jsx'
 import { ChevronDown, User, LogOut, Settings } from 'lucide-react'
-import ThemeSwitcher from './ThemeSwitcher.jsx'
 
 // Import logo asset
 import logo from '../assets/logo.png'
@@ -143,10 +142,6 @@ const Navbar = ({
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
-            
-            {/* Theme Switcher */}
-            <ThemeSwitcher />
-
             {/* Conditional User Authentication Section */}
             {currentUser ? (
               /* ========================================
