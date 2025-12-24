@@ -171,7 +171,7 @@ function App() {
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <Badge variant="outline" style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primaryLight)' }} className="mb-6">
-            Davidson County, Tennessee
+            Tennessee
           </Badge>
           <h1 className="text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>
             Transforming Tenant
@@ -495,7 +495,7 @@ function App() {
             Ready to Transform Tenant Legal Representation?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Join the platform that's revolutionizing landlord-tenant dispute resolution in Davidson County, Tennessee.
+            Join the platform that's revolutionizing landlord-tenant dispute resolution in Tennessee.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100">
@@ -540,9 +540,9 @@ function App() {
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li>Davidson County, TN</li>
-                <li><a href="mailto:johnb@tenantguard.net" className="hover:text-white">johnb@tenantguard.net</a></li>
-                <li><a href="mailto:karlh@tenantguard.net" className="hover:text-white">karlh@tenantguard.net</a></li>
+                <li>Tennessee</li>
+                <li><a href="mailto:john@tenantguard.net" className="hover:text-white">john@tenantguard.net</a></li>
+                <li><a href="mailto:karl@tenantguard.net" className="hover:text-white">karl@tenantguard.net</a></li>
               </ul>
             </div>
           </div>

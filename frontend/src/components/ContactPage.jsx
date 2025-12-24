@@ -54,7 +54,7 @@ const ContactPage = ({ onClose }) => {
       }
     } catch (error) {
       console.error('Error sending message:', error)
-      alert('There was an error sending your message. Please try emailing us directly at johnb@tenantguard.net')
+      alert('There was an error sending your message. Please try emailing us directly at john@tenantguard.net')
     } finally {
       setIsSubmitting(false)
     }
@@ -107,8 +107,8 @@ const ContactPage = ({ onClose }) => {
                         <Mail className="h-5 w-5 text-red-800 mt-1" />
                         <div>
                           <p className="font-semibold text-gray-900">Email</p>
-                          <a href="mailto:johnb@tenantguard.net" className="text-gray-600 hover:text-red-800">
-                            johnb@tenantguard.net
+                          <a href="mailto:john@tenantguard.net" className="text-gray-600 hover:text-red-800">
+                            john@tenantguard.net
                           </a>
                         </div>
                       </div>
@@ -118,7 +118,7 @@ const ContactPage = ({ onClose }) => {
                         <div>
                           <p className="font-semibold text-gray-900">Location</p>
                           <p className="text-gray-600">
-                            Davidson County, Tennessee
+                            Tennessee
                           </p>
                         </div>
                       </div>
