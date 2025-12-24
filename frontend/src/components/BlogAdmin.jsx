@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input.jsx'
 import { Label } from '@/components/ui/label.jsx'
 import { Textarea } from '@/components/ui/textarea.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
-import { Plus, Edit, Trash2, Save, X, Eye } from 'lucide-react'
+import { Plus, Edit, Trash2, Save, X, Eye, AlertCircle } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -14,11 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-function BlogAdmin({ onBack }) {
+function BlogAdmin({ onBack, currentUser }) {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showEditor, setShowEditor] = useState(false)
   const [editingPost, setEditingPost] = useState(null)
+  const [error, setError] = useState(null)
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -30,19 +31,38 @@ function BlogAdmin({ onBack }) {
     tags: ''
   })
 
+  // Get auth token from localStorage
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('access_token')
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : ''
+    }
+  }
+
+  // Check if user is admin
+  const isAdmin = currentUser && currentUser.role === 'admin'
+
   useEffect(() => {
+    if (!isAdmin) {
+      setError('You must be an administrator to access this page.')
+      setLoading(false)
+      return
+    }
     fetchAllPosts()
-  }, [])
+  }, [isAdmin])
 
   const fetchAllPosts = async () => {
     try {
       setLoading(true)
+      setError(null)
       const response = await fetch('/api/blog/posts?status=&per_page=100')
       const data = await response.json()
-      setPosts(data.posts)
+      setPosts(data.posts || [])
       setLoading(false)
     } catch (error) {
       console.error('Error fetching posts:', error)
+      setError('Failed to fetch posts')
       setLoading(false)
     }
   }
@@ -59,6 +79,11 @@ function BlogAdmin({ onBack }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    if (!isAdmin) {
+      alert('You must be an administrator to perform this action.')
+      return
+    }
+    
     try {
       const payload = {
         ...formData,
@@ -69,13 +94,13 @@ function BlogAdmin({ onBack }) {
       if (editingPost) {
         response = await fetch(`/api/blog/posts/${editingPost.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify(payload)
         })
       } else {
         response = await fetch('/api/blog/posts', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify(payload)
         })
       }
@@ -86,7 +111,13 @@ function BlogAdmin({ onBack }) {
         fetchAllPosts()
       } else {
         const error = await response.json()
-        alert('Error: ' + error.error)
+        if (response.status === 401) {
+          alert('Authentication required. Please log in again.')
+        } else if (response.status === 403) {
+          alert('Admin permission required to perform this action.')
+        } else {
+          alert('Error: ' + (error.error || 'Unknown error'))
+        }
       }
     } catch (error) {
       console.error('Error saving post:', error)
@@ -95,6 +126,10 @@ function BlogAdmin({ onBack }) {
   }
 
   const handleEdit = (post) => {
+    if (!isAdmin) {
+      alert('You must be an administrator to edit posts.')
+      return
+    }
     setEditingPost(post)
     setFormData({
       title: post.title,
@@ -110,18 +145,31 @@ function BlogAdmin({ onBack }) {
   }
 
   const handleDelete = async (postId) => {
+    if (!isAdmin) {
+      alert('You must be an administrator to delete posts.')
+      return
+    }
+    
     if (!confirm('Are you sure you want to delete this post?')) return
 
     try {
       const response = await fetch(`/api/blog/posts/${postId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       })
 
       if (response.ok) {
         alert('Post deleted successfully!')
         fetchAllPosts()
       } else {
-        alert('Error deleting post')
+        const error = await response.json()
+        if (response.status === 401) {
+          alert('Authentication required. Please log in again.')
+        } else if (response.status === 403) {
+          alert('Admin permission required to delete posts.')
+        } else {
+          alert('Error: ' + (error.error || 'Error deleting post'))
+        }
       }
     } catch (error) {
       console.error('Error deleting post:', error)
@@ -151,6 +199,34 @@ function BlogAdmin({ onBack }) {
       month: 'short', 
       day: 'numeric' 
     })
+  }
+
+  // Show error if not admin
+  if (!isAdmin) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+              <div>
+                <h3 className="text-lg font-semibold text-red-800">Access Denied</h3>
+                <p className="text-red-600">
+                  You must be logged in as an administrator to access the blog admin panel.
+                </p>
+              </div>
+            </div>
+            <Button 
+              className="mt-4"
+              variant="outline"
+              onClick={onBack}
+            >
+              Return to Blog
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (showEditor) {
@@ -305,7 +381,7 @@ function BlogAdmin({ onBack }) {
             Blog Admin
           </h1>
           <p style={{ color: 'var(--color-textSecondary)' }}>
-            Manage your blog posts
+            Manage your blog posts (Admin access required)
           </p>
         </div>
         <div className="flex gap-4">
@@ -323,6 +399,18 @@ function BlogAdmin({ onBack }) {
         </div>
       </div>
 
+      {/* Error display */}
+      {error && (
+        <Card className="border-red-200 bg-red-50 mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              <span>{error}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Posts List */}
       {loading ? (
         <div className="flex justify-center items-center py-20">
@@ -330,61 +418,69 @@ function BlogAdmin({ onBack }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {posts.map((post) => (
-            <Card 
-              key={post.id}
-              style={{ backgroundColor: 'var(--color-cardBg)', borderColor: 'var(--color-cardBorder)' }}
-            >
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
-                        {post.status}
-                      </Badge>
-                      <Badge variant="outline">
-                        {post.category === 'technical' ? 'Technical Update' : 'Market Research'}
-                      </Badge>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text)' }}>
-                      {post.title}
-                    </h3>
-                    <p className="text-sm mb-2" style={{ color: 'var(--color-textSecondary)' }}>
-                      {post.excerpt}
-                    </p>
-                    <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--color-textSecondary)' }}>
-                      <span>By {post.author}</span>
-                      <span>•</span>
-                      <span>{formatDate(post.created_at)}</span>
-                      {post.published_at && (
-                        <>
-                          <span>•</span>
-                          <span>Published: {formatDate(post.published_at)}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(post)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(post.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+          {posts.length === 0 ? (
+            <Card style={{ backgroundColor: 'var(--color-cardBg)', borderColor: 'var(--color-cardBorder)' }}>
+              <CardContent className="p-6 text-center">
+                <p style={{ color: 'var(--color-textSecondary)' }}>No blog posts found.</p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            posts.map((post) => (
+              <Card 
+                key={post.id}
+                style={{ backgroundColor: 'var(--color-cardBg)', borderColor: 'var(--color-cardBorder)' }}
+              >
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
+                          {post.status}
+                        </Badge>
+                        <Badge variant="outline">
+                          {post.category === 'technical' ? 'Technical Update' : 'Market Research'}
+                        </Badge>
+                      </div>
+                      <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--color-text)' }}>
+                        {post.title}
+                      </h3>
+                      <p className="text-sm mb-2" style={{ color: 'var(--color-textSecondary)' }}>
+                        {post.excerpt}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--color-textSecondary)' }}>
+                        <span>By {post.author}</span>
+                        <span>•</span>
+                        <span>{formatDate(post.created_at)}</span>
+                        {post.published_at && (
+                          <>
+                            <span>•</span>
+                            <span>Published: {formatDate(post.published_at)}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(post)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(post.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       )}
     </div>

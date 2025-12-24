@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 from src.models.user import db
 from src.models.blog import BlogPost
+from src.routes.auth import admin_required
 import re
 
 blog_bp = Blueprint('blog', __name__)
@@ -61,8 +62,9 @@ def get_post(slug):
         return jsonify({'error': str(e)}), 500
 
 @blog_bp.route('/api/blog/posts', methods=['POST'])
-def create_post():
-    """Create a new blog post"""
+@admin_required
+def create_post(current_user):
+    """Create a new blog post - Admin only"""
     try:
         data = request.json
         
@@ -108,8 +110,9 @@ def create_post():
         return jsonify({'error': str(e)}), 500
 
 @blog_bp.route('/api/blog/posts/<int:post_id>', methods=['PUT'])
-def update_post(post_id):
-    """Update an existing blog post"""
+@admin_required
+def update_post(current_user, post_id):
+    """Update an existing blog post - Admin only"""
     try:
         post = BlogPost.query.get(post_id)
         
@@ -159,8 +162,9 @@ def update_post(post_id):
         return jsonify({'error': str(e)}), 500
 
 @blog_bp.route('/api/blog/posts/<int:post_id>', methods=['DELETE'])
-def delete_post(post_id):
-    """Delete a blog post"""
+@admin_required
+def delete_post(current_user, post_id):
+    """Delete a blog post - Admin only"""
     try:
         post = BlogPost.query.get(post_id)
         

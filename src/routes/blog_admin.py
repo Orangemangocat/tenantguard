@@ -1,6 +1,7 @@
 """
 Blog Admin API Routes
 Handles topic suggestions, scheduling, and automated posting
+All routes require admin authentication
 """
 
 from flask import Blueprint, request, jsonify
@@ -8,6 +9,7 @@ from datetime import datetime, timedelta
 from src.models.user import db
 from src.models.blog import BlogPost
 from src.models.blog_topic import BlogTopic, BlogSchedule
+from src.routes.auth import admin_required
 import json
 
 blog_admin_bp = Blueprint('blog_admin', __name__)
@@ -17,8 +19,9 @@ blog_admin_bp = Blueprint('blog_admin', __name__)
 # ============================================================================
 
 @blog_admin_bp.route('/api/blog/topics', methods=['GET'])
-def get_topics():
-    """Get all blog topic suggestions"""
+@admin_required
+def get_topics(current_user):
+    """Get all blog topic suggestions - Admin only"""
     try:
         status_filter = request.args.get('status')
         
@@ -34,8 +37,9 @@ def get_topics():
 
 
 @blog_admin_bp.route('/api/blog/topics', methods=['POST'])
-def create_topic():
-    """Create a new blog topic suggestion for Manus to write about"""
+@admin_required
+def create_topic(current_user):
+    """Create a new blog topic suggestion for Manus to write about - Admin only"""
     try:
         data = request.json
         
@@ -51,7 +55,7 @@ def create_topic():
             research_links=json.dumps(data.get('research_links', [])),
             research_notes=data.get('research_notes', ''),
             priority=data.get('priority', 'normal'),
-            created_by=data.get('created_by', 'admin')
+            created_by=current_user.email or 'admin'
         )
         
         db.session.add(topic)
@@ -65,8 +69,9 @@ def create_topic():
 
 
 @blog_admin_bp.route('/api/blog/topics/<int:topic_id>', methods=['PUT'])
-def update_topic(topic_id):
-    """Update a blog topic suggestion"""
+@admin_required
+def update_topic(current_user, topic_id):
+    """Update a blog topic suggestion - Admin only"""
     try:
         topic = BlogTopic.query.get(topic_id)
         if not topic:
@@ -101,8 +106,9 @@ def update_topic(topic_id):
 
 
 @blog_admin_bp.route('/api/blog/topics/<int:topic_id>', methods=['DELETE'])
-def delete_topic(topic_id):
-    """Delete a blog topic suggestion"""
+@admin_required
+def delete_topic(current_user, topic_id):
+    """Delete a blog topic suggestion - Admin only"""
     try:
         topic = BlogTopic.query.get(topic_id)
         if not topic:
@@ -123,8 +129,9 @@ def delete_topic(topic_id):
 # ============================================================================
 
 @blog_admin_bp.route('/api/blog/schedule', methods=['GET'])
-def get_schedule():
-    """Get blog posting schedule configuration"""
+@admin_required
+def get_schedule(current_user):
+    """Get blog posting schedule configuration - Admin only"""
     try:
         schedule = BlogSchedule.query.first()
         if not schedule:
@@ -143,8 +150,9 @@ def get_schedule():
 
 
 @blog_admin_bp.route('/api/blog/schedule', methods=['PUT'])
-def update_schedule():
-    """Update blog posting schedule configuration"""
+@admin_required
+def update_schedule(current_user):
+    """Update blog posting schedule configuration - Admin only"""
     try:
         schedule = BlogSchedule.query.first()
         if not schedule:
@@ -168,7 +176,7 @@ def update_schedule():
 
 @blog_admin_bp.route('/api/blog/schedule/check', methods=['GET'])
 def check_schedule():
-    """Check if a new post should be automatically generated"""
+    """Check if a new post should be automatically generated - Public endpoint for scheduler"""
     try:
         schedule = BlogSchedule.query.first()
         if not schedule or not schedule.auto_posting_enabled:
@@ -209,8 +217,9 @@ def check_schedule():
 # ============================================================================
 
 @blog_admin_bp.route('/api/blog/analytics', methods=['GET'])
-def get_analytics():
-    """Get blog analytics and statistics"""
+@admin_required
+def get_analytics(current_user):
+    """Get blog analytics and statistics - Admin only"""
     try:
         total_posts = BlogPost.query.filter_by(status='published').count()
         draft_posts = BlogPost.query.filter_by(status='draft').count()
