@@ -138,14 +138,6 @@ const Navbar = ({
             >
               Contact
             </Button>
-            <Button 
-              variant="ghost" 
-              style={{ color: 'var(--color-textSecondary)' }} 
-              className="hover:opacity-80" 
-              onClick={() => window.location.href = '/static/admin-mockup/index.html'}
-            >
-              Admin Panel
-            </Button>
           </nav>
 
           {/* Right Side Actions */}
