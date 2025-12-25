@@ -126,6 +126,7 @@ function App() {
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('how-it-works')}>How It Works</Button>
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowBlog(true)}>Blog</Button>
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowContactPage(true)}>Contact</Button>
+              <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => window.location.href = '/static/admin-mockup/index.html'}>Admin Panel</Button>
             </nav>
             <div className="flex items-center gap-2">
               <ThemeSwitcher />
