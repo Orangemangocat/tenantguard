@@ -7,6 +7,7 @@ from flask import Flask, send_from_directory
 from flask_cors import CORS
 from src.models.user import db
 from src.models.case import Case
+from src.config.database import get_database_uri
 from src.routes.user import user_bp
 from src.routes.case import case_bp
 from src.routes.attorney import attorney_bp
@@ -35,9 +36,13 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(blog_approval_bp)
 app.register_blueprint(groups_bp)
 
-# uncomment if you need to use database
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'tenantguard.db')}"
+# Database configuration - now supports both SQLite and PostgreSQL
+app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,  # Verify connections before using them
+    'pool_recycle': 3600,   # Recycle connections after 1 hour
+}
 db.init_app(app)
 with app.app_context():
     db.create_all()
