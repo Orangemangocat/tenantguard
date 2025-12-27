@@ -12,7 +12,7 @@ POSTGRES_CONFIG = {
     'host': os.getenv('POSTGRES_HOST', '34.173.34.153'),
     'port': os.getenv('POSTGRES_PORT', '5432'),
     'database': os.getenv('POSTGRES_DB', 'tenantguard'),
-    'user': os.getenv('POSTGRES_USER', 'postgres'),
+    'user': os.getenv('POSTGRES_USER', 'tenantguard'),
     'password': os.getenv('POSTGRES_PASSWORD', 'R00t12288$'),
 }
 
