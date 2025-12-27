@@ -48,11 +48,11 @@ with app.app_context():
 @app.route('/<path:path>')
 def serve(path):
     # Don't serve static files for API routes - let blueprints handle them
-    # But allow /auth/callback for SPA OAuth handling
-    if path == 'auth/callback':
-        # This is a frontend route for OAuth callback - serve index.html
+    # But allow /auth/callback and /blog for SPA handling
+    if path == 'auth/callback' or path == 'blog' or path.startswith('blog/'):
+        # This is a frontend route - serve index.html for SPA routing
         pass
-    elif path.startswith('api/') or path.startswith('auth/') or path.startswith('blog/'):
+    elif path.startswith('api/') or path.startswith('auth/'):
         # Return 404 to let Flask continue to blueprint routes
         from flask import abort
         abort(404)

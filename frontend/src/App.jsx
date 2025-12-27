@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
-import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp } from 'lucide-react'
+import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, Menu, X } from 'lucide-react'
 import CaseIntakeForm from './components/CaseIntakeForm.jsx'
 import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
 import ContactPage from './components/ContactPage.jsx'
@@ -37,6 +37,7 @@ function App() {
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   // Handle OAuth callback - extract tokens from URL
   useEffect(() => {
@@ -96,6 +97,13 @@ function App() {
     }
   }, [])
 
+  // Handle /blog URL routing
+  useEffect(() => {
+    if (window.location.pathname === '/blog' || window.location.pathname.startsWith('/blog/')) {
+      setShowBlog(true)
+    }
+  }, [])
+
   const scrollToSection = (sectionId) => {
     setCurrentPage('home')
     setTimeout(() => {
@@ -120,6 +128,8 @@ function App() {
               <img src={logo} alt="TenantGuard" className="h-8 w-8" />
               <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard</span>
             </div>
+            
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => { setCurrentPage('home'); window.scrollTo(0, 0) }}>Home</Button>
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('features')}>Features</Button>
@@ -127,7 +137,9 @@ function App() {
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowBlog(true)}>Blog</Button>
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowContactPage(true)}>Contact</Button>
             </nav>
-            <div className="flex items-center gap-2">
+            
+            {/* Desktop Action Buttons */}
+            <div className="hidden md:flex items-center gap-2">
               {currentUser ? (
                 <div className="relative" onMouseEnter={() => setShowUserMenu(true)} onMouseLeave={() => setShowUserMenu(false)}>
                   <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80">
@@ -162,7 +174,137 @@ function App() {
               <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
               <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
             </div>
+            
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                style={{ color: 'var(--color-textSecondary)' }}
+              >
+                {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
+            </div>
           </div>
+          
+          {/* Mobile Menu */}
+          {showMobileMenu && (
+            <div className="md:hidden py-4 border-t" style={{ borderColor: 'var(--color-navBorder)' }}>
+              <nav className="flex flex-col space-y-2">
+                <Button 
+                  variant="ghost" 
+                  style={{ color: 'var(--color-textSecondary)' }} 
+                  className="hover:opacity-80 justify-start" 
+                  onClick={() => { 
+                    setCurrentPage('home'); 
+                    window.scrollTo(0, 0); 
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Home
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  style={{ color: 'var(--color-textSecondary)' }} 
+                  className="hover:opacity-80 justify-start" 
+                  onClick={() => { 
+                    scrollToSection('features'); 
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Features
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  style={{ color: 'var(--color-textSecondary)' }} 
+                  className="hover:opacity-80 justify-start" 
+                  onClick={() => { 
+                    scrollToSection('how-it-works'); 
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  How It Works
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  style={{ color: 'var(--color-textSecondary)' }} 
+                  className="hover:opacity-80 justify-start" 
+                  onClick={() => { 
+                    setShowBlog(true); 
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Blog
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  style={{ color: 'var(--color-textSecondary)' }} 
+                  className="hover:opacity-80 justify-start" 
+                  onClick={() => { 
+                    setShowContactPage(true); 
+                    setShowMobileMenu(false);
+                  }}
+                >
+                  Contact
+                </Button>
+                <div className="border-t pt-2 mt-2" style={{ borderColor: 'var(--color-navBorder)' }}>
+                  {currentUser ? (
+                    <>
+                      <div className="px-3 py-2 text-sm" style={{ color: 'var(--color-textSecondary)' }}>
+                        {currentUser.email || currentUser.username || 'User'}
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        style={{ color: 'var(--color-textSecondary)' }} 
+                        className="hover:opacity-80 justify-start w-full" 
+                        onClick={() => {
+                          setCurrentUser(null);
+                          localStorage.removeItem('access_token');
+                          localStorage.removeItem('refresh_token');
+                          setShowMobileMenu(false);
+                        }}
+                      >
+                        Logout
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      variant="ghost" 
+                      style={{ color: 'var(--color-textSecondary)' }} 
+                      className="hover:opacity-80 justify-start w-full" 
+                      onClick={() => { 
+                        setShowLogin(true); 
+                        setShowMobileMenu(false);
+                      }}
+                    >
+                      Login
+                    </Button>
+                  )}
+                  <Button 
+                    style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} 
+                    className="hover:opacity-90 w-full mt-2" 
+                    onClick={() => { 
+                      setShowIntakeForm(true); 
+                      setShowMobileMenu(false);
+                    }}
+                  >
+                    Tenants
+                  </Button>
+                  <Button 
+                    style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} 
+                    className="hover:opacity-90 w-full mt-2" 
+                    onClick={() => { 
+                      setShowAttorneyForm(true); 
+                      setShowMobileMenu(false);
+                    }}
+                  >
+                    Attorneys
+                  </Button>
+                </div>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
