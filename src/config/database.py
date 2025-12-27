@@ -30,18 +30,34 @@ def get_database_uri():
     Generate the appropriate database URI based on DB_TYPE
     """
     if DB_TYPE == 'postgresql':
-        # Build PostgreSQL connection string with SSL
-        ssl_params = '&'.join([f'{k}={v}' for k, v in SSL_CONFIG.items()])
+        # Build PostgreSQL connection string WITHOUT SSL params in URI
+        # SSL params will be passed via connect_args in SQLAlchemy
         uri = (
             f"postgresql://{POSTGRES_CONFIG['user']}:{POSTGRES_CONFIG['password']}"
             f"@{POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}"
-            f"/{POSTGRES_CONFIG['database']}?{ssl_params}"
+            f"/{POSTGRES_CONFIG['database']}"
         )
         return uri
     else:
         # SQLite fallback
         db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'tenantguard.db')
         return f"sqlite:///{db_path}"
+
+def get_sqlalchemy_engine_options():
+    """
+    Get SQLAlchemy engine options including SSL configuration for PostgreSQL
+    """
+    if DB_TYPE == 'postgresql':
+        return {
+            'pool_pre_ping': True,
+            'pool_recycle': 3600,
+            'connect_args': SSL_CONFIG
+        }
+    else:
+        return {
+            'pool_pre_ping': True,
+            'pool_recycle': 3600,
+        }
 
 def get_psycopg2_connection_params():
     """
