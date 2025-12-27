@@ -13,7 +13,7 @@ import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
-import ThemeSwitcher from './components/ThemeSwitcher.jsx'
+
 import './App.css'
 import './theme.css'
 
@@ -128,7 +128,6 @@ function App() {
               <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowContactPage(true)}>Contact</Button>
             </nav>
             <div className="flex items-center gap-2">
-              <ThemeSwitcher />
               {currentUser ? (
                 <div className="relative" onMouseEnter={() => setShowUserMenu(true)} onMouseLeave={() => setShowUserMenu(false)}>
                   <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80">
