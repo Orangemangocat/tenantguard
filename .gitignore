@@ -27,6 +27,7 @@ share/python-wheels/
 MANIFEST
 
 # karl
+static/
 *.db
 .env
 .env.local
