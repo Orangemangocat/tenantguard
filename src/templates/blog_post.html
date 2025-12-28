@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>{{ post.meta_title }}</title>
+    <meta name="description" content="{{ post.meta_description }}">
+    <meta name="keywords" content="{{ post.tags }}">
+    <meta name="author" content="{{ post.author }}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://www.tenantguard.net/blog/{{ post.slug }}">
+    <meta property="og:title" content="{{ post.title }}">
+    <meta property="og:description" content="{{ post.meta_description }}">
+    {% if post.featured_image %}
+    <meta property="og:image" content="{{ post.featured_image }}">
+    {% else %}
+    <meta property="og:image" content="https://www.tenantguard.net/assets/logo.png">
+    {% endif %}
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://www.tenantguard.net/blog/{{ post.slug }}">
+    <meta property="twitter:title" content="{{ post.title }}">
+    <meta property="twitter:description" content="{{ post.meta_description }}">
+    {% if post.featured_image %}
+    <meta property="twitter:image" content="{{ post.featured_image }}">
+    {% else %}
+    <meta property="twitter:image" content="https://www.tenantguard.net/assets/logo.png">
+    {% endif %}
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.tenantguard.net/blog/{{ post.slug }}">
+    
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {{ schema_markup | tojson | safe }}
+    </script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/assets/logo.png">
+    
+    <!-- Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px 0;
+            margin-bottom: 40px;
+        }
+        
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc2626;
+            text-decoration: none;
+        }
+        
+        .back-link {
+            color: #dc2626;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        article {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .post-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e5e5;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .category-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background-color: #dc2626;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        h1 {
+            font-size: 36px;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            color: #111;
+        }
+        
+        .post-excerpt {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        .post-content {
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        
+        .post-content h2 {
+            font-size: 28px;
+            margin-top: 40px;
+            margin-bottom: 15px;
+            color: #111;
+        }
+        
+        .post-content h3 {
+            font-size: 22px;
+            margin-top: 30px;
+            margin-bottom: 12px;
+            color: #111;
+        }
+        
+        .post-content p {
+            margin-bottom: 20px;
+        }
+        
+        .post-content ul, .post-content ol {
+            margin-bottom: 20px;
+            padding-left: 30px;
+        }
+        
+        .post-content li {
+            margin-bottom: 10px;
+        }
+        
+        .post-content blockquote {
+            border-left: 4px solid #dc2626;
+            padding-left: 20px;
+            margin: 30px 0;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .post-content code {
+            background-color: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .post-content pre {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        
+        .post-content pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        
+        .tags {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e5e5;
+        }
+        
+        .tags-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background-color: #f5f5f5;
+            color: #666;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            article {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .post-content h2 {
+                font-size: 24px;
+            }
+            
+            .post-content h3 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/" class="logo">TenantGuard</a>
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    </header>
+    
+    <div class="container">
+        <article>
+            <div class="post-meta">
+                <span class="category-badge">{{ post.category }}</span>
+                <span class="meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    {{ post.author }}
+                </span>
+                <span class="meta-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    {{ post.published_at.strftime('%B %d, %Y') if post.published_at else 'Draft' }}
+                </span>
+            </div>
+            
+            <h1>{{ post.title }}</h1>
+            
+            {% if post.excerpt %}
+            <p class="post-excerpt">{{ post.excerpt }}</p>
+            {% endif %}
+            
+            <div class="post-content">
+                {{ post.content | safe }}
+            </div>
+            
+            {% if post.tags %}
+            <div class="tags">
+                <div class="tags-label">Tags:</div>
+                {% for tag in post.tags.split(',') %}
+                <span class="tag">{{ tag.strip() }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </article>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 TenantGuard. All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,1149 @@
+/* TenantGuard Admin Dashboard - CSS Styles */
+
+/* ========================================
+   CSS Variables & Reset
+   ======================================== */
+:root {
+    --primary-red: #DC2626;
+    --primary-red-dark: #B91C1C;
+    --primary-red-light: #FEE2E2;
+    --text-dark: #1F2937;
+    --text-gray: #6B7280;
+    --text-light: #9CA3AF;
+    --bg-white: #FFFFFF;
+    --bg-light: #F9FAFB;
+    --bg-gray: #F3F4F6;
+    --border-gray: #E5E7EB;
+    --border-light: #F3F4F6;
+    --success-green: #10B981;
+    --success-light: #D1FAE5;
+    --warning-yellow: #F59E0B;
+    --warning-light: #FEF3C7;
+    --info-blue: #3B82F6;
+    --info-light: #DBEAFE;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* ========================================
+   Header & Navigation
+   ======================================== */
+.header {
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border-gray);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    width: 32px;
+    height: 32px;
+}
+
+.logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.nav-links {
+    display: flex;
+    gap: 8px;
+}
+
+.nav-link {
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--text-gray);
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background: var(--bg-gray);
+    color: var(--text-dark);
+}
+
+.nav-link.active {
+    background: var(--primary-red-light);
+    color: var(--primary-red);
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--radius-md);
+    transition: background 0.2s ease;
+}
+
+.notification-bell:hover {
+    background: var(--bg-gray);
+}
+
+.notification-bell svg {
+    width: 20px;
+    height: 20px;
+    color: var(--text-gray);
+}
+
+.notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: var(--primary-red);
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-red);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.user-name {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-dark);
+}
+
+/* ========================================
+   Case Banner
+   ======================================== */
+.case-banner {
+    background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-red-dark) 100%);
+    color: white;
+    padding: 24px 0;
+}
+
+.case-banner-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.case-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.case-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.case-number {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.case-status {
+    display: flex;
+    gap: 32px;
+}
+
+.status-item {
+    text-align: center;
+}
+
+.status-label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.status-value {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.status-value.urgent {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+}
+
+.status-value.countdown {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* ========================================
+   Main Content & Dashboard Grid
+   ======================================== */
+.main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.dashboard-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ========================================
+   Card Component
+   ======================================== */
+.card {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--primary-red);
+}
+
+/* ========================================
+   Buttons
+   ======================================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    text-decoration: none;
+}
+
+.btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-primary {
+    background: var(--primary-red);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-red-dark);
+}
+
+.btn-secondary {
+    background: var(--bg-gray);
+    color: var(--text-dark);
+}
+
+.btn-secondary:hover {
+    background: var(--border-gray);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--primary-red);
+    border: 1px solid var(--primary-red);
+}
+
+.btn-outline:hover {
+    background: var(--primary-red-light);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.btn-lg {
+    padding: 14px 28px;
+    font-size: 16px;
+}
+
+/* ========================================
+   Documents Section
+   ======================================== */
+.document-categories {
+    padding: 16px;
+}
+
+.doc-category {
+    border: 1px solid var(--border-gray);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.doc-category:last-child {
+    margin-bottom: 0;
+}
+
+.category-header {
+    padding: 14px 16px;
+    background: var(--bg-gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.category-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.category-title h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.category-icon {
+    font-size: 16px;
+}
+
+.doc-count {
+    background: var(--primary-red);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.expand-btn {
+    background: none;
+    border: none;
+    color: var(--text-gray);
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.doc-list {
+    padding: 8px;
+}
+
+.doc-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s ease;
+}
+
+.doc-item:hover {
+    background: var(--bg-light);
+}
+
+.doc-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.doc-icon.pdf {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.doc-icon.img {
+    background: #DBEAFE;
+    color: #3B82F6;
+}
+
+.doc-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-name {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doc-meta {
+    display: block;
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+.doc-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s ease;
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    background: var(--bg-gray);
+}
+
+.doc-source {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.doc-source.caselink {
+    background: #DBEAFE;
+    color: #1D4ED8;
+}
+
+/* ========================================
+   AI Motions Section
+   ======================================== */
+.ai-badge {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--info-blue);
+    background: var(--info-light);
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.motions-list {
+    padding: 16px;
+}
+
+.motion-item {
+    border: 1px solid var(--border-gray);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.motion-item:last-child {
+    margin-bottom: 0;
+}
+
+.motion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.motion-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+}
+
+.motion-desc {
+    font-size: 13px;
+    color: var(--text-gray);
+}
+
+.motion-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.motion-status .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.motion-status.finalized {
+    background: var(--success-light);
+    color: #059669;
+}
+
+.motion-status.finalized .status-dot {
+    background: var(--success-green);
+}
+
+.motion-status.review {
+    background: var(--warning-light);
+    color: #D97706;
+}
+
+.motion-status.review .status-dot {
+    background: var(--warning-yellow);
+}
+
+.motion-status.draft {
+    background: var(--bg-gray);
+    color: var(--text-gray);
+}
+
+.motion-status.draft .status-dot {
+    background: var(--text-light);
+}
+
+.motion-workflow {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.workflow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.workflow-step .step-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    background: var(--bg-gray);
+    color: var(--text-light);
+    border: 2px solid var(--border-gray);
+}
+
+.workflow-step.completed .step-icon {
+    background: var(--success-green);
+    color: white;
+    border-color: var(--success-green);
+}
+
+.workflow-step.active .step-icon {
+    background: var(--primary-red);
+    color: white;
+    border-color: var(--primary-red);
+}
+
+.workflow-step .step-label {
+    font-size: 11px;
+    color: var(--text-light);
+}
+
+.workflow-step.completed .step-label,
+.workflow-step.active .step-label {
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.workflow-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border-gray);
+    margin: 0 8px;
+    margin-bottom: 20px;
+}
+
+.workflow-line.completed {
+    background: var(--success-green);
+}
+
+.motion-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ========================================
+   Court Schedule Timeline
+   ======================================== */
+.timeline {
+    padding: 20px 24px;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 16px;
+    padding-bottom: 24px;
+    position: relative;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 24px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-gray);
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+.timeline-item.past::before {
+    background: var(--success-green);
+}
+
+.timeline-marker {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-marker.completed {
+    background: var(--success-green);
+    border: 3px solid var(--success-light);
+}
+
+.timeline-marker.completed::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.timeline-marker.current {
+    background: var(--primary-red);
+    border: 3px solid var(--primary-red-light);
+    animation: pulse 2s infinite;
+}
+
+.timeline-marker.upcoming {
+    background: var(--bg-white);
+    border: 3px solid var(--border-gray);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+    }
+}
+
+.timeline-content {
+    flex: 1;
+    padding-top: 2px;
+}
+
+.timeline-date {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-gray);
+    margin-bottom: 4px;
+}
+
+.timeline-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 2px;
+}
+
+.timeline-desc {
+    font-size: 13px;
+    color: var(--text-gray);
+    margin-bottom: 8px;
+}
+
+.timeline-item.urgent .timeline-marker.upcoming {
+    border-color: var(--primary-red);
+}
+
+.timeline-item.urgent .timeline-date {
+    color: var(--primary-red);
+}
+
+.timeline-item.highlight .timeline-content {
+    background: var(--primary-red-light);
+    padding: 12px;
+    border-radius: var(--radius-md);
+    margin-left: -12px;
+}
+
+.reminder-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--bg-gray);
+    border: 1px solid var(--border-gray);
+    color: var(--text-gray);
+}
+
+.reminder-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.reminder-btn:hover {
+    background: var(--primary-red-light);
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+}
+
+.reminder-btn.set {
+    background: var(--success-light);
+    border-color: var(--success-green);
+    color: #059669;
+}
+
+/* ========================================
+   Checklist Section
+   ======================================== */
+.progress-badge {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--success-green);
+    background: var(--success-light);
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.checklist {
+    padding: 16px 24px;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.checklist-item:last-child {
+    border-bottom: none;
+}
+
+.checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--border-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: white;
+    margin-top: 2px;
+}
+
+.checkbox.checked {
+    background: var(--success-green);
+    border-color: var(--success-green);
+}
+
+.checklist-content {
+    flex: 1;
+}
+
+.checklist-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.checklist-item.completed .checklist-title {
+    color: var(--text-gray);
+    text-decoration: line-through;
+}
+
+.checklist-date {
+    display: block;
+    font-size: 12px;
+    color: var(--success-green);
+    margin-top: 2px;
+}
+
+.checklist-due {
+    display: block;
+    font-size: 12px;
+    color: var(--text-gray);
+    margin-top: 2px;
+}
+
+.checklist-item.urgent .checklist-due {
+    color: var(--primary-red);
+    font-weight: 500;
+}
+
+/* ========================================
+   Lawyers Section
+   ======================================== */
+.lawyers-intro {
+    padding: 16px 24px 0;
+}
+
+.lawyers-intro p {
+    font-size: 14px;
+    color: var(--text-gray);
+}
+
+.lawyers-list {
+    padding: 16px 24px;
+}
+
+.lawyer-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--border-gray);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.lawyer-card:hover {
+    border-color: var(--primary-red);
+    box-shadow: var(--shadow-sm);
+}
+
+.lawyer-card:last-child {
+    margin-bottom: 0;
+}
+
+.lawyer-avatar {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-red-dark) 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.lawyer-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.lawyer-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 2px;
+}
+
+.lawyer-specialty {
+    font-size: 12px;
+    color: var(--text-gray);
+    margin-bottom: 6px;
+}
+
+.lawyer-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.lawyer-stats .stat {
+    font-size: 11px;
+    color: var(--text-gray);
+}
+
+.lawyer-rate {
+    font-size: 12px;
+    color: var(--success-green);
+    font-weight: 500;
+}
+
+.lawyer-cta {
+    padding: 20px 24px;
+    background: var(--bg-light);
+    text-align: center;
+    border-top: 1px solid var(--border-gray);
+}
+
+.lawyer-cta .btn-lg {
+    width: 100%;
+    max-width: 400px;
+}
+
+.cta-note {
+    font-size: 12px;
+    color: var(--text-gray);
+    margin-top: 12px;
+}
+
+/* ========================================
+   Footer
+   ======================================== */
+.footer {
+    background: var(--bg-white);
+    border-top: 1px solid var(--border-gray);
+    padding: 24px;
+    margin-top: 40px;
+}
+
+.footer-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.footer-content p {
+    font-size: 13px;
+    color: var(--text-gray);
+}
+
+.footer-links {
+    display: flex;
+    gap: 24px;
+}
+
+.footer-links a {
+    font-size: 13px;
+    color: var(--text-gray);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: var(--primary-red);
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .case-banner-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .case-status {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-container {
+        padding: 0 16px;
+    }
+    
+    .nav-links {
+        display: none;
+    }
+    
+    .user-name {
+        display: none;
+    }
+    
+    .main-content {
+        padding: 16px;
+    }
+    
+    .case-title {
+        font-size: 20px;
+    }
+    
+    .case-status {
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    
+    .status-item {
+        flex: 1;
+        min-width: 100px;
+    }
+    
+    .card-header {
+        padding: 16px;
+    }
+    
+    .motion-header {
+        flex-direction: column;
+    }
+    
+    .lawyer-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .lawyer-stats {
+        justify-content: center;
+    }
+    
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .doc-item {
+        flex-wrap: wrap;
+    }
+    
+    .doc-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+    
+    .workflow-step .step-label {
+        font-size: 10px;
+    }
+    
+    .timeline-item.highlight .timeline-content {
+        margin-left: 0;
+    }
+}

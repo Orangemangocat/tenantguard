@@ -210,3 +210,63 @@ def get_recent_posts():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@blog_bp.route('/blog/<slug>')
+def render_blog_post(slug):
+    """Render individual blog post with SEO meta tags"""
+    try:
+        from flask import render_template
+        import json
+        
+        # Get post from database
+        post = BlogPost.query.filter_by(slug=slug, status='published').first()
+        
+        if not post:
+            return "Blog post not found", 404
+        
+        # Prepare post data
+        post_dict = post.to_dict()
+        
+        # Convert tags list back to string for template
+        if isinstance(post_dict.get('tags'), list):
+            post_dict['tags'] = ','.join(post_dict['tags'])
+        
+        # Generate meta values
+        post_dict['meta_title'] = f"{post.title} | TenantGuard Blog"
+        post_dict['meta_description'] = post.excerpt[:160] if post.excerpt else post.content[:160]
+        
+        # Ensure featured_image has full URL
+        if post_dict.get('featured_image') and not post_dict['featured_image'].startswith('http'):
+            post_dict['featured_image'] = f"https://www.tenantguard.net{post_dict['featured_image']}"
+        
+        # Generate Schema.org JSON-LD
+        schema_markup = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": post.title,
+            "description": post_dict['meta_description'],
+            "author": {
+                "@type": "Person",
+                "name": post.author
+            },
+            "datePublished": post_dict.get('created_at'),
+            "dateModified": post_dict.get('updated_at'),
+            "publisher": {
+                "@type": "Organization",
+                "name": "TenantGuard",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://www.tenantguard.net/assets/logo.png"
+                }
+            },
+            "image": post_dict.get('featured_image', 'https://www.tenantguard.net/assets/logo.png'),
+            "keywords": post_dict.get('tags', ''),
+            "articleSection": post.category
+        }
+        
+        # Render template with SEO meta tags
+        return render_template('blog_post.html', post=post_dict, schema_markup=schema_markup)
+        
+    except Exception as e:
+        return f"Error loading blog post: {str(e)}", 500

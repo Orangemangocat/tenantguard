@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ----- Theme Tokens ----- */
+:root {
+  /* Light */
+  --bg: 210 40% 98%; /* slate-50-ish */
+  --surface: 0 0% 100%;
+  --card: 0 0% 100%;
+  --text: 222 47% 11%; /* slate-900 */
+  --muted: 215 16% 47%; /* slate-500 */
+  --border: 214 32% 91%; /* slate-200 */
+  --ring: 160 84% 39%; /* emerald-500 */
+
+  --primary: 160 84% 39%; /* emerald-500 */
+  --primary-fg: 0 0% 100%;
+
+  --secondary: 231 84% 60%; /* indigo-500 */
+  --secondary-fg: 0 0% 100%;
+
+  --danger: 0 84% 60%; /* red-500 */
+  --danger-fg: 0 0% 100%;
+
+  --warn: 38 92% 50%; /* amber-500 */
+  --warn-fg: 17 24% 14%;
+
+  --success: 142 71% 45%; /* green-500 */
+  --success-fg: 0 0% 100%;
+}
+
+.dark {
+  /* Dark (not washed-out, not neon) */
+  --bg: 222 47% 6%; /* near slate-950 */
+  --surface: 222 47% 9%;
+  --card: 222 47% 11%;
+  --text: 210 40% 98%;
+  --muted: 215 20% 65%;
+  --border: 217 19% 18%;
+  --ring: 160 84% 45%;
+
+  --primary: 160 84% 45%;
+  --primary-fg: 222 47% 7%;
+
+  --secondary: 231 84% 68%;
+  --secondary-fg: 222 47% 7%;
+
+  --danger: 0 84% 66%;
+  --danger-fg: 222 47% 7%;
+
+  --warn: 38 92% 60%;
+  --warn-fg: 222 47% 7%;
+
+  --success: 142 71% 55%;
+  --success-fg: 222 47% 7%;
+}
+
+/* ----- Base ----- */
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    @apply bg-bg text-text;
+  }
+}
+
+/* ----- Reusable components ----- */
+@layer components {
+  .container-shell {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .card {
+    @apply rounded-2xl bg-card border border-border shadow-soft;
+  }
+  .card-hover {
+    @apply transition hover:shadow-lift hover:-translate-y-0.5;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold
+           transition focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+           focus:ring-offset-bg disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-primary-fg hover:opacity-90;
+  }
+  .btn-secondary {
+    @apply btn bg-secondary text-secondary-fg hover:opacity-90;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent border border-border hover:bg-surface;
+  }
+  .btn-danger {
+    @apply btn bg-danger text-danger-fg hover:opacity-90;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm
+           placeholder:text-muted shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-bg;
+  }
+  .label {
+    @apply text-sm font-medium text-text;
+  }
+  .hint {
+    @apply text-xs text-muted;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-semibold;
+  }
+  .badge-primary {
+    @apply badge border-transparent bg-primary/10 text-text;
+  }
+  .badge-secondary {
+    @apply badge border-transparent bg-secondary/10 text-text;
+  }
+
+  .navlink {
+    @apply rounded-xl px-3 py-2 text-sm font-medium text-muted hover:text-text hover:bg-surface transition;
+  }
+  .navlink-active {
+    @apply text-text bg-surface border border-border;
+  }
+}

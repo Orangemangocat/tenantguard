@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* --- Copied from Vite theme.css --- */
+/* Theme CSS Variables */
+:root {
+  /* These will be dynamically set by ThemeContext */
+  --color-background: #ffffff;
+  --color-backgroundSecondary: #f9fafb;
+  --color-backgroundTertiary: #f3f4f6;
+  --color-text: #111827;
+  --color-textSecondary: #6b7280;
+  --color-textTertiary: #9ca3af;
+  --color-primary: #dc2626;
+  --color-primaryHover: #b91c1c;
+  --color-primaryLight: #fee2e2;
+  --color-accent: #f97316;
+  --color-accentHover: #ea580c;
+  --color-border: #e5e7eb;
+  --color-borderHover: #d1d5db;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  --color-cardBg: #ffffff;
+  --color-cardBgHover: #f9fafb;
+  --color-navBg: #ffffff;
+  --color-navText: #111827;
+  --color-navBorder: #e5e7eb;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Disable transitions for elements that shouldn't animate */
+button, a, input, textarea, select {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
