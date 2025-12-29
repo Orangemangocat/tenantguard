@@ -179,22 +179,12 @@ function App() {
             <div className="md:hidden">
               <Button 
                 variant="ghost" 
+                size="icon-lg"
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                style={{ 
-                  color: 'var(--color-textSecondary)', 
-                  touchAction: 'manipulation',
-                  width: '56px',
-                  height: '56px',
-                  minWidth: '56px',
-                  minHeight: '56px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '12px'
-                }}
+                style={{ color: 'var(--color-textSecondary)', touchAction: 'manipulation' }}
                 aria-label="Toggle mobile menu"
               >
-                {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {showMobileMenu ? <X className="h-8 w-8" /> : <Menu className="h-8 w-8" />}
               </Button>
             </div>
           </div>
