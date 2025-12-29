@@ -650,10 +650,10 @@ function App() {
             Join the platform that's revolutionizing landlord-tenant dispute resolution in Tennessee.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100">
+            <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100" onClick={() => setShowIntakeForm(true)}>
               Get Started as Tenant
             </Button>
-            <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100 border-2 border-white">
+            <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100 border-2 border-white" onClick={() => setShowAttorneyForm(true)}>
               Join as Attorney
             </Button>
           </div>
