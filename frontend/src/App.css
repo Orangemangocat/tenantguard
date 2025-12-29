@@ -118,3 +118,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile Hamburger Menu - iOS Tap Target Fix */
+/* Ensures minimum 44x44px tap target for iOS accessibility */
+.md\:hidden button[data-slot="button"] {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  width: 2.75rem !important;  /* 44px */
+  height: 2.75rem !important; /* 44px */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  touch-action: manipulation !important;
+}
