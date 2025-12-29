@@ -1,0 +1,11 @@
+{
+  "id": "WO-YYYYMMDD-###",
+  "title": "Short title",
+  "scope": ["Describe the work"],
+  "allowed_paths": ["src/**", "frontend/**", "scripts/**", "docs/**", ".github/**", "workorders/**"],
+  "blocked_paths": ["**/.env*", "**/secrets/**", "**/*.pem", "**/*id_rsa*", "**/__pycache__/**", "**/*.pyc", "src/database/*.db", "frontend/pnpm-lock.yaml"],
+  "acceptance_criteria": ["What must be true to merge"],
+  "risk_notes": ["What could break?"],
+  "rollback_plan": ["How to revert quickly"]
+}
+
