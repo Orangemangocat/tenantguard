@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
-import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, Menu, X } from 'lucide-react'
+import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp } from 'lucide-react'
 import CaseIntakeForm from './components/CaseIntakeForm.jsx'
 import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
 import ContactPage from './components/ContactPage.jsx'
@@ -179,22 +179,15 @@ function App() {
             <div className="md:hidden">
               <Button 
                 variant="ghost" 
+                size="icon"
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                style={{ 
-                  color: 'var(--color-textSecondary)', 
-                  touchAction: 'manipulation',
-                  width: '56px',
-                  height: '56px',
-                  minWidth: '56px',
-                  minHeight: '56px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '12px'
-                }}
                 aria-label="Toggle mobile menu"
               >
-                {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                <img 
+                  src={showMobileMenu ? "/close-menu.png" : "/hamburger-menu.png"} 
+                  alt={showMobileMenu ? "Close menu" : "Open menu"}
+                  className="w-14 h-14"
+                />
               </Button>
             </div>
           </div>
