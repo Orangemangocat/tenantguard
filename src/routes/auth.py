@@ -12,6 +12,10 @@ import requests
 import secrets
 import os
 import hashlib
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -28,6 +32,30 @@ GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize'
 GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
 GITHUB_USERINFO_URL = 'https://api.github.com/user'
+
+# Use environment variable for redirect URI to ensure consistency
+# Fallback to dynamic generation if not set
+GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', None)
+GITHUB_REDIRECT_URI = os.getenv('GITHUB_REDIRECT_URI', None)
+
+def get_redirect_uri(provider='google'):
+    """
+    Get the redirect URI for OAuth providers with consistent logic.
+    
+    Args:
+        provider: 'google' or 'github'
+    
+    Returns:
+        str: The redirect URI
+    """
+    if provider == 'google' and GOOGLE_REDIRECT_URI:
+        return GOOGLE_REDIRECT_URI
+    elif provider == 'github' and GITHUB_REDIRECT_URI:
+        return GITHUB_REDIRECT_URI
+    else:
+        # Fallback to dynamic generation
+        base_url = request.host_url.replace('http://', 'https://').rstrip('/')
+        return f"{base_url}/auth/{provider}/callback"
 
 # ============================================================================
 # AUTHENTICATION DECORATORS
@@ -103,125 +131,247 @@ def admin_required(f):
 
 @auth_bp.route('/auth/google/login', methods=['GET'])
 def google_login():
-    """Initiate Google OAuth flow"""
+    """Initiate Google OAuth flow with improved error handling"""
     
-    # Generate state token for CSRF protection
-    state = secrets.token_urlsafe(32)
-    
-    # Store state in database
-    oauth_state = OAuthState(
-        state=state,
-        provider='google',
-        expires_at=datetime.utcnow() + timedelta(minutes=10)
-    )
-    db.session.add(oauth_state)
-    db.session.commit()
-    
-    # Build authorization URL
-    # Use HTTPS for production
-    base_url = request.host_url.replace('http://', 'https://').rstrip('/')
-    redirect_uri = base_url + '/auth/google/callback'
-    
-    auth_url = (
-        f"{GOOGLE_AUTH_URL}?"
-        f"client_id={GOOGLE_CLIENT_ID}&"
-        f"redirect_uri={redirect_uri}&"
-        f"response_type=code&"
-        f"scope=openid email profile&"
-        f"state={state}"
-    )
-    
-    return jsonify({'auth_url': auth_url}), 200
+    try:
+        # Validate OAuth credentials are configured
+        if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+            logger.error("Google OAuth credentials not configured")
+            return jsonify({
+                'error': 'OAuth not configured',
+                'detail': 'Google OAuth credentials are missing. Please contact support.'
+            }), 500
+        
+        # Generate state token for CSRF protection
+        state = secrets.token_urlsafe(32)
+        
+        # Get redirect URI
+        redirect_uri = get_redirect_uri('google')
+        
+        # Store state in database with redirect URI for verification
+        oauth_state = OAuthState(
+            state=state,
+            provider='google',
+            redirect_uri=redirect_uri,
+            expires_at=datetime.utcnow() + timedelta(minutes=10)
+        )
+        db.session.add(oauth_state)
+        db.session.commit()
+        
+        # Build authorization URL
+        auth_url = (
+            f"{GOOGLE_AUTH_URL}?"
+            f"client_id={GOOGLE_CLIENT_ID}&"
+            f"redirect_uri={redirect_uri}&"
+            f"response_type=code&"
+            f"scope=openid email profile&"
+            f"state={state}"
+        )
+        
+        logger.info(f"Google OAuth initiated with redirect_uri: {redirect_uri}")
+        
+        return jsonify({'auth_url': auth_url}), 200
+        
+    except Exception as e:
+        logger.error(f"Error initiating Google OAuth: {str(e)}", exc_info=True)
+        return jsonify({
+            'error': 'OAuth initialization failed',
+            'detail': str(e) if os.getenv('DEBUG') else 'An error occurred'
+        }), 500
 
 
 @auth_bp.route('/auth/google/callback', methods=['GET'])
 def google_callback():
-    """Handle Google OAuth callback"""
+    """
+    Handle Google OAuth callback with comprehensive error reporting.
     
-    code = request.args.get('code')
-    state = request.args.get('state')
+    This function exchanges the authorization code for access tokens,
+    retrieves user information, and creates or updates the user account.
+    """
     
-    if not code or not state:
-        return jsonify({'error': 'Missing code or state'}), 400
-    
-    # Verify state
-    oauth_state = OAuthState.query.filter_by(state=state, provider='google').first()
-    if not oauth_state or not oauth_state.is_valid():
-        return jsonify({'error': 'Invalid or expired state'}), 400
-    
-    oauth_state.mark_used()
-    
-    # Exchange code for tokens
-    # Use HTTPS for production
-    base_url = request.host_url.replace('http://', 'https://').rstrip('/')
-    redirect_uri = base_url + '/auth/google/callback'
-    
-    token_data = {
-        'code': code,
-        'client_id': GOOGLE_CLIENT_ID,
-        'client_secret': GOOGLE_CLIENT_SECRET,
-        'redirect_uri': redirect_uri,
-        'grant_type': 'authorization_code'
-    }
-    
-    token_response = requests.post(GOOGLE_TOKEN_URL, data=token_data)
-    if token_response.status_code != 200:
-        return jsonify({'error': 'Failed to obtain access token'}), 400
-    
-    tokens = token_response.json()
-    access_token = tokens.get('access_token')
-    
-    # Get user info
-    headers = {'Authorization': f'Bearer {access_token}'}
-    userinfo_response = requests.get(GOOGLE_USERINFO_URL, headers=headers)
-    
-    if userinfo_response.status_code != 200:
-        return jsonify({'error': 'Failed to get user info'}), 400
-    
-    userinfo = userinfo_response.json()
-    
-    # Find or create user
-    user = AuthUser.query.filter_by(oauth_provider='google', oauth_id=userinfo['id']).first()
-    
-    if not user:
-        # Check if email already exists
-        existing_user = AuthUser.query.filter_by(email=userinfo['email']).first()
-        if existing_user:
-            return jsonify({'error': 'Email already registered with different provider'}), 400
+    try:
+        # Extract parameters
+        code = request.args.get('code')
+        state = request.args.get('state')
+        error = request.args.get('error')
+        error_description = request.args.get('error_description')
         
-        # Create new user
-        username = userinfo['email'].split('@')[0] + '_' + secrets.token_hex(4)
+        # Check for OAuth errors from Google
+        if error:
+            logger.error(f"Google OAuth error: {error} - {error_description}")
+            return jsonify({
+                'error': 'OAuth authentication failed',
+                'detail': error_description or error
+            }), 400
         
-        user = AuthUser(
-            email=userinfo['email'],
-            username=username,
-            full_name=userinfo.get('name'),
-            avatar_url=userinfo.get('picture'),
-            oauth_provider='google',
-            oauth_id=userinfo['id'],
-            oauth_access_token=access_token,
-            role='viewer',  # Default role
-            is_verified=True,
-            last_login=datetime.utcnow()
+        # Validate required parameters
+        if not code or not state:
+            logger.error("Missing code or state in OAuth callback")
+            return jsonify({
+                'error': 'Invalid OAuth callback',
+                'detail': 'Missing required parameters'
+            }), 400
+        
+        # Verify state token
+        oauth_state = OAuthState.query.filter_by(state=state, provider='google').first()
+        if not oauth_state or not oauth_state.is_valid():
+            logger.error(f"Invalid or expired OAuth state: {state}")
+            return jsonify({
+                'error': 'Invalid or expired state',
+                'detail': 'OAuth state verification failed. Please try again.'
+            }), 400
+        
+        # Mark state as used
+        oauth_state.mark_used()
+        
+        # Get redirect URI (use stored one if available, otherwise generate)
+        redirect_uri = oauth_state.redirect_uri or get_redirect_uri('google')
+        
+        logger.info(f"Processing Google OAuth callback with redirect_uri: {redirect_uri}")
+        
+        # Prepare token exchange request
+        token_data = {
+            'code': code,
+            'client_id': GOOGLE_CLIENT_ID,
+            'client_secret': GOOGLE_CLIENT_SECRET,
+            'redirect_uri': redirect_uri,
+            'grant_type': 'authorization_code'
+        }
+        
+        # Exchange authorization code for access token
+        try:
+            token_response = requests.post(GOOGLE_TOKEN_URL, data=token_data, timeout=10)
+            
+            # Enhanced error reporting for token exchange
+            if token_response.status_code != 200:
+                error_data = token_response.json() if token_response.headers.get('content-type', '').startswith('application/json') else {}
+                error_message = error_data.get('error_description', error_data.get('error', 'Unknown error'))
+                
+                logger.error(
+                    f"Google token exchange failed: "
+                    f"Status {token_response.status_code}, "
+                    f"Error: {error_message}, "
+                    f"Response: {token_response.text[:500]}"
+                )
+                
+                # Provide detailed error information
+                return jsonify({
+                    'error': 'Failed to obtain access token',
+                    'detail': error_message,
+                    'status_code': token_response.status_code,
+                    'redirect_uri_used': redirect_uri if os.getenv('DEBUG') else None,
+                    'hint': 'Verify that the redirect URI matches exactly in Google Cloud Console'
+                }), 400
+            
+            tokens = token_response.json()
+            access_token = tokens.get('access_token')
+            
+            if not access_token:
+                logger.error("No access token in Google response")
+                return jsonify({
+                    'error': 'Invalid token response',
+                    'detail': 'No access token received from Google'
+                }), 400
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error during token exchange: {str(e)}", exc_info=True)
+            return jsonify({
+                'error': 'Network error',
+                'detail': 'Failed to communicate with Google OAuth service'
+            }), 500
+        
+        # Get user information from Google
+        try:
+            headers = {'Authorization': f'Bearer {access_token}'}
+            userinfo_response = requests.get(GOOGLE_USERINFO_URL, headers=headers, timeout=10)
+            
+            if userinfo_response.status_code != 200:
+                logger.error(f"Failed to get user info: Status {userinfo_response.status_code}")
+                return jsonify({
+                    'error': 'Failed to get user info',
+                    'detail': 'Could not retrieve user information from Google'
+                }), 400
+            
+            userinfo = userinfo_response.json()
+            
+            if not userinfo.get('email'):
+                logger.error("No email in Google userinfo response")
+                return jsonify({
+                    'error': 'Invalid user info',
+                    'detail': 'Email not provided by Google'
+                }), 400
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error getting user info: {str(e)}", exc_info=True)
+            return jsonify({
+                'error': 'Network error',
+                'detail': 'Failed to retrieve user information'
+            }), 500
+        
+        # Find or create user
+        user = AuthUser.query.filter_by(oauth_provider='google', oauth_id=userinfo['id']).first()
+        
+        if not user:
+            # Check if email already exists with different provider
+            existing_user = AuthUser.query.filter_by(email=userinfo['email']).first()
+            if existing_user:
+                logger.warning(f"Email {userinfo['email']} already registered with provider: {existing_user.oauth_provider}")
+                return jsonify({
+                    'error': 'Email already registered',
+                    'detail': f'This email is already registered with {existing_user.oauth_provider or "local"} authentication'
+                }), 400
+            
+            # Create new user
+            username = userinfo['email'].split('@')[0] + '_' + secrets.token_hex(4)
+            
+            user = AuthUser(
+                email=userinfo['email'],
+                username=username,
+                full_name=userinfo.get('name'),
+                avatar_url=userinfo.get('picture'),
+                oauth_provider='google',
+                oauth_id=userinfo['id'],
+                oauth_access_token=access_token,
+                role='viewer',  # Default role
+                is_verified=True,
+                last_login=datetime.utcnow()
+            )
+            db.session.add(user)
+            db.session.commit()
+            
+            logger.info(f"Created new user: {user.email} (ID: {user.id})")
+        else:
+            # Update existing user
+            user.oauth_access_token = access_token
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            
+            logger.info(f"Updated existing user: {user.email} (ID: {user.id})")
+        
+        # Generate JWT tokens
+        jwt_token = user.generate_jwt_token()
+        refresh_token = user.generate_refresh_token()
+        
+        # Redirect to frontend with tokens
+        frontend_url = request.host_url.rstrip('/')
+        redirect_url = (
+            f"{frontend_url}/auth/callback?"
+            f"access_token={jwt_token}&"
+            f"refresh_token={refresh_token}&"
+            f"token_type=Bearer&"
+            f"expires_in=3600"
         )
-        db.session.add(user)
-        db.session.commit()
-    else:
-        # Update existing user
-        user.oauth_access_token = access_token
-        user.last_login = datetime.utcnow()
-        db.session.commit()
-    
-    # Generate JWT tokens
-    jwt_token = user.generate_jwt_token()
-    refresh_token = user.generate_refresh_token()
-    
-    # Redirect to frontend with tokens
-    # Frontend will receive tokens as URL parameters and store them
-    frontend_url = request.host_url.rstrip('/')
-    redirect_url = f"{frontend_url}/auth/callback?access_token={jwt_token}&refresh_token={refresh_token}&token_type=Bearer&expires_in=3600"
-    
-    return redirect(redirect_url)
+        
+        logger.info(f"OAuth successful for user {user.email}, redirecting to frontend")
+        
+        return redirect(redirect_url)
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in Google OAuth callback: {str(e)}", exc_info=True)
+        return jsonify({
+            'error': 'Authentication failed',
+            'detail': str(e) if os.getenv('DEBUG') else 'An unexpected error occurred'
+        }), 500
 
 
 # ============================================================================
