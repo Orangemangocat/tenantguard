@@ -179,7 +179,7 @@ function App() {
             <div className="md:hidden">
               <Button 
                 variant="ghost" 
-                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center p-2"
+                className="w-[72px] h-[72px] min-w-[72px] min-h-[72px] flex items-center justify-center p-3"
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 style={{ color: 'var(--color-textSecondary)', touchAction: 'manipulation' }}
                 aria-label="Toggle mobile menu"
