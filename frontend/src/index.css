@@ -1,0 +1,12 @@
+/* Mobile Hamburger Menu - iOS Tap Target Fix */
+/* Ensures 72x72px tap target for optimal mobile accessibility */
+.md\:hidden button[data-slot="button"] {
+  min-width: 72px !important;
+  min-height: 72px !important;
+  width: 72px !important;
+  height: 72px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  touch-action: manipulation !important;
+}
