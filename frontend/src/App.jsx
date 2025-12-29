@@ -179,6 +179,7 @@ function App() {
             <div className="md:hidden">
               <Button 
                 variant="ghost" 
+                size="lg"
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 style={{ 
                   color: 'var(--color-textSecondary)', 
