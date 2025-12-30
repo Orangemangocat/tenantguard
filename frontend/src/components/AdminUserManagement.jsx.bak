@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from "../lib/apiBase";
 
 const AdminUserManagement = ({ onClose }) => {
   const [users, setUsers] = useState([]);
@@ -38,7 +37,7 @@ const AdminUserManagement = ({ onClose }) => {
         return;
       }
 
-      const response = await fetch('${API_BASE_URL}/auth/users', {
+      const response = await fetch('__API_BASE__/auth/users', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`
@@ -86,7 +85,7 @@ const AdminUserManagement = ({ onClose }) => {
       
       const accessToken = localStorage.getItem('access_token');
       
-      const response = await fetch(`${API_BASE_URL}/auth/users/${userId}`, {
+      const response = await fetch(`__API_BASE__/auth/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -116,7 +115,7 @@ const AdminUserManagement = ({ onClose }) => {
     try {
       const accessToken = localStorage.getItem('access_token');
       
-      const response = await fetch(`${API_BASE_URL}/auth/users/${userId}`, {
+      const response = await fetch(`__API_BASE__/auth/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -146,7 +145,7 @@ const AdminUserManagement = ({ onClose }) => {
     try {
       const accessToken = localStorage.getItem('access_token');
       
-      const response = await fetch(`${API_BASE_URL}/auth/users/${userId}`, {
+      const response = await fetch(`__API_BASE__/auth/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${accessToken}`
@@ -173,7 +172,7 @@ const AdminUserManagement = ({ onClose }) => {
       
       const accessToken = localStorage.getItem('access_token');
       
-      const response = await fetch('${API_BASE_URL}/auth/users', {
+      const response = await fetch('__API_BASE__/auth/users', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
