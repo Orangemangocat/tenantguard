@@ -38,6 +38,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const API_BASE = import.meta.env.VITE_API_BASE_URL
 
   // Handle OAuth callback - extract tokens from URL
   useEffect(() => {
