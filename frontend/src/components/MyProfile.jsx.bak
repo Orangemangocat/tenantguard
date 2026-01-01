@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from "../lib/apiBase";
 
 const MyProfile = ({ onClose }) => {
   const [user, setUser] = useState(null);
@@ -31,7 +30,7 @@ const MyProfile = ({ onClose }) => {
         return;
       }
 
-      const response = await fetch('${API_BASE_URL}/auth/me', {
+      const response = await fetch('__API_BASE__/auth/me', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`
@@ -70,7 +69,7 @@ const MyProfile = ({ onClose }) => {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) return false;
 
-      const response = await fetch('${API_BASE_URL}/auth/refresh', {
+      const response = await fetch('__API_BASE__/auth/refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -104,7 +103,7 @@ const MyProfile = ({ onClose }) => {
       
       const accessToken = localStorage.getItem('access_token');
       
-      const response = await fetch(`${API_BASE_URL}/auth/users/${user.id}`, {
+      const response = await fetch(`__API_BASE__/auth/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
