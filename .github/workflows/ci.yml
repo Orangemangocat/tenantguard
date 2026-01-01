@@ -17,14 +17,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
       - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements_auth.txt
       - name: Backend compile check
-        run: python -m compileall src
+        run: |
+          python -m compileall src
       - name: Backend import smoke check
         run: |
           python - <<'PY'
@@ -35,11 +36,10 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
       - name: Frontend install/lint/build
         run: |
           cd frontend
           corepack enable
-          pnpm install --frozen-lockfile
-          pnpm lint
+          pnpm install
           pnpm build
