@@ -3,6 +3,13 @@
 Repo layout:
 - `src/` = Flask backend (Python 3.12), entrypoint `src/main.py`
 - `frontend/` = Vite + React frontend (pnpm)
+- `frontend-next/` = blog static file generation frontend (pnpm)
+- `docs/control-plane/` = Control Plane docs (Markdown, AGENTS READ THIS FIRST)
+- `docs/` = Documentation (Markdown)
+- `workorders/` = Work Orders (Markdown)
+- `.github/` = GitHub Actions workflows
+- `scripts/` = Utility scripts (Python/JS)
+- `AGENTS.md` = This file
 
 Agents must operate in PATCH-ONLY mode. No direct overwrites. All changes are delivered as unified diff patches and merged via PR.
 
