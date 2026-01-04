@@ -1,0 +1,12 @@
+{
+  "artifact_type": "exec_summary",
+  "case_id": "",
+  "notebook_version": 0,
+  "sections": [
+    {"title": "Case Snapshot", "bullets": []},
+    {"title": "Key Facts", "bullets": []},
+    {"title": "Key Issues", "bullets": []},
+    {"title": "Next Steps", "bullets": []}
+  ],
+  "citations": []
+}
