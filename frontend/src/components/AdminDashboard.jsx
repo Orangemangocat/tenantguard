@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import ApprovalQueue from './ApprovalQueue.jsx';
 import UserManagement from './UserManagement.jsx';
+import IntakeReview from './IntakeReview.jsx';
 import DashboardOverview from './DashboardOverview.jsx';
+import AdminQueue from './AdminQueue.jsx';
 
 /**
  * Main Admin Dashboard Component
@@ -84,6 +86,30 @@ export default function AdminDashboard({ user, onLogout, onClose }) {
                 User Management
               </button>
             )}
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('intakes')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'intakes'
+                    ? 'border-red-800 text-red-800'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Intakes
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab('queue')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'queue'
+                    ? 'border-red-800 text-red-800'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Queue
+              </button>
+            )}
           </nav>
         </div>
       </div>
@@ -93,6 +119,8 @@ export default function AdminDashboard({ user, onLogout, onClose }) {
         {activeTab === 'overview' && <DashboardOverview user={user} />}
         {activeTab === 'approvals' && isAdmin && <ApprovalQueue user={user} />}
         {activeTab === 'users' && isAdmin && <UserManagement user={user} />}
+        {activeTab === 'intakes' && isAdmin && <IntakeReview user={user} />}
+        {activeTab === 'queue' && isAdmin && <AdminQueue />}
       </div>
     </div>
   );

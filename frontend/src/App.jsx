@@ -13,6 +13,7 @@ import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
 import Onboarding from './components/Onboarding.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 
 import './App.css'
@@ -112,17 +113,48 @@ function App() {
     }
   }
 
+  // Full-page intake routes
+  if (pathname === '/tenant-intake') {
+    return (
+      <ThemeProvider>
+        <ProtectedRoute>
+          <div className="min-h-screen bg-gray-50">
+            <div className="max-w-4xl mx-auto py-12 px-4">
+              <CaseIntakeForm />
+            </div>
+          </div>
+        </ProtectedRoute>
+      </ThemeProvider>
+    )
+  }
+
+  if (pathname === '/attorney-intake') {
+    return (
+      <ThemeProvider>
+        <ProtectedRoute>
+          <div className="min-h-screen bg-gray-50">
+            <div className="max-w-4xl mx-auto py-12 px-4">
+              <AttorneyIntakeForm />
+            </div>
+          </div>
+        </ProtectedRoute>
+      </ThemeProvider>
+    )
+  }
+
   if (pathname === '/admin-panel' || showAdminPanel) {
     return (
       <ThemeProvider>
-        <AdminDashboard
-          user={currentUser}
-          onLogout={handleLogout}
-          onClose={() => {
-            setShowAdminPanel(false)
-            if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/')
-          }}
-        />
+        <ProtectedRoute requireAdmin={true}>
+          <AdminDashboard
+            user={currentUser}
+            onLogout={handleLogout}
+            onClose={() => {
+              setShowAdminPanel(false)
+              if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/')
+            }}
+          />
+        </ProtectedRoute>
       </ThemeProvider>
     )
   }
@@ -130,7 +162,9 @@ function App() {
   if (pathname === '/onboarding') {
     return (
       <ThemeProvider>
-        <Onboarding user={currentUser} onFinish={() => { if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/') }} />
+        <ProtectedRoute>
+          <Onboarding user={currentUser} onFinish={() => { if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/') }} />
+        </ProtectedRoute>
       </ThemeProvider>
     )
   }
@@ -305,13 +339,15 @@ function App() {
                         <div className="px-3 py-2 text-sm" style={{ color: 'var(--color-textSecondary)' }}>
                           {currentUser.email || currentUser.username || 'User'}
                         </div>
-                        <a
-                          href="/onboarding"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-                          onClick={() => setShowMobileMenu(false)}
-                        >
-                          Onboarding
-                        </a>
+                        {currentUser?.role !== 'admin' && (
+                          <a
+                            href="/onboarding"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
+                            onClick={() => setShowMobileMenu(false)}
+                          >
+                            Onboarding
+                          </a>
+                        )}
                         <Button
                           variant="ghost"
                           style={{ color: 'var(--color-textSecondary)' }}

@@ -195,17 +195,27 @@ Comprehensive data handling with:
 - Image optimization
 
 ## Browser Support
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
 - Edge 90+
+## CI Secrets
+
+We use a dedicated CI secret name for repository CI tasks (notably running database migrations during preview/deploy workflows).
+
+- `CI_DB_URL`: Database connection URL used by CI to run Alembic migrations. Add this as a GitHub Actions secret named `CI_DB_URL` in the repository settings when you want CI to run `alembic upgrade head` during preview/deploy. Using a dedicated secret avoids exposing production credentials to CI workflows.
+
+Recommended additional secrets used by CI/deploy workflows:
+
+- `VERCEL_TOKEN`: Token used by the Vercel CLI for preview deployments.
+- `REDIS_URL`: Redis connection URL for workers and queue monitoring.
+- `LLM_API_KEY` (provider-specific name): API key for any LLM provider used by background analysis jobs (store under a provider-specific secret name if preferred).
+
+Note: After adding `CI_DB_URL` to repository secrets, update `.github/workflows/vercel-preview.yml` (if needed) to reference `CI_DB_URL` for migration steps instead of any other DB secret name. Be sure secrets are scoped appropriately (deployment vs preview) according to your environment strategy.
+
 
 ## License
 Proprietary - TenantGuard Platform
 
 ## Support
 For technical support or questions about the platform, contact the development team.
-
 ---
 
 **TenantGuard** - Transforming tenant legal representation in Tennessee.

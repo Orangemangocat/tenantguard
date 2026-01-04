@@ -201,6 +201,18 @@ const Navbar = ({
                     <span>Dashboard</span>
                   </DropdownMenuItem>
 
+                  {/* Onboarding Link (hide for admin users) */}
+                  {currentUser?.role !== 'admin' && (
+                    <DropdownMenuItem
+                      onClick={() => { window.location.href = '/onboarding'; }}
+                      className="cursor-pointer"
+                      style={{ color: 'var(--color-text)' }}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Onboarding</span>
+                    </DropdownMenuItem>
+                  )}
+
                   <DropdownMenuSeparator 
                     style={{ backgroundColor: 'var(--color-cardBorder)' }} 
                   />

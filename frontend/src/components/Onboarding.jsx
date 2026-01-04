@@ -193,9 +193,15 @@ export default function Onboarding({ user, onFinish }) {
                     <div className="space-y-4">
                         <h3 className="font-medium">Finish</h3>
                         <p className="text-sm text-gray-600">You're all set. Start using TenantGuard to manage cases and collaborate with your team.</p>
-                        <div className="flex justify-end mt-4">
+                        <div className="flex flex-col md:flex-row gap-2 justify-end mt-4">
                             <Button variant="outline" onClick={prev}>Back</Button>
                             <Button className="ml-2" onClick={() => onFinish && onFinish()}>Finish</Button>
+                            <a href="/tenant-intake" className="ml-2">
+                                <Button>Start Tenant Intake</Button>
+                            </a>
+                            <a href="/attorney-intake" className="ml-2">
+                                <Button>Go to Attorney Intake</Button>
+                            </a>
                         </div>
                     </div>
                 )}

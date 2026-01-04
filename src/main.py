@@ -19,6 +19,7 @@ from src.routes.admin_panel import admin_panel_bp
 from src.routes.auth import auth_bp
 from src.routes.blog_approval import blog_approval_bp
 from src.routes.groups import groups_bp
+from src.routes.admin_queue import admin_queue_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
@@ -37,6 +38,7 @@ app.register_blueprint(admin_panel_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(blog_approval_bp)
 app.register_blueprint(groups_bp)
+app.register_blueprint(admin_queue_bp, url_prefix='/api')
 
 # Database configuration - now supports both SQLite and PostgreSQL
 app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
@@ -44,7 +46,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = get_sqlalchemy_engine_options()
 db.init_app(app)
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+    except Exception as e:
+        # If DB is not reachable during import (e.g., missing certs or remote DB),
+        # log and continue so the app can still start for local development.
+        print(f"[DB_INIT] Skipping create_all due to error: {e}")
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

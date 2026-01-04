@@ -14,43 +14,7 @@ from src.models.blog import BlogPost
 from src.models.case import Case
 
 admin_panel_bp = Blueprint('admin_panel', __name__, url_prefix='/api/admin')
-
-def admin_required(f):
-    """Decorator to require admin authentication"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'No authorization token provided'}), 401
-        
-        token = auth_header.split(' ')[1]
-        try:
-            # Decode JWT token
-            secret_key = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
-            print(f"[ADMIN_DEBUG] Secret: {secret_key[:20]}... Token: {token[:30]}...")
-            payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-            print(f"[ADMIN_DEBUG] Payload: {payload}")
-            user_id = payload.get('user_id')
-            role = payload.get('role')
-            
-            # Check if user is admin
-            if role != 'admin':
-                return jsonify({'error': 'Admin access required'}), 403
-            
-            request.current_user_id = user_id
-            request.current_user_role = role
-            return f(*args, **kwargs)
-        except jwt.ExpiredSignatureError as e:
-            print(f"[ADMIN_DEBUG] Expired: {e}")
-            return jsonify({'error': 'Token has expired'}), 401
-        except jwt.InvalidTokenError as e:
-            print(f"[ADMIN_DEBUG] Invalid: {type(e).__name__} - {e}")
-            return jsonify({'error': 'Invalid token', 'detail': str(e)}), 401
-        except Exception as e:
-            print(f"[ADMIN_DEBUG] Exception: {type(e).__name__} - {e}")
-            return jsonify({'error': str(e)}), 401
-    
-    return decorated_function
+from src.routes.auth import admin_required
 
 # Dashboard Stats
 @admin_panel_bp.route('/stats', methods=['GET'])
