@@ -62,6 +62,9 @@ jobs:
             echo "Database migrations applied successfully."
             sed -n '1,200p' migration.log || true
           fi
+      
+      - name: Install pnpm
+        run: npm install -g pnpm
 
       - name: Install frontend dependencies
         working-directory: frontend
