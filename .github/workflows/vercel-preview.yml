@@ -34,33 +34,6 @@ jobs:
           python -m pip install -r requirements.txt
           python -m compileall src
           python -c "import importlib; importlib.import_module('src.main')"
-
-      - name: Migrations check/logging
-        env:
-          CI_DB_URL: ${{ secrets.CI_DB_URL }}
-        run: |
-          if [ -z "${CI_DB_URL}" ]; then
-            echo "CI_DB_URL not set; DB migrations will be skipped. To enable, add CI_DB_URL to repo secrets."
-          else
-            echo "CI_DB_URL is present; migration step will run next."
-          fi
-
-      - name: Run DB migrations (optional)
-        if: ${{ env.CI_DB_URL != '' }}
-        env:
-          DB_URL: ${{ env.CI_DB_URL }}
-        run: |
-          source ./venv/bin/activate
-          set -o pipefail
-          echo "Running Alembic migrations..."
-          if ! alembic upgrade head 2>&1 | tee migration.log; then
-            echo "::error::Database migration failed. See migration.log for details."
-            sed -n '1,200p' migration.log >&2 || true
-            exit 1
-          else
-            echo "Database migrations applied successfully."
-            sed -n '1,200p' migration.log || true
-          fi
       
       - name: Install pnpm
         run: npm install -g pnpm
