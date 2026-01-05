@@ -1,0 +1,85 @@
+name: Vercel Preview Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  preview:
+    name: Preview Deploy
+    runs-on: ubuntu-latest
+    env:
+      CI_DB_URL: ${{ secrets.CI_DB_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Prepare backend
+        env:
+          PYTHONUNBUFFERED: 1
+          REDIS_URL: "redis://localhost:6379/0"
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          # Add any backend build steps here if necessary
+          # sanity-check backend
+          python -m pip install -r requirements.txt
+          python -m compileall src
+          python -c "import importlib; importlib.import_module('src.main')"
+
+      - name: Migrations check/logging
+        env:
+          CI_DB_URL: ${{ secrets.CI_DB_URL }}
+        run: |
+          if [ -z "${CI_DB_URL}" ]; then
+            echo "CI_DB_URL not set; DB migrations will be skipped. To enable, add CI_DB_URL to repo secrets."
+          else
+            echo "CI_DB_URL is present; migration step will run next."
+          fi
+
+      - name: Run DB migrations (optional)
+        if: ${{ env.CI_DB_URL != '' }}
+        env:
+          DB_URL: ${{ env.CI_DB_URL }}
+        run: |
+          source ./venv/bin/activate
+          set -o pipefail
+          echo "Running Alembic migrations..."
+          if ! alembic upgrade head 2>&1 | tee migration.log; then
+            echo "::error::Database migration failed. See migration.log for details."
+            sed -n '1,200p' migration.log >&2 || true
+            exit 1
+          else
+            echo "Database migrations applied successfully."
+            sed -n '1,200p' migration.log || true
+          fi
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm build
+
+      - name: Vercel Deploy (Preview)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: frontend
+        run: |
+          npx vercel --token $VERCEL_TOKEN --confirm
+          npx vercel alias set $(npx vercel --token $VERCEL_TOKEN) pr-${{ github.event.pull_request.number }}.tenantguard.vercel.app
