@@ -1,10 +1,11 @@
 # AGENTS.md — TenantGuard Patch-Only Contract (Flask + Vite React)
 
 Repo layout:
-- `docs/control-plane/` = Control Plane docs (Markdown, AGENTS READ THIS FIRST)
 - `src/` = Flask backend (Python 3.12), entrypoint `src/main.py`
+- `src/worker.py` = Background worker (Python)
 - `frontend/` = Vite + React frontend (pnpm)
 - `frontend-next/` = blog static file generation frontend (pnpm)
+- `docs/control-plane/` = Control Plane docs (Markdown, AGENTS READ THIS FIRST)
 - `docs/` = Documentation (Markdown)
 - `workorders/` = Work Orders (Markdown)
 - `.github/` = GitHub Actions workflows

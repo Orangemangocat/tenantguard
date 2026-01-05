@@ -135,6 +135,7 @@ const AdminUserManagement = ({ onClose }) => {
       }
     } catch (err) {
       setError('Network error. Please try again.');
+      console.error('Error toggling user status:', err);
     }
   };
 
@@ -163,6 +164,7 @@ const AdminUserManagement = ({ onClose }) => {
       }
     } catch (err) {
       setError('Network error. Please try again.');
+      console.error('Error deleting user:', err);
     }
   };
 
@@ -200,6 +202,7 @@ const AdminUserManagement = ({ onClose }) => {
       }
     } catch (err) {
       setError('Network error. Please try again.');
+      console.error('Error creating user:', err);
     } finally {
       setSaving(false);
     }

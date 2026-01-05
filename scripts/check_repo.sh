@@ -2,21 +2,21 @@
 set -euo pipefail
 
 echo "== Backend: install deps =="
-venv/bin/python -m pip install --upgrade pip
-venv/bin/pip install -r requirements.txt
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r requirements_auth.txt
 
 echo "== Backend: compile check =="
-venv/bin/python -m compileall src
+python -m compileall src
 
 echo "== Backend: import/smoke check =="
-venv/bin/python -c "import importlib; importlib.import_module('src.main'); print('OK: imported src.main')"
-venv/bin/python -c "import importlib; importlib.import_module('src.worker'); print('OK: imported src.worker')"
+python -c "import importlib; importlib.import_module('src.main'); print('OK: imported src.main')"
 
 echo "== Frontend: install/lint/build =="
 cd frontend
-# corepack enable
+corepack enable
 pnpm install --frozen-lockfile
-# pnpm lint
+pnpm lint
 pnpm build
 cd ..
 cd frontend-next

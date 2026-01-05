@@ -15,7 +15,6 @@ export default function AdminDashboard({ user, onLogout, onClose }) {
   const [activeTab, setActiveTab] = useState('overview');
 
   const isAdmin = user && user.role === 'admin';
-  const isEditor = user && (user.role === 'admin' || user.role === 'editor');
 
   if (!user) {
     return (

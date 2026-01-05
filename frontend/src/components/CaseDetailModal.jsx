@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 export default function CaseDetailModal({ caseData, onClose, onActionComplete }) {
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ export default function CaseDetailModal({ caseData, onClose, onActionComplete })
     }
   };
 
-  const fetchSavedAnalyses = async () => {
+  const fetchSavedAnalyses = useCallback(async () => {
     try {
       const res = await fetch(`/api/cases/${caseNumber}/analyses`, {
         headers: {
@@ -52,11 +52,11 @@ export default function CaseDetailModal({ caseData, onClose, onActionComplete })
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [caseNumber]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchSavedAnalyses();
-  }, []);
+  }, [fetchSavedAnalyses]);
 
   const updateStatus = async (newStatus) => {
     try {

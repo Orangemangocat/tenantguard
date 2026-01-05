@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from './AuthProvider';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../hooks/useAuth';
 
 const ApprovalQueue = () => {
   const { accessToken, isAdmin } = useAuth();
@@ -10,14 +10,9 @@ const ApprovalQueue = () => {
   const [approvalNotes, setApprovalNotes] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (isAdmin()) {
-      fetchPendingPosts();
-      fetchStatistics();
-    }
-  }, []);
+  const adminFlag = isAdmin();
 
-  const fetchPendingPosts = async () => {
+  const fetchPendingPosts = useCallback(async () => {
     try {
       const response = await fetch('/api/blog/approval/pending', {
         headers: {
@@ -34,9 +29,9 @@ const ApprovalQueue = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [accessToken]);
 
-  const fetchStatistics = async () => {
+  const fetchStatistics = useCallback(async () => {
     try {
       const response = await fetch('/api/blog/approval/statistics', {
         headers: {
@@ -51,7 +46,16 @@ const ApprovalQueue = () => {
     } catch (error) {
       console.error('Error fetching statistics:', error);
     }
-  };
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (adminFlag) {
+      fetchPendingPosts();
+      fetchStatistics();
+    }
+  }, [adminFlag, fetchPendingPosts, fetchStatistics]);
+
+  
 
   const handleApprove = async (postId, publishImmediately = true) => {
     try {

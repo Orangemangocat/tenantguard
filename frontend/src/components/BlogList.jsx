@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { Button } from '@/components/ui/button.jsx'
@@ -11,11 +11,7 @@ function BlogList({ onPostClick }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
-  useEffect(() => {
-    fetchPosts()
-  }, [selectedCategory, currentPage])
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -38,7 +34,11 @@ function BlogList({ onPostClick }) {
       console.error('Error fetching posts:', error)
       setLoading(false)
     }
-  }
+  }, [selectedCategory, currentPage])
+
+  useEffect(() => {
+    fetchPosts()
+  }, [fetchPosts])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)

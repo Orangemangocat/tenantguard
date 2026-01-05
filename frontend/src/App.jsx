@@ -30,7 +30,7 @@ function App() {
   const [showIntakeForm, setShowIntakeForm] = useState(false)
   const [showAttorneyForm, setShowAttorneyForm] = useState(false)
   const [showContactPage, setShowContactPage] = useState(false)
-  const [currentPage, setCurrentPage] = useState('home')
+  const [_currentPage, setCurrentPage] = useState('home')
   const [showBlog, setShowBlog] = useState(false)
   const [showBlogAdmin, setShowBlogAdmin] = useState(false)
   const [selectedBlogPost, setSelectedBlogPost] = useState(null)
@@ -38,6 +38,7 @@ function App() {
   const [showRegister, setShowRegister] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
+  const [userOnboarded, setUserOnboarded] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -98,6 +99,38 @@ function App() {
         console.error('Error decoding stored token:', e)
       }
     }
+  }, [currentUser])
+
+  // Once currentUser is known, fetch their full user record to determine onboarding state
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (!currentUser || !currentUser.id) return
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        })
+        if (!res.ok) return
+        const data = await res.json().catch(() => ({}))
+        const userRec = data.user || data
+
+        // Heuristics: look for common flags indicating onboarding/profile completion
+        const onboarded = !!(userRec.onboarded || userRec.profile_complete || userRec.has_tenant_profile || userRec.has_attorney_profile || userRec.full_name)
+        setUserOnboarded(onboarded)
+      } catch (e) {
+        console.debug('Could not fetch user onboarding status', e)
+      }
+    }
+
+    fetchStatus()
+  }, [currentUser, API_BASE])
+
+  // Handle /blog URL routing early so hooks remain in consistent order
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window.location.pathname === '/blog' || window.location.pathname.startsWith('/blog/'))) {
+      setShowBlog(true)
+    }
   }, [])
 
   // If user navigates directly to /admin-panel or /onboarding, render those views
@@ -110,6 +143,20 @@ function App() {
     // redirect to home
     if (typeof window !== 'undefined') {
       window.history.replaceState({}, document.title, '/')
+    }
+  }
+
+  // When user clicks Tenants/Attorneys actions, ensure they're authenticated
+  // If not authenticated -> show login. If authenticated -> forward to onboarding
+  const handleRequireOnboarding = () => {
+    if (!currentUser) {
+      setShowLogin(true)
+      return
+    }
+
+    // Forward authenticated users to onboarding first.
+    if (typeof window !== 'undefined') {
+      window.location.href = '/onboarding'
     }
   }
 
@@ -169,12 +216,7 @@ function App() {
     )
   }
 
-  // Handle /blog URL routing
-  useEffect(() => {
-    if (window.location.pathname === '/blog' || window.location.pathname.startsWith('/blog/')) {
-      setShowBlog(true)
-    }
-  }, [])
+  // NOTE: blog routing handled above to keep hooks stable
 
   const scrollToSection = (sectionId) => {
     setCurrentPage('home')
@@ -225,7 +267,9 @@ function App() {
                         {currentUser.role === 'admin' && (
                           <a href="/admin-panel" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Panel</a>
                         )}
-                        <a href="/onboarding" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Onboarding</a>
+                        {!userOnboarded && currentUser?.role !== 'admin' && (
+                          <a href="/onboarding" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Onboarding</a>
+                        )}
                         <div className="border-t border-gray-200 my-1"></div>
                         <button
                           onClick={() => {
@@ -244,8 +288,8 @@ function App() {
                 ) : (
                   <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowLogin(true)}>Login</Button>
                 )}
-                <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowIntakeForm(true)}>Tenants</Button>
-                <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => setShowAttorneyForm(true)}>Attorneys</Button>
+                <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => handleRequireOnboarding('tenant')}>Tenants</Button>
+                <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => handleRequireOnboarding('attorney')}>Attorneys</Button>
               </div>
 
               {/* Mobile Menu Button */}
@@ -339,7 +383,7 @@ function App() {
                         <div className="px-3 py-2 text-sm" style={{ color: 'var(--color-textSecondary)' }}>
                           {currentUser.email || currentUser.username || 'User'}
                         </div>
-                        {currentUser?.role !== 'admin' && (
+                        {!userOnboarded && currentUser?.role !== 'admin' && (
                           <a
                             href="/onboarding"
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
@@ -379,7 +423,7 @@ function App() {
                       style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
                       className="hover:opacity-90 w-full mt-2"
                       onClick={() => {
-                        setShowIntakeForm(true);
+                        handleRequireOnboarding('tenant');
                         setShowMobileMenu(false);
                       }}
                     >
@@ -389,7 +433,7 @@ function App() {
                       style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
                       className="hover:opacity-90 w-full mt-2"
                       onClick={() => {
-                        setShowAttorneyForm(true);
+                        handleRequireOnboarding('attorney');
                         setShowMobileMenu(false);
                       }}
                     >
@@ -421,7 +465,7 @@ function App() {
                 size="lg"
                 style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
                 className="hover:opacity-90"
-                onClick={() => setShowIntakeForm(true)}
+                onClick={() => handleRequireOnboarding('tenant')}
               >
                 Start Your Case <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -430,7 +474,7 @@ function App() {
                 variant="outline"
                 style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', backgroundColor: 'transparent' }}
                 className="hover:opacity-80"
-                onClick={() => setShowAttorneyForm(true)}
+                onClick={() => handleRequireOnboarding('attorney')}
               >
                 Attorney Portal
               </Button>
@@ -733,10 +777,10 @@ function App() {
               Join the platform that's revolutionizing landlord-tenant dispute resolution in Tennessee.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100" onClick={() => setShowIntakeForm(true)}>
+              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100" onClick={() => handleRequireOnboarding('tenant')}>
                 Get Started as Tenant
               </Button>
-              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100 border-2 border-white" onClick={() => setShowAttorneyForm(true)}>
+              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100 border-2 border-white" onClick={() => handleRequireOnboarding('attorney')}>
                 Join as Attorney
               </Button>
             </div>
@@ -768,8 +812,8 @@ function App() {
               <div>
                 <h3 className="font-semibold mb-4">For Users</h3>
                 <ul className="space-y-2 text-gray-400 text-sm">
-                  <li><button onClick={() => setShowIntakeForm(true)} className="hover:text-white">Tenant Portal</button></li>
-                  <li><button onClick={() => setShowAttorneyForm(true)} className="hover:text-white">Attorney Portal</button></li>
+                  <li><button onClick={() => handleRequireOnboarding('tenant')} className="hover:text-white">Tenant Portal</button></li>
+                  <li><button onClick={() => handleRequireOnboarding('attorney')} className="hover:text-white">Attorney Portal</button></li>
                 </ul>
               </div>
               <div>

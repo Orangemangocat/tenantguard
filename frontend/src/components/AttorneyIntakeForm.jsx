@@ -101,8 +101,7 @@ const AttorneyIntakeForm = ({ onClose }) => {
     
     // Terms & Agreements
     termsAccepted: false,
-    privacyConsent: false,
-    marketingConsent: false
+    privacyConsent: false
   })
 
   const totalSteps = 10

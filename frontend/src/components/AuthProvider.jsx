@@ -1,57 +1,47 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
+import { AuthContext } from '../contexts/AuthContext'
 
-const AuthContext = createContext(null);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [accessToken, setAccessToken] = useState(null);
-  const [refreshToken, setRefreshToken] = useState(null);
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [accessToken, setAccessToken] = useState(null)
+  const [refreshToken, setRefreshToken] = useState(null)
 
   useEffect(() => {
-    // Check for stored tokens on mount
-    const storedAccessToken = localStorage.getItem('access_token');
-    const storedRefreshToken = localStorage.getItem('refresh_token');
-    
-    if (storedAccessToken) {
-      setAccessToken(storedAccessToken);
-      setRefreshToken(storedRefreshToken);
-      fetchCurrentUser(storedAccessToken);
-    } else {
+    const init = async () => {
+      const storedAccessToken = localStorage.getItem('access_token');
+      const storedRefreshToken = localStorage.getItem('refresh_token');
+
+      if (storedAccessToken) {
+        setAccessToken(storedAccessToken);
+        setRefreshToken(storedRefreshToken);
+        try {
+          const response = await fetch('/auth/me', {
+            headers: { 'Authorization': `Bearer ${storedAccessToken}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setUser(data.user || null);
+          } else {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('Error fetching current user:', error);
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          setUser(null);
+        }
+      }
+
       setLoading(false);
-    }
+    };
+
+    init();
   }, []);
 
-  const fetchCurrentUser = async (token) => {
-    try {
-      const response = await fetch('/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-      } else {
-        // Token invalid, clear storage
-        logout();
-      }
-    } catch (error) {
-      console.error('Error fetching current user:', error);
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Note: initial token check/bootstrapping handled in useEffect above.
 
   const loginWithGoogle = async () => {
     try {
@@ -171,7 +161,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
 
-export default AuthProvider;
+export default AuthProvider

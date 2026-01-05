@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '../hooks/useAuth';
 import Login from './Login';
 
 const ProtectedRoute = ({ children, requireAdmin = false, requireEditor = false }) => {

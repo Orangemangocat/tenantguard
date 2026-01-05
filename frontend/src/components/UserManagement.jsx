@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label.jsx';
  * User Management Component
  * Allows admins to create, edit, activate/deactivate, and delete users
  */
-export default function UserManagement({ user }) {
+export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

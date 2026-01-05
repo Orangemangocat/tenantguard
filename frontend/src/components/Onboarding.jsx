@@ -7,6 +7,7 @@ export default function Onboarding({ user, onFinish }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [selectedRole, setSelectedRole] = useState(null); // 'tenant' or 'attorney'
 
     // Profile fields
     const [fullName, setFullName] = useState(user?.full_name || '');
@@ -149,6 +150,23 @@ export default function Onboarding({ user, onFinish }) {
                 {step === 1 && (
                     <div className="space-y-4">
                         <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">I'm signing up as</label>
+                            <div className="flex gap-2">
+                                <button
+                                    className={`px-3 py-2 rounded border ${selectedRole === 'tenant' ? 'bg-red-800 text-white' : 'bg-white'}`}
+                                    onClick={() => setSelectedRole('tenant')}
+                                >
+                                    Tenant
+                                </button>
+                                <button
+                                    className={`px-3 py-2 rounded border ${selectedRole === 'attorney' ? 'bg-red-800 text-white' : 'bg-white'}`}
+                                    onClick={() => setSelectedRole('attorney')}
+                                >
+                                    Attorney / Lawyer
+                                </button>
+                            </div>
+                        </div>
+                        <div>
                             <label className="block text-sm font-medium text-gray-700">Full name</label>
                             <input className="w-full border px-3 py-2 rounded" value={fullName} onChange={(e) => setFullName(e.target.value)} />
                         </div>
@@ -195,7 +213,31 @@ export default function Onboarding({ user, onFinish }) {
                         <p className="text-sm text-gray-600">You're all set. Start using TenantGuard to manage cases and collaborate with your team.</p>
                         <div className="flex flex-col md:flex-row gap-2 justify-end mt-4">
                             <Button variant="outline" onClick={prev}>Back</Button>
-                            <Button className="ml-2" onClick={() => onFinish && onFinish()}>Finish</Button>
+                            <Button className="ml-2" onClick={() => {
+                                // Prefer the explicit selection made during onboarding
+                                if (selectedRole === 'tenant') {
+                                    if (typeof window !== 'undefined') window.location.href = '/tenant-intake';
+                                    return;
+                                }
+                                if (selectedRole === 'attorney') {
+                                    if (typeof window !== 'undefined') window.location.href = '/attorney-intake';
+                                    return;
+                                }
+
+                                // Fallback to URL param if present (backcompat)
+                                const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+                                const start = params ? params.get('start') : null;
+                                if (start === 'tenant') {
+                                    if (typeof window !== 'undefined') window.location.href = '/tenant-intake';
+                                    return;
+                                }
+                                if (start === 'attorney') {
+                                    if (typeof window !== 'undefined') window.location.href = '/attorney-intake';
+                                    return;
+                                }
+
+                                if (onFinish) onFinish();
+                            }}>Finish</Button>
                             <a href="/tenant-intake" className="ml-2">
                                 <Button>Start Tenant Intake</Button>
                             </a>

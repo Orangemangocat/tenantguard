@@ -4,15 +4,12 @@ Handles database connection configuration for both SQLite and PostgreSQL
 """
 import os
 
-# Check for local development environment
-IS_LOCAL_DEV = os.getenv('LOCAL_DEV_ENV', 'false').lower() == 'true'
-
 # Database type: 'sqlite' or 'postgresql'
 DB_TYPE = os.getenv('DB_TYPE', 'postgresql')
 
 # PostgreSQL Configuration
 POSTGRES_CONFIG = {
-    'host': 'localhost' if IS_LOCAL_DEV else os.getenv('POSTGRES_HOST', '34.173.34.153'),
+    'host': os.getenv('POSTGRES_HOST', '34.173.34.153'),
     'port': os.getenv('POSTGRES_PORT', '5432'),
     'database': os.getenv('POSTGRES_DB', 'tenantguard'),
     'user': os.getenv('POSTGRES_USER', 'tenantguard'),
@@ -63,13 +60,6 @@ def get_sqlalchemy_engine_options():
         # return SSL connect_args when psycopg2 exists.
         try:
             import psycopg2  # noqa: F401
-            
-            if IS_LOCAL_DEV:
-                return {
-                    'pool_pre_ping': True,
-                    'pool_recycle': 3600,
-                }
-            
             return {
                 'pool_pre_ping': True,
                 'pool_recycle': 3600,
@@ -91,6 +81,5 @@ def get_psycopg2_connection_params():
     Get connection parameters for direct psycopg2 usage
     """
     params = POSTGRES_CONFIG.copy()
-    if not IS_LOCAL_DEV:
-        params.update(SSL_CONFIG)
+    params.update(SSL_CONFIG)
     return params

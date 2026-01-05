@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { Button } from '@/components/ui/button.jsx'
@@ -8,11 +8,7 @@ function BlogPost({ slug, onBack }) {
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchPost()
-  }, [slug])
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/blog/posts/${slug}`)
@@ -23,7 +19,11 @@ function BlogPost({ slug, onBack }) {
       console.error('Error fetching post:', error)
       setLoading(false)
     }
-  }
+  }, [slug])
+
+  useEffect(() => {
+    fetchPost()
+  }, [fetchPost])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)

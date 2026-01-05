@@ -11,40 +11,42 @@ export default function DashboardOverview({ user }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchStatistics();
-  }, []);
-
-  const fetchStatistics = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch blog statistics
-      const blogResponse = await fetch('/api/blog/analytics');
-      const blogData = await blogResponse.json();
-      
-      // Fetch approval queue statistics (admin only)
-      let approvalData = null;
-      if (user.role === 'admin') {
-        const approvalResponse = await fetch('/api/blog/approval/statistics', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-          }
+    const fetchStatistics = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch blog statistics
+        const blogResponse = await fetch('/api/blog/analytics');
+        const blogData = await blogResponse.json();
+        
+        // Fetch approval queue statistics (admin only)
+        let approvalData = null;
+        if (user?.role === 'admin') {
+          const approvalResponse = await fetch('/api/blog/approval/statistics', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            }
+          });
+          approvalData = await approvalResponse.json();
+        }
+        
+        setStats({
+          blog: blogData,
+          approval: approvalData
         });
-        approvalData = await approvalResponse.json();
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching statistics:', err);
+        setError('Failed to load dashboard statistics');
+      } finally {
+        setLoading(false);
       }
-      
-      setStats({
-        blog: blogData,
-        approval: approvalData
-      });
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching statistics:', err);
-      setError('Failed to load dashboard statistics');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchStatistics();
+  }, [user]);
+
+  
 
   if (loading) {
     return (
