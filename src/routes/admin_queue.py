@@ -62,3 +62,5 @@ def get_queue(current_user):
             # If Redis/queue is not available, return empty jobs
             print(f"[get_queue] Queue error: {queue_error}")
             return jsonify({'success': True, 'jobs': []}), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch queue', 'details': str(e)}), 500
