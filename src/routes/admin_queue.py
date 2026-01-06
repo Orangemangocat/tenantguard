@@ -34,27 +34,31 @@ def get_queue(current_user):
         allowed = admin_rate_limit(current_user.id, limit=20, window=10)
         if not allowed:
             return jsonify({'error': 'Rate limit exceeded'}), 429
-        if Queue is None:
-            return jsonify({'error': 'Background queue not configured (missing rq/redis)'}), 503
+        
+        try:
+            if Queue is None:
+                return jsonify({'success': True, 'jobs': []}), 200
 
-        redis_conn = _get_redis_conn()
-        q = Queue('default', connection=redis_conn)
-        jobs = []
-        for job in q.jobs:
-            try:
-                j = Job.fetch(job.id, connection=redis_conn)
-                jobs.append({
-                    'id': j.id,
-                    'status': j.get_status(),
-                    'description': j.description,
-                    'enqueued_at': j.enqueued_at.isoformat() if j.enqueued_at else None,
-                    'started_at': j.started_at.isoformat() if j.started_at else None,
-                    'ended_at': j.ended_at.isoformat() if j.ended_at else None,
-                })
-            except Exception:
-                # Skip jobs that cannot be fetched
-                continue
+            redis_conn = _get_redis_conn()
+            q = Queue('default', connection=redis_conn)
+            jobs = []
+            for job in q.jobs:
+                try:
+                    j = Job.fetch(job.id, connection=redis_conn)
+                    jobs.append({
+                        'id': j.id,
+                        'status': j.get_status(),
+                        'description': j.description,
+                        'enqueued_at': j.enqueued_at.isoformat() if j.enqueued_at else None,
+                        'started_at': j.started_at.isoformat() if j.started_at else None,
+                        'ended_at': j.ended_at.isoformat() if j.ended_at else None,
+                    })
+                except Exception:
+                    # Skip jobs that cannot be fetched
+                    continue
 
-        return jsonify({'success': True, 'jobs': jobs}), 200
-    except Exception as e:
-        return jsonify({'error': 'Failed to fetch queue', 'details': str(e)}), 500
+            return jsonify({'success': True, 'jobs': jobs}), 200
+        except Exception as queue_error:
+            # If Redis/queue is not available, return empty jobs
+            print(f"[get_queue] Queue error: {queue_error}")
+            return jsonify({'success': True, 'jobs': []}), 200

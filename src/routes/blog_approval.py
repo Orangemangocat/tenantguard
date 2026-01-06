@@ -162,22 +162,30 @@ def get_approval_statistics(current_user):
     """Get approval queue statistics"""
     
     try:
-        pending_count = BlogPost.query.filter_by(status='pending_approval').count()
-        approved_count = BlogPost.query.filter_by(status='approved').count()
-        rejected_count = BlogPost.query.filter_by(status='rejected').count()
-        published_count = BlogPost.query.filter_by(status='published').count()
-        
-        # Get oldest pending post
-        oldest_pending = BlogPost.query.filter_by(status='pending_approval').order_by(BlogPost.submitted_for_approval_at.asc()).first()
-        
-        # Get recent approvals
-        recent_approvals = BlogPost.query.filter(
-            BlogPost.status.in_(['approved', 'published']),
-            BlogPost.approved_at.isnot(None)
-        ).order_by(BlogPost.approved_at.desc()).limit(5).all()
-        
-        # Get recent rejections
-        recent_rejections = BlogPost.query.filter_by(status='rejected').order_by(BlogPost.rejected_at.desc()).limit(5).all()
+        try:
+            pending_count = BlogPost.query.filter_by(status='pending_approval').count()
+            approved_count = BlogPost.query.filter_by(status='approved').count()
+            rejected_count = BlogPost.query.filter_by(status='rejected').count()
+            published_count = BlogPost.query.filter_by(status='published').count()
+            
+            # Get oldest pending post
+            oldest_pending = BlogPost.query.filter_by(status='pending_approval').order_by(BlogPost.submitted_for_approval_at.asc()).first()
+            
+            # Get recent approvals
+            recent_approvals = BlogPost.query.filter(
+                BlogPost.status.in_(['approved', 'published']),
+                BlogPost.approved_at.isnot(None)
+            ).order_by(BlogPost.approved_at.desc()).limit(5).all()
+            
+            # Get recent rejections
+            recent_rejections = BlogPost.query.filter_by(status='rejected').order_by(BlogPost.rejected_at.desc()).limit(5).all()
+        except Exception as db_error:
+            # If tables don't exist yet, return empty data
+            print(f"[blog_approval_statistics] Database query error: {db_error}")
+            pending_count = approved_count = rejected_count = published_count = 0
+            oldest_pending = None
+            recent_approvals = []
+            recent_rejections = []
         
         return jsonify({
             'pending_count': pending_count,

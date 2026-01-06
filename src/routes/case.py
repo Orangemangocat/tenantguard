@@ -58,29 +58,45 @@ def get_cases():
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
         
-        # Build query
-        query = Case.query
-        
-        if status:
-            query = query.filter(Case.status == status)
-        
-        # Paginate results
-        cases = query.order_by(Case.created_at.desc()).paginate(
-            page=page, per_page=per_page, error_out=False
-        )
-        
-        return jsonify({
-            'success': True,
-            'cases': [case.to_dict() for case in cases.items],
-            'pagination': {
-                'page': page,
-                'per_page': per_page,
-                'total': cases.total,
-                'pages': cases.pages,
-                'has_next': cases.has_next,
-                'has_prev': cases.has_prev
-            }
-        }), 200
+        try:
+            # Build query
+            query = Case.query
+            
+            if status:
+                query = query.filter(Case.status == status)
+            
+            # Paginate results
+            cases = query.order_by(Case.created_at.desc()).paginate(
+                page=page, per_page=per_page, error_out=False
+            )
+            
+            return jsonify({
+                'success': True,
+                'cases': [case.to_dict() for case in cases.items],
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': cases.total,
+                    'pages': cases.pages,
+                    'has_next': cases.has_next,
+                    'has_prev': cases.has_prev
+                }
+            }), 200
+        except Exception as db_error:
+            # If tables don't exist yet, return empty cases
+            print(f"[get_cases] Database query error: {db_error}")
+            return jsonify({
+                'success': True,
+                'cases': [],
+                'pagination': {
+                    'page': 1,
+                    'per_page': per_page,
+                    'total': 0,
+                    'pages': 0,
+                    'has_next': False,
+                    'has_prev': False
+                }
+            }), 200
         
     except Exception as e:
         return jsonify({

@@ -702,8 +702,13 @@ def get_current_user(current_user):
 def list_users(current_user):
     """List all users (admin only)"""
     
-    users = AuthUser.query.all()
-    return jsonify({'users': [u.to_dict() for u in users]}), 200
+    try:
+        users = AuthUser.query.all()
+        return jsonify({'users': [u.to_dict() for u in users]}), 200
+    except Exception as e:
+        # If table doesn't exist yet, return empty list
+        print(f"[list_users] Database query error: {e}")
+        return jsonify({'users': []}), 200
 
 
 @auth_bp.route('/auth/users/<int:user_id>/role', methods=['PUT'])

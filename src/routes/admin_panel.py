@@ -19,7 +19,7 @@ from src.routes.auth import admin_required
 # Dashboard Stats
 @admin_panel_bp.route('/stats', methods=['GET'])
 @admin_required
-def get_dashboard_stats():
+def get_dashboard_stats(current_user):
     """Get dashboard statistics"""
     try:
         # Total users
@@ -57,7 +57,7 @@ def get_dashboard_stats():
 # User Management
 @admin_panel_bp.route('/users', methods=['GET'])
 @admin_required
-def list_users():
+def list_users(current_user):
     """List all users with optional search"""
     search = request.args.get('search', '')
     
@@ -200,7 +200,7 @@ def delete_user(user_id):
 # Blog Post Management
 @admin_panel_bp.route('/blog-posts', methods=['GET'])
 @admin_required
-def list_blog_posts():
+def list_blog_posts(current_user):
     """List blog posts with optional filtering"""
     status = request.args.get('status')
     search = request.args.get('search', '')
@@ -383,7 +383,7 @@ def delete_blog_post(post_id):
 # Tenant Case Management
 @admin_panel_bp.route('/tenant-cases', methods=['GET'])
 @admin_required
-def list_tenant_cases():
+def list_tenant_cases(current_user):
     """List tenant cases with optional filtering"""
     status = request.args.get('status')
     urgency = request.args.get('urgency')
@@ -464,7 +464,7 @@ def update_case_status(case_id):
 # Lawyer Application Management
 @admin_panel_bp.route('/lawyer-applications', methods=['GET'])
 @admin_required
-def list_lawyer_applications():
+def list_lawyer_applications(current_user):
     """List lawyer applications with optional filtering"""
     status = request.args.get('status')
     search = request.args.get('search', '')
@@ -514,7 +514,7 @@ def reject_lawyer_application(app_id):
 # Create User
 @admin_panel_bp.route('/users', methods=['POST'])
 @admin_required
-def create_user():
+def create_user(current_user):
     """Create a new user"""
     data = request.json
     
@@ -581,7 +581,7 @@ def get_user(user_id):
 # Create Blog Post
 @admin_panel_bp.route('/blog-posts', methods=['POST'])
 @admin_required
-def create_blog_post():
+def create_blog_post(current_user):
     """Create a new blog post"""
     data = request.json
     

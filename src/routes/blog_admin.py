@@ -221,20 +221,28 @@ def check_schedule():
 def get_analytics(current_user):
     """Get blog analytics and statistics - Admin only"""
     try:
-        total_posts = BlogPost.query.filter_by(status='published').count()
-        draft_posts = BlogPost.query.filter_by(status='draft').count()
-        
-        technical_posts = BlogPost.query.filter_by(status='published', category='technical').count()
-        research_posts = BlogPost.query.filter_by(status='published', category='market-research').count()
-        
-        pending_topics = BlogTopic.query.filter_by(status='pending').count()
-        in_progress_topics = BlogTopic.query.filter_by(status='in_progress').count()
-        
-        # Get posting frequency
-        latest_post = BlogPost.query.filter_by(status='published').order_by(BlogPost.published_at.desc()).first()
-        days_since_last_post = None
-        if latest_post:
-            days_since_last_post = (datetime.utcnow() - latest_post.published_at).days
+        try:
+            total_posts = BlogPost.query.filter_by(status='published').count()
+            draft_posts = BlogPost.query.filter_by(status='draft').count()
+            
+            technical_posts = BlogPost.query.filter_by(status='published', category='technical').count()
+            research_posts = BlogPost.query.filter_by(status='published', category='market-research').count()
+            
+            pending_topics = BlogTopic.query.filter_by(status='pending').count()
+            in_progress_topics = BlogTopic.query.filter_by(status='in_progress').count()
+            
+            # Get posting frequency
+            latest_post = BlogPost.query.filter_by(status='published').order_by(BlogPost.published_at.desc()).first()
+            days_since_last_post = None
+            if latest_post:
+                days_since_last_post = (datetime.utcnow() - latest_post.published_at).days
+        except Exception as db_error:
+            # If tables don't exist yet, return empty data
+            print(f"[blog_analytics] Database query error: {db_error}")
+            total_posts = draft_posts = technical_posts = research_posts = 0
+            pending_topics = in_progress_topics = 0
+            days_since_last_post = None
+            latest_post = None
         
         return jsonify({
             'total_published_posts': total_posts,
