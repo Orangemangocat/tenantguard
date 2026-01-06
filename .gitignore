@@ -3,11 +3,6 @@
 **/*.pyc
 static/
 index.html
-**/static/
-**/static/*
-**/static/**
-**/static/index.html
-*/static/index.html
 node_modules/
 node_modules/*
 **/node_modules/
@@ -227,7 +222,6 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-frontend/dist/
 venv/
 # SSL Certificates - DO NOT COMMIT
 ssl_certs/
