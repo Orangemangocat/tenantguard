@@ -15,6 +15,7 @@ import AdminDashboard from './components/AdminDashboard.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Navbar from './components/Navbar.jsx'
+import AuthProvider from './components/AuthProvider.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 
 import './App.css'
@@ -194,16 +195,18 @@ function App() {
   if (pathname === '/admin-panel' || showAdminPanel) {
     return (
       <ThemeProvider>
-        <ProtectedRoute requireAdmin={true}>
-          <AdminDashboard
-            user={currentUser}
-            onLogout={handleLogout}
-            onClose={() => {
-              setShowAdminPanel(false)
-              if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/')
-            }}
-          />
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute requireAdmin={true}>
+            <AdminDashboard
+              user={currentUser}
+              onLogout={handleLogout}
+              onClose={() => {
+                setShowAdminPanel(false)
+                if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/')
+              }}
+            />
+          </ProtectedRoute>
+        </AuthProvider>
       </ThemeProvider>
     )
   }

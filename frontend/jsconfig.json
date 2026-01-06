@@ -1,6 +1,6 @@
 {
   "build": {
-    "chukSizeWarningLimit": 800000,
+    "chunkSizeWarningLimit": 800000,
   },
   "compilerOptions": {
     "baseUrl": "./",
