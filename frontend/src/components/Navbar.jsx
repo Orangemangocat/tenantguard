@@ -191,15 +191,17 @@ const Navbar = ({
                     style={{ backgroundColor: 'var(--color-cardBorder)' }} 
                   />
 
-                  {/* Dashboard Link */}
-                  <DropdownMenuItem 
-                    onClick={() => onDashboard && onDashboard()}
-                    className="cursor-pointer"
-                    style={{ color: 'var(--color-text)' }}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
-                  </DropdownMenuItem>
+                  {/* Dashboard Link (Admin Only) */}
+                  {currentUser?.role === 'admin' && (
+                    <DropdownMenuItem 
+                      onClick={() => onDashboard && onDashboard()}
+                      className="cursor-pointer"
+                      style={{ color: 'var(--color-text)' }}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </DropdownMenuItem>
+                  )}
 
                   {/* Onboarding Link (hide for admin users) */}
                   {currentUser?.role !== 'admin' && (

@@ -1,8 +1,11 @@
 {
+  "build": {
+    "chukSizeWarningLimit": 800000,
+  },
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"]
-    }
-  }
+    },
+  },
 }

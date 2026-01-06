@@ -1,436 +1,284 @@
+"""
+SQLAlchemy Attorney Model
+Migrated from SQLite to PostgreSQL using SQLAlchemy ORM
+"""
 from datetime import datetime
-import sqlite3
+from src.models.user import db
 import json
-import uuid
 
+class AttorneyApplication(db.Model):
+    """Attorney application model for PostgreSQL"""
+    __tablename__ = 'attorney_applications'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    application_id = db.Column(db.String(255), unique=True, nullable=False)
+    
+    # Professional Information
+    first_name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    firm_name = db.Column(db.String(255), nullable=False)
+    firm_address = db.Column(db.Text, nullable=False)
+    firm_city = db.Column(db.String(100), default='Nashville')
+    firm_zip = db.Column(db.String(10), nullable=False)
+    firm_website = db.Column(db.String(500))
+    
+    # Legal Credentials
+    bar_number = db.Column(db.String(50), nullable=False)
+    bar_state = db.Column(db.String(2), nullable=False)
+    bar_admission_date = db.Column(db.String(50), nullable=False)
+    law_school = db.Column(db.String(255), nullable=False)
+    graduation_year = db.Column(db.String(4), nullable=False)
+    years_experience = db.Column(db.String(50), nullable=False)
+    
+    # Practice Areas (stored as JSON)
+    practice_areas = db.Column(db.Text)  # JSON array
+    landlord_tenant_experience = db.Column(db.Text, nullable=False)
+    eviction_experience = db.Column(db.Text, nullable=False)
+    court_experience = db.Column(db.Text)  # JSON array
+    specializations = db.Column(db.Text)  # JSON array
+    
+    # Case Preferences
+    case_types = db.Column(db.Text)  # JSON array
+    client_types = db.Column(db.Text)  # JSON array
+    minimum_case_value = db.Column(db.String(50))
+    case_volume_interest = db.Column(db.String(50))
+    
+    # Service Areas
+    service_areas = db.Column(db.Text, nullable=False)  # JSON array
+    
+    # Response & Rates
+    response_time = db.Column(db.String(50), nullable=False)
+    hourly_rate = db.Column(db.String(50), nullable=False)
+    fee_structure_preference = db.Column(db.String(255), nullable=False)
+    
+    # Business Info
+    lead_budget = db.Column(db.String(50), nullable=False)
+    lead_volume = db.Column(db.String(50), nullable=False)
+    lead_quality = db.Column(db.String(50), nullable=False)
+    
+    # Platform Preferences
+    profile_visibility = db.Column(db.String(50))
+    client_communication = db.Column(db.Text)  # JSON array
+    case_updates = db.Column(db.Text)
+    marketing_consent = db.Column(db.Boolean, default=False)
+    data_sharing = db.Column(db.Boolean, default=False)
+    
+    # Additional Information
+    motivation = db.Column(db.Text, nullable=False)
+    additional_services = db.Column(db.Text)
+    special_requirements = db.Column(db.Text)
+    
+    # Terms & Agreements
+    terms_accepted = db.Column(db.Boolean, default=False, nullable=False)
+    privacy_consent = db.Column(db.Boolean, default=False, nullable=False)
+    
+    # Application Status
+    status = db.Column(db.String(50), default='pending_review')
+    review_date = db.Column(db.DateTime)
+    approval_date = db.Column(db.DateTime)
+    reviewer_notes = db.Column(db.Text)
+    
+    # Profile Settings
+    profile_active = db.Column(db.Boolean, default=False)
+    accepting_cases = db.Column(db.Boolean, default=False)
+    last_login = db.Column(db.DateTime)
+    
+    # Timestamps
+    application_date = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        """Convert model to dictionary"""
+        return {
+            'id': self.id,
+            'application_id': self.application_id,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'email': self.email,
+            'phone': self.phone,
+            'firm_name': self.firm_name,
+            'firm_address': self.firm_address,
+            'firm_city': self.firm_city,
+            'firm_zip': self.firm_zip,
+            'firm_website': self.firm_website,
+            'bar_number': self.bar_number,
+            'bar_state': self.bar_state,
+            'bar_admission_date': self.bar_admission_date,
+            'law_school': self.law_school,
+            'graduation_year': self.graduation_year,
+            'years_experience': self.years_experience,
+            'practice_areas': json.loads(self.practice_areas) if self.practice_areas else [],
+            'landlord_tenant_experience': self.landlord_tenant_experience,
+            'eviction_experience': self.eviction_experience,
+            'court_experience': json.loads(self.court_experience) if self.court_experience else [],
+            'specializations': json.loads(self.specializations) if self.specializations else [],
+            'case_types': json.loads(self.case_types) if self.case_types else [],
+            'client_types': json.loads(self.client_types) if self.client_types else [],
+            'minimum_case_value': self.minimum_case_value,
+            'case_volume_interest': self.case_volume_interest,
+            'service_areas': json.loads(self.service_areas) if self.service_areas else [],
+            'response_time': self.response_time,
+            'hourly_rate': self.hourly_rate,
+            'fee_structure_preference': self.fee_structure_preference,
+            'lead_budget': self.lead_budget,
+            'lead_volume': self.lead_volume,
+            'lead_quality': self.lead_quality,
+            'profile_visibility': self.profile_visibility,
+            'client_communication': json.loads(self.client_communication) if self.client_communication else [],
+            'case_updates': self.case_updates,
+            'marketing_consent': self.marketing_consent,
+            'data_sharing': self.data_sharing,
+            'motivation': self.motivation,
+            'additional_services': self.additional_services,
+            'special_requirements': self.special_requirements,
+            'terms_accepted': self.terms_accepted,
+            'privacy_consent': self.privacy_consent,
+            'status': self.status,
+            'review_date': self.review_date.isoformat() if self.review_date else None,
+            'approval_date': self.approval_date.isoformat() if self.approval_date else None,
+            'reviewer_notes': self.reviewer_notes,
+            'profile_active': self.profile_active,
+            'accepting_cases': self.accepting_cases,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
+            'application_date': self.application_date.isoformat() if self.application_date else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+# Keep backward compatibility - Attorney class can delegate to AttorneyApplication
 class Attorney:
-    def __init__(self, db_path='tenantguard.db'):
-        self.db_path = db_path
-        self.init_db()
+    """
+    Wrapper class for backward compatibility
+    All operations now use SQLAlchemy AttorneyApplication model with PostgreSQL
+    """
+    def __init__(self, db_path=None):
+        """Initialize - db_path is ignored, uses PostgreSQL via SQLAlchemy"""
+        pass
     
     def init_db(self):
-        """Initialize the attorney database table"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS attorneys (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                application_id TEXT UNIQUE NOT NULL,
-                
-                -- Professional Information
-                first_name TEXT NOT NULL,
-                last_name TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                phone TEXT NOT NULL,
-                firm_name TEXT NOT NULL,
-                firm_address TEXT NOT NULL,
-                firm_city TEXT DEFAULT 'Nashville',
-                firm_zip TEXT NOT NULL,
-                firm_website TEXT,
-                
-                -- Legal Credentials
-                bar_number TEXT NOT NULL,
-                bar_state TEXT NOT NULL,
-                bar_admission_date TEXT NOT NULL,
-                law_school TEXT NOT NULL,
-                graduation_year TEXT NOT NULL,
-                years_experience TEXT NOT NULL,
-                
-                -- Practice Areas & Expertise
-                practice_areas TEXT, -- JSON array
-                landlord_tenant_experience TEXT NOT NULL,
-                eviction_experience TEXT NOT NULL,
-                court_experience TEXT, -- JSON array
-                specializations TEXT, -- JSON array
-                
-                -- Case Preferences
-                case_types TEXT, -- JSON array
-                client_types TEXT, -- JSON array
-                minimum_case_value TEXT,
-                maximum_caseload TEXT,
-                response_time TEXT NOT NULL,
-                availability_hours TEXT, -- JSON array
-                
-                -- Budget & Pricing
-                hourly_rate TEXT NOT NULL,
-                flat_fee_services TEXT, -- JSON array
-                payment_terms TEXT,
-                retainer_amount TEXT,
-                payment_methods TEXT, -- JSON array
-                fee_structure_preference TEXT NOT NULL,
-                
-                -- Lead Generation Preferences
-                lead_budget TEXT NOT NULL,
-                lead_volume TEXT NOT NULL,
-                lead_quality TEXT NOT NULL,
-                marketing_preferences TEXT, -- JSON array
-                referral_sources TEXT, -- JSON array
-                
-                -- Geographic Coverage
-                service_areas TEXT, -- JSON array
-                travel_radius TEXT,
-                remote_consultation BOOLEAN DEFAULT 0,
-                
-                -- Technology & Tools
-                case_management_software TEXT,
-                communication_tools TEXT, -- JSON array
-                document_signing TEXT, -- JSON array
-                
-                -- Professional References
-                professional_references TEXT, -- JSON array of objects
-                
-                -- Compliance & Insurance
-                malpractice_insurance BOOLEAN DEFAULT 0,
-                insurance_carrier TEXT,
-                coverage_amount TEXT,
-                disciplinary_history BOOLEAN DEFAULT 0,
-                disciplinary_details TEXT,
-                
-                -- Platform Preferences
-                profile_visibility TEXT,
-                client_communication TEXT, -- JSON array
-                case_updates TEXT,
-                marketing_consent BOOLEAN DEFAULT 0,
-                data_sharing BOOLEAN DEFAULT 0,
-                
-                -- Additional Information
-                motivation TEXT NOT NULL,
-                additional_services TEXT,
-                special_requirements TEXT,
-                
-                -- Terms & Agreements
-                terms_accepted BOOLEAN DEFAULT 0,
-                privacy_consent BOOLEAN DEFAULT 0,
-                
-                -- Application Status
-                status TEXT DEFAULT 'pending_review',
-                application_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                review_date TIMESTAMP,
-                approval_date TIMESTAMP,
-                reviewer_notes TEXT,
-                
-                -- Profile Settings
-                profile_active BOOLEAN DEFAULT 0,
-                accepting_cases BOOLEAN DEFAULT 0,
-                last_login TIMESTAMP,
-                
-                -- Metadata
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Create indexes for better performance
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_attorney_email ON attorneys(email)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_attorney_application_id ON attorneys(application_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_attorney_status ON attorneys(status)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_attorney_service_areas ON attorneys(service_areas)')
-        
-        conn.commit()
-        conn.close()
+        """No-op for backward compatibility - tables created via SQLAlchemy"""
+        pass
     
     def create_attorney(self, attorney_data):
         """Create a new attorney application"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
         try:
-            # Generate unique application ID
-            application_id = f"ATT{datetime.now().strftime('%Y%m%d')}{str(uuid.uuid4())[:8].upper()}"
+            new_attorney = AttorneyApplication(
+                application_id=attorney_data.get('applicationId') or str(datetime.utcnow().timestamp()),
+                first_name=attorney_data.get('firstName'),
+                last_name=attorney_data.get('lastName'),
+                email=attorney_data.get('email'),
+                phone=attorney_data.get('phone'),
+                firm_name=attorney_data.get('firmName'),
+                firm_address=attorney_data.get('firmAddress'),
+                firm_city=attorney_data.get('firmCity', 'Nashville'),
+                firm_zip=attorney_data.get('firmZip'),
+                firm_website=attorney_data.get('firmWebsite'),
+                bar_number=attorney_data.get('barNumber'),
+                bar_state=attorney_data.get('barState'),
+                bar_admission_date=attorney_data.get('barAdmissionDate'),
+                law_school=attorney_data.get('lawSchool'),
+                graduation_year=attorney_data.get('graduationYear'),
+                years_experience=attorney_data.get('yearsExperience'),
+                practice_areas=json.dumps(attorney_data.get('practiceAreas', [])),
+                landlord_tenant_experience=attorney_data.get('landlordTenantExperience'),
+                eviction_experience=attorney_data.get('evictionExperience'),
+                court_experience=json.dumps(attorney_data.get('courtExperience', [])),
+                specializations=json.dumps(attorney_data.get('specializations', [])),
+                case_types=json.dumps(attorney_data.get('caseTypes', [])),
+                client_types=json.dumps(attorney_data.get('clientTypes', [])),
+                minimum_case_value=attorney_data.get('minimumCaseValue'),
+                case_volume_interest=attorney_data.get('caseVolumeInterest'),
+                service_areas=json.dumps(attorney_data.get('serviceAreas', [])),
+                response_time=attorney_data.get('responseTime'),
+                hourly_rate=attorney_data.get('hourlyRate'),
+                fee_structure_preference=attorney_data.get('feeStructurePreference'),
+                lead_budget=attorney_data.get('leadBudget'),
+                lead_volume=attorney_data.get('leadVolume'),
+                lead_quality=attorney_data.get('leadQuality'),
+                profile_visibility=attorney_data.get('profileVisibility'),
+                client_communication=json.dumps(attorney_data.get('clientCommunication', [])),
+                case_updates=attorney_data.get('caseUpdates'),
+                marketing_consent=attorney_data.get('marketingConsent', False),
+                data_sharing=attorney_data.get('dataSharing', False),
+                motivation=attorney_data.get('motivation'),
+                additional_services=attorney_data.get('additionalServices'),
+                special_requirements=attorney_data.get('specialRequirements'),
+                terms_accepted=attorney_data.get('termsAccepted', False),
+                privacy_consent=attorney_data.get('privacyConsent', False),
+                status=attorney_data.get('status', 'pending_review'),
+            )
             
-            # Convert arrays to JSON strings
-            practice_areas = json.dumps(attorney_data.get('practiceAreas', []))
-            court_experience = json.dumps(attorney_data.get('courtExperience', []))
-            specializations = json.dumps(attorney_data.get('specializations', []))
-            case_types = json.dumps(attorney_data.get('caseTypes', []))
-            client_types = json.dumps(attorney_data.get('clientTypes', []))
-            availability_hours = json.dumps(attorney_data.get('availabilityHours', []))
-            flat_fee_services = json.dumps(attorney_data.get('flatFeeServices', []))
-            payment_methods = json.dumps(attorney_data.get('paymentMethods', []))
-            marketing_preferences = json.dumps(attorney_data.get('marketingPreferences', []))
-            referral_sources = json.dumps(attorney_data.get('referralSources', []))
-            service_areas = json.dumps(attorney_data.get('serviceAreas', []))
-            communication_tools = json.dumps(attorney_data.get('communicationTools', []))
-            document_signing = json.dumps(attorney_data.get('documentSigning', []))
-            professional_references = json.dumps(attorney_data.get('references', []))
-            client_communication = json.dumps(attorney_data.get('clientCommunication', []))
+            db.session.add(new_attorney)
+            db.session.commit()
             
-            cursor.execute('''
-                INSERT INTO attorneys (
-                    application_id, first_name, last_name, email, phone, firm_name,
-                    firm_address, firm_city, firm_zip, firm_website, bar_number, bar_state,
-                    bar_admission_date, law_school, graduation_year, years_experience,
-                    practice_areas, landlord_tenant_experience, eviction_experience,
-                    court_experience, specializations, case_types, client_types,
-                    minimum_case_value, maximum_caseload, response_time, availability_hours,
-                    hourly_rate, flat_fee_services, payment_terms, retainer_amount,
-                    payment_methods, fee_structure_preference, lead_budget, lead_volume,
-                    lead_quality, marketing_preferences, referral_sources, service_areas,
-                    travel_radius, remote_consultation, case_management_software,
-                    communication_tools, document_signing, professional_references, malpractice_insurance,
-                    insurance_carrier, coverage_amount, disciplinary_history,
-                    disciplinary_details, profile_visibility, client_communication,
-                    case_updates, marketing_consent, data_sharing, motivation,
-                    additional_services, special_requirements, terms_accepted,
-                    privacy_consent
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                application_id,
-                attorney_data.get('firstName', ''),
-                attorney_data.get('lastName', ''),
-                attorney_data.get('email', ''),
-                attorney_data.get('phone', ''),
-                attorney_data.get('firmName', ''),
-                attorney_data.get('firmAddress', ''),
-                attorney_data.get('firmCity', 'Nashville'),
-                attorney_data.get('firmZip', ''),
-                attorney_data.get('firmWebsite', ''),
-                attorney_data.get('barNumber', ''),
-                attorney_data.get('barState', ''),
-                attorney_data.get('barAdmissionDate', ''),
-                attorney_data.get('lawSchool', ''),
-                attorney_data.get('graduationYear', ''),
-                attorney_data.get('yearsExperience', ''),
-                practice_areas,
-                attorney_data.get('landlordTenantExperience', ''),
-                attorney_data.get('evictionExperience', ''),
-                court_experience,
-                specializations,
-                case_types,
-                client_types,
-                attorney_data.get('minimumCaseValue', ''),
-                attorney_data.get('maximumCaseload', ''),
-                attorney_data.get('responseTime', ''),
-                availability_hours,
-                attorney_data.get('hourlyRate', ''),
-                flat_fee_services,
-                attorney_data.get('paymentTerms', ''),
-                attorney_data.get('retainerAmount', ''),
-                payment_methods,
-                attorney_data.get('feeStructurePreference', ''),
-                attorney_data.get('leadBudget', ''),
-                attorney_data.get('leadVolume', ''),
-                attorney_data.get('leadQuality', ''),
-                marketing_preferences,
-                referral_sources,
-                service_areas,
-                attorney_data.get('travelRadius', ''),
-                attorney_data.get('remoteConsultation', False),
-                attorney_data.get('caseManagementSoftware', ''),
-                communication_tools,
-                document_signing,
-                professional_references,
-                attorney_data.get('malpracticeInsurance', False),
-                attorney_data.get('insuranceCarrier', ''),
-                attorney_data.get('coverageAmount', ''),
-                attorney_data.get('disciplinaryHistory', False),
-                attorney_data.get('disciplinaryDetails', ''),
-                attorney_data.get('profileVisibility', ''),
-                client_communication,
-                attorney_data.get('caseUpdates', ''),
-                attorney_data.get('marketingConsent', False),
-                attorney_data.get('dataSharing', False),
-                attorney_data.get('motivation', ''),
-                attorney_data.get('additionalServices', ''),
-                attorney_data.get('specialRequirements', ''),
-                attorney_data.get('termsAccepted', False),
-                attorney_data.get('privacyConsent', False)
-            ))
-            
-            attorney_id = cursor.lastrowid
-            conn.commit()
-            
-            # Return the created attorney data
             return {
                 'success': True,
-                'attorney': {
-                    'id': attorney_id,
-                    'application_id': application_id,
-                    'email': attorney_data.get('email', ''),
-                    'firm_name': attorney_data.get('firmName', ''),
-                    'status': 'pending_review'
-                }
+                'message': 'Attorney application created successfully',
+                'application_id': new_attorney.application_id,
+                'data': new_attorney.to_dict()
             }
-            
-        except sqlite3.IntegrityError as e:
-            if 'email' in str(e):
-                return {'success': False, 'error': 'An attorney with this email address already exists'}
-            else:
-                return {'success': False, 'error': 'Attorney application could not be created'}
         except Exception as e:
-            return {'success': False, 'error': f'Database error: {str(e)}'}
-        finally:
-            conn.close()
+            db.session.rollback()
+            return {
+                'success': False,
+                'error': str(e)
+            }
     
-    def get_attorney_by_id(self, attorney_id):
+    def get_attorney(self, attorney_id):
         """Get attorney by ID"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM attorneys WHERE id = ?', (attorney_id,))
-        row = cursor.fetchone()
-        conn.close()
-        
-        if row:
-            return self._row_to_dict(cursor, row)
-        return None
+        attorney = AttorneyApplication.query.get(attorney_id)
+        return attorney.to_dict() if attorney else None
     
     def get_attorney_by_application_id(self, application_id):
         """Get attorney by application ID"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM attorneys WHERE application_id = ?', (application_id,))
-        row = cursor.fetchone()
-        conn.close()
-        
-        if row:
-            return self._row_to_dict(cursor, row)
-        return None
+        attorney = AttorneyApplication.query.filter_by(application_id=application_id).first()
+        return attorney.to_dict() if attorney else None
     
     def get_attorney_by_email(self, email):
         """Get attorney by email"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM attorneys WHERE email = ?', (email,))
-        row = cursor.fetchone()
-        conn.close()
-        
-        if row:
-            return self._row_to_dict(cursor, row)
-        return None
+        attorney = AttorneyApplication.query.filter_by(email=email).first()
+        return attorney.to_dict() if attorney else None
     
-    def get_all_attorneys(self, status=None, limit=50, offset=0):
+    def get_all_attorneys(self, status=None, limit=None):
         """Get all attorneys with optional filtering"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        query = 'SELECT * FROM attorneys'
-        params = []
-        
+        query = AttorneyApplication.query
         if status:
-            query += ' WHERE status = ?'
-            params.append(status)
-        
-        query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-        params.extend([limit, offset])
-        
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        conn.close()
-        
-        return [self._row_to_dict(cursor, row) for row in rows]
+            query = query.filter_by(status=status)
+        if limit:
+            query = query.limit(limit)
+        return [attorney.to_dict() for attorney in query.all()]
     
     def update_attorney_status(self, application_id, status, reviewer_notes=None):
         """Update attorney application status"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+        attorney = AttorneyApplication.query.filter_by(application_id=application_id).first()
+        if not attorney:
+            return {'success': False, 'error': 'Attorney not found'}
         
-        update_fields = ['status = ?', 'updated_at = CURRENT_TIMESTAMP']
-        params = [status]
+        attorney.status = status
+        attorney.reviewer_notes = reviewer_notes
+        attorney.review_date = datetime.utcnow()
+        if status == 'approved':
+            attorney.approval_date = datetime.utcnow()
+            attorney.profile_active = True
         
-        if status in ['approved', 'rejected']:
-            update_fields.append('review_date = CURRENT_TIMESTAMP')
-            if status == 'approved':
-                update_fields.append('approval_date = CURRENT_TIMESTAMP')
-                update_fields.append('profile_active = 1')
-        
-        if reviewer_notes:
-            update_fields.append('reviewer_notes = ?')
-            params.append(reviewer_notes)
-        
-        params.append(application_id)
-        
-        query = f'UPDATE attorneys SET {", ".join(update_fields)} WHERE application_id = ?'
-        cursor.execute(query, params)
-        
-        rows_affected = cursor.rowcount
-        conn.commit()
-        conn.close()
-        
-        return rows_affected > 0
+        db.session.commit()
+        return {'success': True, 'data': attorney.to_dict()}
     
-    def search_attorneys(self, criteria):
-        """Search attorneys based on various criteria"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
+    def update_attorney_profile(self, attorney_id, updates):
+        """Update attorney profile"""
+        attorney = AttorneyApplication.query.get(attorney_id)
+        if not attorney:
+            return {'success': False, 'error': 'Attorney not found'}
         
-        query = 'SELECT * FROM attorneys WHERE status = "approved" AND profile_active = 1'
-        params = []
+        for key, value in updates.items():
+            if hasattr(attorney, key):
+                setattr(attorney, key, value)
         
-        if criteria.get('service_areas'):
-            query += ' AND service_areas LIKE ?'
-            params.append(f'%{criteria["service_areas"]}%')
-        
-        if criteria.get('practice_areas'):
-            query += ' AND practice_areas LIKE ?'
-            params.append(f'%{criteria["practice_areas"]}%')
-        
-        if criteria.get('case_types'):
-            query += ' AND case_types LIKE ?'
-            params.append(f'%{criteria["case_types"]}%')
-        
-        if criteria.get('max_hourly_rate'):
-            query += ' AND CAST(REPLACE(hourly_rate, "$", "") AS INTEGER) <= ?'
-            params.append(criteria['max_hourly_rate'])
-        
-        query += ' ORDER BY created_at DESC'
-        
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        conn.close()
-        
-        return [self._row_to_dict(cursor, row) for row in rows]
-    
-    def get_attorney_stats(self):
-        """Get attorney statistics"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        stats = {}
-        
-        # Total attorneys by status
-        cursor.execute('SELECT status, COUNT(*) FROM attorneys GROUP BY status')
-        stats['by_status'] = dict(cursor.fetchall())
-        
-        # Total attorneys
-        cursor.execute('SELECT COUNT(*) FROM attorneys')
-        stats['total'] = cursor.fetchone()[0]
-        
-        # Active attorneys
-        cursor.execute('SELECT COUNT(*) FROM attorneys WHERE profile_active = 1')
-        stats['active'] = cursor.fetchone()[0]
-        
-        # Recent applications (last 30 days)
-        cursor.execute('''
-            SELECT COUNT(*) FROM attorneys 
-            WHERE created_at >= datetime('now', '-30 days')
-        ''')
-        stats['recent_applications'] = cursor.fetchone()[0]
-        
-        conn.close()
-        return stats
-    
-    def _row_to_dict(self, cursor, row):
-        """Convert database row to dictionary"""
-        columns = [description[0] for description in cursor.description]
-        attorney_dict = dict(zip(columns, row))
-        
-        # Parse JSON fields
-        json_fields = [
-            'practice_areas', 'court_experience', 'specializations', 'case_types',
-            'client_types', 'availability_hours', 'flat_fee_services', 'payment_methods',
-            'marketing_preferences', 'referral_sources', 'service_areas',
-            'communication_tools', 'document_signing', 'professional_references', 'client_communication'
-        ]
-        
-        for field in json_fields:
-            if attorney_dict.get(field):
-                try:
-                    attorney_dict[field] = json.loads(attorney_dict[field])
-                except json.JSONDecodeError:
-                    attorney_dict[field] = []
-        
-        return attorney_dict
+        attorney.updated_at = datetime.utcnow()
+        db.session.commit()
+        return {'success': True, 'data': attorney.to_dict()}
+
