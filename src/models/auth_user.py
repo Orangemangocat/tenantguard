@@ -160,6 +160,8 @@ class OAuthState(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=False)
     used = db.Column(db.Boolean, default=False)
+    # Optional: record intended post-auth start role (e.g. 'tenant' or 'attorney')
+    start_role = db.Column(db.String(50))
     
     def is_valid(self):
         """Check if state is still valid"""

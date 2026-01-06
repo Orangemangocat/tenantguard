@@ -39,6 +39,7 @@ function App() {
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
   const [userOnboarded, setUserOnboarded] = useState(false)
+  const [pendingStartRole, setPendingStartRole] = useState(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -148,15 +149,17 @@ function App() {
 
   // When user clicks Tenants/Attorneys actions, ensure they're authenticated
   // If not authenticated -> show login. If authenticated -> forward to onboarding
-  const handleRequireOnboarding = () => {
+  const handleRequireOnboarding = (role) => {
     if (!currentUser) {
+      setPendingStartRole(role || null)
       setShowLogin(true)
       return
     }
 
-    // Forward authenticated users to onboarding first.
+    // Forward authenticated users to onboarding first with explicit start role.
     if (typeof window !== 'undefined') {
-      window.location.href = '/onboarding'
+      const start = role ? `?start=${encodeURIComponent(role)}` : ''
+      window.location.href = `/onboarding${start}`
     }
   }
 
@@ -267,7 +270,7 @@ function App() {
                         {currentUser.role === 'admin' && (
                           <a href="/admin-panel" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Panel</a>
                         )}
-                        {!userOnboarded && currentUser?.role !== 'admin' && (
+                        {currentUser?.role !== 'admin' && (
                           <a href="/onboarding" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Onboarding</a>
                         )}
                         <div className="border-t border-gray-200 my-1"></div>
@@ -383,7 +386,7 @@ function App() {
                         <div className="px-3 py-2 text-sm" style={{ color: 'var(--color-textSecondary)' }}>
                           {currentUser.email || currentUser.username || 'User'}
                         </div>
-                        {!userOnboarded && currentUser?.role !== 'admin' && (
+                        {currentUser?.role !== 'admin' && (
                           <a
                             href="/onboarding"
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
@@ -906,10 +909,22 @@ function App() {
         {/* Login Modal */}
         {showLogin && !currentUser && (
           <Login
+            pendingStartRole={pendingStartRole}
+            setPendingStartRole={setPendingStartRole}
             onClose={() => setShowLogin(false)}
             onSuccess={(user) => {
               setCurrentUser(user)
               setShowLogin(false)
+              if (pendingStartRole) {
+                const start = `?start=${encodeURIComponent(pendingStartRole)}`
+                setPendingStartRole(null)
+                if (typeof window !== 'undefined') window.location.href = `/onboarding${start}`
+              } else {
+                // If user wasn't coming from a CTA, but isn't onboarded, send them to onboarding
+                if (!userOnboarded && typeof window !== 'undefined') {
+                  window.location.href = '/onboarding'
+                }
+              }
             }}
             onSwitchToRegister={() => {
               setShowLogin(false)

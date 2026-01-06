@@ -4,7 +4,7 @@ import React, { useState } from 'react';
  * Login Component with OAuth Integration
  * Supports Google OAuth, GitHub OAuth, and local login
  */
-export default function Login({ onSuccess, onSwitchToRegister, onClose }) {
+export default function Login({ onSuccess, onSwitchToRegister, onClose, pendingStartRole, setPendingStartRole }) {
   const [showLocalLogin, setShowLocalLogin] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -18,15 +18,20 @@ export default function Login({ onSuccess, onSwitchToRegister, onClose }) {
       setLoading(true);
       setError(null);
       
-      // Get OAuth authorization URL from backend
-      const response = await fetch(`/auth/${provider}/login`);
+      // Get OAuth authorization URL from backend, include pending start role if provided
+      let authUrlEndpoint = `/auth/${provider}/login`
+      if (pendingStartRole) {
+        authUrlEndpoint += `?start=${encodeURIComponent(pendingStartRole)}`
+      }
+      const response = await fetch(authUrlEndpoint);
       const data = await response.json();
       
       if (!response.ok) {
         throw new Error(data.error || `Failed to initiate ${provider} login`);
       }
       
-      // Redirect to OAuth provider
+      // Clear pending role (page will navigate) then redirect to OAuth provider
+      if (setPendingStartRole) setPendingStartRole(null)
       window.location.href = data.auth_url;
     } catch (err) {
       setError(err.message);

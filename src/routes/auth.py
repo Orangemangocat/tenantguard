@@ -148,11 +148,15 @@ def google_login():
         # Get redirect URI
         redirect_uri = get_redirect_uri('google')
         
-        # Store state in database with redirect URI for verification
+        # Capture optional 'start' param (tenant/attorney) and store with state
+        start_role = request.args.get('start')
+
+        # Store state in database with redirect URI and intended start role for verification
         oauth_state = OAuthState(
             state=state,
             provider='google',
             redirect_uri=redirect_uri,
+            start_role=start_role,
             expires_at=datetime.utcnow() + timedelta(minutes=10)
         )
         db.session.add(oauth_state)
@@ -361,6 +365,10 @@ def google_callback():
             f"token_type=Bearer&"
             f"expires_in=3600"
         )
+
+        # Preserve intended start role for frontend onboarding flow
+        if oauth_state.start_role:
+            redirect_url = f"{redirect_url}&start={oauth_state.start_role}"
         
         logger.info(f"OAuth successful for user {user.email}, redirecting to frontend")
         
@@ -384,9 +392,12 @@ def github_login():
     
     state = secrets.token_urlsafe(32)
     
+    start_role = request.args.get('start')
+
     oauth_state = OAuthState(
         state=state,
         provider='github',
+        start_role=start_role,
         expires_at=datetime.utcnow() + timedelta(minutes=10)
     )
     db.session.add(oauth_state)
@@ -501,6 +512,8 @@ def github_callback():
     # Redirect to frontend with tokens
     frontend_url = request.host_url.rstrip('/')
     redirect_url = f"{frontend_url}/auth/callback?access_token={jwt_token}&refresh_token={refresh_token}&token_type=Bearer&expires_in=3600"
+    if oauth_state.start_role:
+        redirect_url = f"{redirect_url}&start={oauth_state.start_role}"
     
     return redirect(redirect_url)
 
