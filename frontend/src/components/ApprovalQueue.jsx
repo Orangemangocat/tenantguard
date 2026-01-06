@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { API_BASE_URL } from '../lib/apiBase.js';
 
 const ApprovalQueue = () => {
   const { accessToken, isAdmin } = useAuth();
@@ -14,7 +15,7 @@ const ApprovalQueue = () => {
 
   const fetchPendingPosts = useCallback(async () => {
     try {
-      const response = await fetch('/api/blog/approval/pending', {
+      const response = await fetch(`${API_BASE_URL}/api/blog/approval/pending`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -33,7 +34,7 @@ const ApprovalQueue = () => {
 
   const fetchStatistics = useCallback(async () => {
     try {
-      const response = await fetch('/api/blog/approval/statistics', {
+      const response = await fetch(`${API_BASE_URL}/api/blog/approval/statistics`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -59,7 +60,7 @@ const ApprovalQueue = () => {
 
   const handleApprove = async (postId, publishImmediately = true) => {
     try {
-      const response = await fetch(`/api/blog/approval/approve/${postId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/blog/approval/approve/${postId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -95,7 +96,7 @@ const ApprovalQueue = () => {
     }
     
     try {
-      const response = await fetch(`/api/blog/approval/reject/${postId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/blog/approval/reject/${postId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,

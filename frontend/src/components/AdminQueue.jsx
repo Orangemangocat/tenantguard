@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../lib/apiBase.js';
 
 export default function AdminQueue() {
   const [jobs, setJobs] = useState([]);
@@ -12,7 +13,7 @@ export default function AdminQueue() {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/queue', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/queue`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json'

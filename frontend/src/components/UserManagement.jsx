@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label.jsx';
+import { API_BASE_URL } from '../lib/apiBase.js';
 
 /**
  * User Management Component
@@ -32,7 +33,7 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/auth/users', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/users`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -90,8 +91,8 @@ export default function UserManagement() {
 
     try {
       const url = dialogMode === 'create'
-        ? '/api/auth/users'
-        : `/api/auth/users/${selectedUser.id}`;
+        ? `${API_BASE_URL}/api/auth/users`
+        : `${API_BASE_URL}/api/auth/users/${selectedUser.id}`;
 
       const method = dialogMode === 'create' ? 'POST' : 'PUT';
 
@@ -124,7 +125,7 @@ export default function UserManagement() {
     }
 
     try {
-      const response = await fetch(`/api/auth/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -144,7 +145,7 @@ export default function UserManagement() {
 
   const handleToggleActive = async (userId, currentStatus) => {
     try {
-      const response = await fetch(`/api/auth/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

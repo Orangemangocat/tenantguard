@@ -210,11 +210,21 @@ function App() {
   }
 
   if (pathname === '/onboarding') {
+    // If not authenticated, show login prompt
+    if (!currentUser) {
+      return (
+        <ThemeProvider>
+          <div className="flex items-center justify-center min-h-screen bg-gray-50">
+            {(showLogin || !currentUser) && <Login onClose={() => setShowLogin(false)} pendingStartRole={pendingStartRole} setPendingStartRole={setPendingStartRole} onSuccess={(user) => { setCurrentUser(user); setShowLogin(false); }} onSwitchToRegister={() => { setShowLogin(false); setShowRegister(true); }} />}
+          </div>
+        </ThemeProvider>
+      )
+    }
+    
+    // User is authenticated, show onboarding
     return (
       <ThemeProvider>
-        <ProtectedRoute>
-          <Onboarding user={currentUser} onFinish={() => { if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/') }} />
-        </ProtectedRoute>
+        <Onboarding user={currentUser} onFinish={() => { if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/') }} />
       </ThemeProvider>
     )
   }
@@ -265,8 +275,8 @@ function App() {
                     {showUserMenu && (
                       <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                         <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit Profile</a>
-                        <a href="/my-tenant-case" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Tenant Submission</a>
-                        <a href="/my-lawyer-profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Lawyer Profile</a>
+                        <button onClick={() => { handleRequireOnboarding('tenant'); setShowUserMenu(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Tenant Submission</button>
+                        <button onClick={() => { handleRequireOnboarding('attorney'); setShowUserMenu(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Lawyer Profile</button>
                         {currentUser.role === 'admin' && (
                           <a href="/admin-panel" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Panel</a>
                         )}

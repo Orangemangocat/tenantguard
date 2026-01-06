@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import CaseDetailModal from './CaseDetailModal';
+import { API_BASE_URL } from '../lib/apiBase.js';
 
 export default function IntakeReview() {
   const [cases, setCases] = useState([]);
@@ -14,7 +15,7 @@ export default function IntakeReview() {
   const fetchCases = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/cases', {
+      const res = await fetch(`${API_BASE_URL}/api/cases`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json'
