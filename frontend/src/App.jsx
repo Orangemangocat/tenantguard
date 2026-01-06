@@ -14,6 +14,7 @@ import Register from './components/Register.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
 import Onboarding from './components/Onboarding.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
+import Navbar from './components/Navbar.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 
 import './App.css'
@@ -40,8 +41,6 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null)
   const [userOnboarded, setUserOnboarded] = useState(false)
   const [pendingStartRole, setPendingStartRole] = useState(null)
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const API_BASE = import.meta.env.VITE_API_BASE_URL
 
   // Handle OAuth callback - extract tokens from URL
@@ -247,217 +246,29 @@ function App() {
         backgroundColor: 'var(--color-background)',
         transition: 'background-color 0.3s ease'
       }}>
-        {/* Header */}
-        <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-3">
-                <img src={logo} alt="TenantGuard" className="h-8 w-8" />
-                <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard</span>
-              </div>
-
-              {/* Desktop Navigation */}
-              <nav className="hidden md:flex space-x-8">
-                <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => { setCurrentPage('home'); window.scrollTo(0, 0) }}>Home</Button>
-                <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('features')}>Features</Button>
-                <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => scrollToSection('how-it-works')}>How It Works</Button>
-                <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowBlog(true)}>Blog</Button>
-                <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowContactPage(true)}>Contact</Button>
-              </nav>
-
-              {/* Desktop Action Buttons */}
-              <div className="hidden md:flex items-center gap-2">
-                {currentUser ? (
-                  <div className="relative" onMouseEnter={() => setShowUserMenu(true)} onMouseLeave={() => setShowUserMenu(false)}>
-                    <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80">
-                      {currentUser.email || currentUser.username || 'User'}
-                    </Button>
-                    {showUserMenu && (
-                      <div className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                        <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit Profile</a>
-                        <button onClick={() => { handleRequireOnboarding('tenant'); setShowUserMenu(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Tenant Submission</button>
-                        <button onClick={() => { handleRequireOnboarding('attorney'); setShowUserMenu(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View Lawyer Profile</button>
-                        {currentUser.role === 'admin' && (
-                          <a href="/admin-panel" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Panel</a>
-                        )}
-                        {currentUser?.role !== 'admin' && (
-                          <a href="/onboarding" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Onboarding</a>
-                        )}
-                        <div className="border-t border-gray-200 my-1"></div>
-                        <button
-                          onClick={() => {
-                            setCurrentUser(null)
-                            localStorage.removeItem('access_token')
-                            localStorage.removeItem('refresh_token')
-                            setShowUserMenu(false)
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                        >
-                          Logout
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Button variant="ghost" style={{ color: 'var(--color-textSecondary)' }} className="hover:opacity-80" onClick={() => setShowLogin(true)}>Login</Button>
-                )}
-                <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => handleRequireOnboarding('tenant')}>Tenants</Button>
-                <Button style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }} className="hover:opacity-90" onClick={() => handleRequireOnboarding('attorney')}>Attorneys</Button>
-              </div>
-
-              {/* Mobile Menu Button */}
-              <div className="md:hidden">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={() => setShowMobileMenu(!showMobileMenu)}
-                  style={{
-                    color: 'var(--color-textSecondary)',
-                    touchAction: 'manipulation',
-                    width: '56px',
-                    height: '56px',
-                    minWidth: '56px',
-                    minHeight: '56px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '12px'
-                  }}
-                  aria-label="Toggle mobile menu"
-                >
-                  {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-                </Button>
-              </div>
-            </div>
-
-            {/* Mobile Menu */}
-            {showMobileMenu && (
-              <div className="md:hidden py-4 border-t" style={{ borderColor: 'var(--color-navBorder)' }}>
-                <nav className="flex flex-col space-y-2">
-                  <Button
-                    variant="ghost"
-                    style={{ color: 'var(--color-textSecondary)' }}
-                    className="hover:opacity-80 justify-start"
-                    onClick={() => {
-                      setCurrentPage('home');
-                      window.scrollTo(0, 0);
-                      setShowMobileMenu(false);
-                    }}
-                  >
-                    Home
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    style={{ color: 'var(--color-textSecondary)' }}
-                    className="hover:opacity-80 justify-start"
-                    onClick={() => {
-                      scrollToSection('features');
-                      setShowMobileMenu(false);
-                    }}
-                  >
-                    Features
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    style={{ color: 'var(--color-textSecondary)' }}
-                    className="hover:opacity-80 justify-start"
-                    onClick={() => {
-                      scrollToSection('how-it-works');
-                      setShowMobileMenu(false);
-                    }}
-                  >
-                    How It Works
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    style={{ color: 'var(--color-textSecondary)' }}
-                    className="hover:opacity-80 justify-start"
-                    onClick={() => {
-                      setShowBlog(true);
-                      setShowMobileMenu(false);
-                    }}
-                  >
-                    Blog
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    style={{ color: 'var(--color-textSecondary)' }}
-                    className="hover:opacity-80 justify-start"
-                    onClick={() => {
-                      setShowContactPage(true);
-                      setShowMobileMenu(false);
-                    }}
-                  >
-                    Contact
-                  </Button>
-                  <div className="border-t pt-2 mt-2" style={{ borderColor: 'var(--color-navBorder)' }}>
-                    {currentUser ? (
-                      <>
-                        <div className="px-3 py-2 text-sm" style={{ color: 'var(--color-textSecondary)' }}>
-                          {currentUser.email || currentUser.username || 'User'}
-                        </div>
-                        {currentUser?.role !== 'admin' && (
-                          <a
-                            href="/onboarding"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-                            onClick={() => setShowMobileMenu(false)}
-                          >
-                            Onboarding
-                          </a>
-                        )}
-                        <Button
-                          variant="ghost"
-                          style={{ color: 'var(--color-textSecondary)' }}
-                          className="hover:opacity-80 justify-start w-full"
-                          onClick={() => {
-                            setCurrentUser(null);
-                            localStorage.removeItem('access_token');
-                            localStorage.removeItem('refresh_token');
-                            setShowMobileMenu(false);
-                          }}
-                        >
-                          Logout
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        style={{ color: 'var(--color-textSecondary)' }}
-                        className="hover:opacity-80 justify-start w-full"
-                        onClick={() => {
-                          setShowLogin(true);
-                          setShowMobileMenu(false);
-                        }}
-                      >
-                        Login
-                      </Button>
-                    )}
-                    <Button
-                      style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
-                      className="hover:opacity-90 w-full mt-2"
-                      onClick={() => {
-                        handleRequireOnboarding('tenant');
-                        setShowMobileMenu(false);
-                      }}
-                    >
-                      Tenants
-                    </Button>
-                    <Button
-                      style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
-                      className="hover:opacity-90 w-full mt-2"
-                      onClick={() => {
-                        handleRequireOnboarding('attorney');
-                        setShowMobileMenu(false);
-                      }}
-                    >
-                      Attorneys
-                    </Button>
-                  </div>
-                </nav>
-              </div>
-            )}
-          </div>
-        </header>
+        {/* Navbar Component */}
+        <Navbar
+          currentUser={currentUser}
+          onLogin={() => setShowLogin(true)}
+          onLogout={handleLogout}
+          onDashboard={() => setShowAdminPanel(true)}
+          onNavigate={(section) => {
+            if (section === 'home') {
+              setCurrentPage('home');
+              window.scrollTo(0, 0);
+            } else if (section === 'features') {
+              scrollToSection('features');
+            } else if (section === 'how-it-works') {
+              scrollToSection('how-it-works');
+            } else if (section === 'blog') {
+              setShowBlog(true);
+            } else if (section === 'contact') {
+              setShowContactPage(true);
+            }
+          }}
+          onTenantClick={() => handleRequireOnboarding('tenant')}
+          onAttorneyClick={() => handleRequireOnboarding('attorney')}
+        />
 
         {/* Hero Section */}
         <section className="py-20 px-4 sm:px-6 lg:px-8">
