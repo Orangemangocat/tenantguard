@@ -1,8 +1,9 @@
+---
 name: Vercel Preview Deploy
 
 on:
   push:
-    branches: [ dev ]
+    branches: [main, dev]
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -35,14 +36,14 @@ jobs:
           python -m pip install -r requirements.txt
           python -m compileall src
           python -c "import importlib; importlib.import_module('src.main')"
-      
+
       - name: Install pnpm
         run: sudo npm install -g pnpm
 
       - name: Install frontend dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile
-      
+
       - name: Build frontend
         working-directory: frontend
         run: pnpm build
@@ -50,10 +51,15 @@ jobs:
       - name: Install frontend-next dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile
-      
+
       - name: Lint frontend-next
         working-directory: frontend
         run: pnpm lint
+
+      - name: 'notify vercel'
+        uses: 'vercel/repository-dispatch/actions/status@v1'
+        with: |
+          name: Vercel - tenantguard: lint
 
       - name: Vercel Deploy (Preview)
         env:
@@ -63,4 +69,5 @@ jobs:
         working-directory: frontend
         run: |
           npx vercel --token $VERCEL_TOKEN --confirm
-          npx vercel alias set $(npx vercel --token $VERCEL_TOKEN) pr-${{ github.event.pull_request.number }}.tenantguard.vercel.app
+          npx vercel alias set $(npx vercel --token $VERCEL_TOKEN) |
+            pr-${{ github.event.pull_request.number }}.tenantguard.vercel.app
