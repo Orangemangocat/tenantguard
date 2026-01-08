@@ -1,11 +1,8 @@
 {
-  "build": {
-    "chunkSizeWarningLimit": 800000,
-  },
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"]
-    },
-  },
+    }
+  }
 }

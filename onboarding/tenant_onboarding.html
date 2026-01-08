@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Gathering - TenantGuard Onboarding</title>
+    <link rel="stylesheet" href="tenant_onboarding.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">TenantGuard</div>
+            <div class="progress-bar">
+                <div class="progress-step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Welcome</div>
+                </div>
+                <div class="progress-step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Documents</div>
+                </div>
+                <div class="progress-step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Upload</div>
+                </div>
+                <div class="progress-step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Complete</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Step 1: Welcome -->
+        <div class="form-step active" id="step-1">
+            <div class="step-content">
+                <h1>Welcome to Your TenantGuard Onboarding</h1>
+                <div class="info-box">
+                    <h2>📋 What We're Collecting</h2>
+                    <p>We need to gather any communications your landlord has sent you. This might include notices, letters, court documents, or lease paperwork. These documents help us understand your situation and build your defense.</p>
+                </div>
+                
+                <div class="reassurance-box">
+                    <h3>✓ Don't worry if you don't have everything</h3>
+                    <p>It's completely normal if you don't remember all the notices you've received or don't have copies of them. We can obtain many documents through CaseLink and court records. Just tell us what you remember, and we'll handle the rest.</p>
+                </div>
+
+                <div class="important-box">
+                    <h3>⚠️ Important: Future Communications</h3>
+                    <p><strong>When you receive any new communication from your landlord</strong> (notices, letters, court papers), please return to your admin area immediately and upload them. This helps us stay current with your case and respond appropriately.</p>
+                </div>
+
+                <button class="btn-primary" onclick="nextStep(2)">Get Started</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Document Selection -->
+        <div class="form-step" id="step-2">
+            <div class="step-content">
+                <h1>Which Communications Have You Received?</h1>
+                <p class="subtitle">Select all that apply. Don't worry if you're not sure about the exact type—just pick what sounds familiar.</p>
+
+                <form id="document-selection-form">
+                    <!-- Category 1: Move-in / Lease Documents -->
+                    <div class="document-category">
+                        <h2 class="category-title">📄 Move-In & Lease Documents</h2>
+                        <div class="document-options">
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="lease-agreement">
+                                <div class="option-content">
+                                    <div class="option-title">Lease or Rental Agreement</div>
+                                    <div class="option-description">Your original lease, renewal paperwork, or rental contract</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="addenda">
+                                <div class="option-content">
+                                    <div class="option-title">Addenda or Rules</div>
+                                    <div class="option-description">Pet addendum, parking rules, smoking policy, noise rules, HOA rules</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="lead-paint">
+                                <div class="option-content">
+                                    <div class="option-title">Lead-Based Paint Disclosure</div>
+                                    <div class="option-description">Required for housing built before 1978, includes EPA pamphlet</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="security-deposit">
+                                <div class="option-content">
+                                    <div class="option-title">Security Deposit Receipt</div>
+                                    <div class="option-description">Receipt for your deposit, move-in inspection form, condition checklist</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Category 2: During Tenancy -->
+                    <div class="document-category">
+                        <h2 class="category-title">📬 Notices During Your Tenancy</h2>
+                        <div class="document-options">
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="rent-increase">
+                                <div class="option-content">
+                                    <div class="option-title">Rent Increase Notice</div>
+                                    <div class="option-description">Notice that your rent is going up</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="entry-notice">
+                                <div class="option-content">
+                                    <div class="option-title">Notice of Entry or Access</div>
+                                    <div class="option-description">Notice that landlord needs to enter your unit for inspections, repairs, or showings</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="cure-letter">
+                                <div class="option-content">
+                                    <div class="option-title">Demand or "Cure" Letter</div>
+                                    <div class="option-description">Letter about housekeeping, unauthorized occupants, pets, parking, trash, noise, or other lease violations</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="maintenance-notice">
+                                <div class="option-content">
+                                    <div class="option-title">Maintenance or Repair Notice</div>
+                                    <div class="option-description">Scheduling repairs, denial of access, code issues</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="utility-notice">
+                                <div class="option-content">
+                                    <div class="option-title">Utility Notice</div>
+                                    <div class="option-description">Notice about utilities, transfers, or shut-offs</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="vehicle-notice">
+                                <div class="option-content">
+                                    <div class="option-title">Vehicle Tow/Removal Notice</div>
+                                    <div class="option-description">24-hour notice to remove or tow a vehicle</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Category 3: Breach/Termination Notices -->
+                    <div class="document-category">
+                        <h2 class="category-title">⚠️ Breach, Default, or Termination Notices</h2>
+                        <div class="document-options">
+                            <label class="document-option highlight-important">
+                                <input type="checkbox" name="doc" value="14day-pay">
+                                <div class="option-content">
+                                    <div class="option-title">14-Day Notice to Pay or Quit</div>
+                                    <div class="option-description">Notice for nonpayment of rent, giving you 14 days to pay or move out</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option highlight-important">
+                                <input type="checkbox" name="doc" value="14day-violation">
+                                <div class="option-content">
+                                    <div class="option-title">14-Day Notice for Lease Violations</div>
+                                    <div class="option-description">Notice for breaking lease rules (not rent-related)</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option highlight-important">
+                                <input type="checkbox" name="doc" value="3day-violent">
+                                <div class="option-content">
+                                    <div class="option-title">3-Day Termination for Violent Conduct</div>
+                                    <div class="option-description">Immediate termination for threatening or violent behavior</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="10day-weekly">
+                                <div class="option-content">
+                                    <div class="option-title">10-Day Notice to End Week-to-Week</div>
+                                    <div class="option-description">Notice ending a week-to-week rental agreement</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="30day-monthly">
+                                <div class="option-content">
+                                    <div class="option-title">30-Day Notice to End Month-to-Month</div>
+                                    <div class="option-description">Notice ending a month-to-month rental agreement</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Category 4: Move-Out & Deposit -->
+                    <div class="document-category">
+                        <h2 class="category-title">🏠 Move-Out & Security Deposit</h2>
+                        <div class="document-options">
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="moveout-inspection">
+                                <div class="option-content">
+                                    <div class="option-title">Move-Out Inspection Notice</div>
+                                    <div class="option-description">Offer of joint inspection, damage statement, itemization</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="deposit-refund">
+                                <div class="option-content">
+                                    <div class="option-title">Security Deposit Refund Notice</div>
+                                    <div class="option-description">Notice about your deposit return or deductions</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Category 5: Court & Sheriff Papers -->
+                    <div class="document-category">
+                        <h2 class="category-title">⚖️ Court & Sheriff Papers</h2>
+                        <div class="document-options">
+                            <label class="document-option highlight-urgent">
+                                <input type="checkbox" name="doc" value="detainer-warrant">
+                                <div class="option-content">
+                                    <div class="option-title">Detainer Warrant</div>
+                                    <div class="option-description">Official eviction case filing from General Sessions Court</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option highlight-urgent">
+                                <input type="checkbox" name="doc" value="immediate-possession">
+                                <div class="option-content">
+                                    <div class="option-title">Immediate Possession Warrant</div>
+                                    <div class="option-description">Court paper for immediate possession in certain situations</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option highlight-urgent">
+                                <input type="checkbox" name="doc" value="warrant-recover">
+                                <div class="option-content">
+                                    <div class="option-title">Warrant to Recover</div>
+                                    <div class="option-description">Court order for possession and related relief</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option highlight-urgent">
+                                <input type="checkbox" name="doc" value="writ-possession">
+                                <div class="option-content">
+                                    <div class="option-title">Writ of Possession / Writ of Restitution</div>
+                                    <div class="option-description">Post-judgment paper authorizing physical removal by sheriff</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="subpoena">
+                                <div class="option-content">
+                                    <div class="option-title">Subpoena or Show-Cause Order</div>
+                                    <div class="option-description">Court order requiring your appearance or response</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Other/Not Sure -->
+                    <div class="document-category">
+                        <h2 class="category-title">❓ Other or Not Sure</h2>
+                        <div class="document-options">
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="other">
+                                <div class="option-content">
+                                    <div class="option-title">Other Document Type</div>
+                                    <div class="option-description">I received something not listed here</div>
+                                </div>
+                            </label>
+
+                            <label class="document-option">
+                                <input type="checkbox" name="doc" value="not-sure">
+                                <div class="option-content">
+                                    <div class="option-title">Not Sure / Don't Remember</div>
+                                    <div class="option-description">I'm not sure what I received</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="prevStep(1)">Back</button>
+                        <button type="button" class="btn-primary" onclick="nextStep(3)">Continue to Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Step 3: Document Upload -->
+        <div class="form-step" id="step-3">
+            <div class="step-content">
+                <h1>Upload Your Documents</h1>
+                <p class="subtitle">Upload copies of the documents you selected. You can skip any you don't have—we'll obtain them through other means.</p>
+
+                <div class="upload-section" id="upload-section">
+                    <!-- Upload areas will be dynamically generated based on selections -->
+                    <div class="upload-placeholder">
+                        <p>Please select documents in the previous step to see upload options here.</p>
+                    </div>
+                </div>
+
+                <div class="additional-info">
+                    <h3>Additional Information (Optional)</h3>
+                    <label for="additional-notes">
+                        <span>Any additional context about these documents?</span>
+                        <textarea id="additional-notes" rows="4" placeholder="For example: approximate dates you received notices, any verbal communications, missing documents you know about, etc."></textarea>
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="prevStep(2)">Back</button>
+                    <button type="button" class="btn-primary" onclick="nextStep(4)">Complete Onboarding</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Confirmation -->
+        <div class="form-step" id="step-4">
+            <div class="step-content">
+                <div class="success-icon">✓</div>
+                <h1>Onboarding Complete!</h1>
+                
+                <div class="summary-box">
+                    <h2>What Happens Next?</h2>
+                    <ol class="next-steps">
+                        <li>Our team will review the documents you've provided</li>
+                        <li>We'll obtain any missing documents through CaseLink and court records</li>
+                        <li>You'll receive a comprehensive case analysis within 24-48 hours</li>
+                        <li>We'll contact you if we need any clarification</li>
+                    </ol>
+                </div>
+
+                <div class="reminder-box">
+                    <h3>🔔 Important Reminder</h3>
+                    <p><strong>If you receive ANY new communication from your landlord</strong>—whether it's a notice, letter, email, or court document—please log into your admin area immediately and upload it. Timely information is critical to your defense.</p>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" onclick="goToDashboard()">Go to Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="tenant_onboarding.js"></script>
+</body>
+</html>

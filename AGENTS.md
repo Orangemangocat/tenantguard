@@ -1,5 +1,11 @@
 # AGENTS.md — TenantGuard Patch-Only Contract (Flask + Vite React)
 
+Agents must operate in PATCH-ONLY mode. No direct overwrites. All changes are delivered as unified diff patches and merged via PR.
+
+## ALL AGENTS MUST READ 'docs/control-plane' IMMEDIATELY!
+- Once you're ve read and understand the control-plane, you MUST say to the user:
+  "I UNDERSTAND THE CONTROL-PLANE DOCUMENTATION!"
+
 Repo layout:
 - `src/` = Flask backend (Python 3.12), entrypoint `src/main.py`
 - `src/worker.py` = Background worker (Python)
@@ -12,7 +18,6 @@ Repo layout:
 - `scripts/` = Utility scripts (Python/JS)
 - `AGENTS.md` = This file
 
-Agents must operate in PATCH-ONLY mode. No direct overwrites. All changes are delivered as unified diff patches and merged via PR.
 
 ---
 

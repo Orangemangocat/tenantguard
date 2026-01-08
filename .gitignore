@@ -1,15 +1,14 @@
 # Python
 **/__pycache__/
 **/*.pyc
-static/
-index.html
 node_modules/
 node_modules/*
 **/node_modules/
 **/node_modules/**
 
 # Local databases / generated data
-src/database/*.db
+src/database/
+src/database/**
 
 # Frontend build output
 frontend/dist/

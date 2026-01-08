@@ -33,7 +33,7 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/auth/users`, {
+      const response = await fetch(`${API_BASE_URL}/auth/users`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
@@ -44,7 +44,7 @@ export default function UserManagement() {
         setUsers(data.users || []);
         setError(null);
       } else {
-        throw new Error('Failed to fetch users');
+        throw new Error(`Failed to fetch users (status ${response.status})`);
       }
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -91,8 +91,8 @@ export default function UserManagement() {
 
     try {
       const url = dialogMode === 'create'
-        ? `${API_BASE_URL}/api/auth/users`
-        : `${API_BASE_URL}/api/auth/users/${selectedUser.id}`;
+        ? `${API_BASE_URL}/auth/users`
+        : `${API_BASE_URL}/auth/users/${selectedUser.id}`;
 
       const method = dialogMode === 'create' ? 'POST' : 'PUT';
 
@@ -125,7 +125,7 @@ export default function UserManagement() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/auth/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -136,7 +136,7 @@ export default function UserManagement() {
         setSuccess('User deleted successfully');
         fetchUsers();
       } else {
-        throw new Error('Failed to delete user');
+        throw new Error(`Failed to delete user (status ${response.status})`);
       }
     } catch (err) {
       setError(err.message);
@@ -145,7 +145,7 @@ export default function UserManagement() {
 
   const handleToggleActive = async (userId, currentStatus) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/auth/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ export default function UserManagement() {
         setSuccess(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
         fetchUsers();
       } else {
-        throw new Error('Failed to update user status');
+        throw new Error(`Failed to update user status (status ${response.status})`);
       }
     } catch (err) {
       setError(err.message);
