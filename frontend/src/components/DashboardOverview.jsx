@@ -17,7 +17,11 @@ export default function DashboardOverview({ user }) {
         setLoading(true);
         
         // Fetch blog statistics
-        const blogResponse = await fetch(`${API_BASE_URL}/api/blog/analytics`);
+        const blogResponse = await fetch(`${API_BASE_URL}/api/blog/analytics`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          }
+        });
         const blogData = await blogResponse.json();
         
         // Fetch approval queue statistics (admin only)

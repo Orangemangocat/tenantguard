@@ -2,7 +2,7 @@ name: Vercel Preview Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ dev ]
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -11,6 +11,7 @@ jobs:
     name: Preview Deploy
     runs-on: ubuntu-latest
     env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CI_DB_URL: ${{ secrets.CI_DB_URL }}
 
     steps:
@@ -36,7 +37,7 @@ jobs:
           python -c "import importlib; importlib.import_module('src.main')"
       
       - name: Install pnpm
-        run: npm install -g pnpm
+        run: sudo npm install -g pnpm
 
       - name: Install frontend dependencies
         working-directory: frontend
@@ -45,6 +46,14 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: pnpm build
+
+      - name: Install frontend-next dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      
+      - name: Lint frontend-next
+        working-directory: frontend
+        run: pnpm lint
 
       - name: Vercel Deploy (Preview)
         env:

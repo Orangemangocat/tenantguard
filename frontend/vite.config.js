@@ -16,4 +16,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    "chunkSizeWarningLimit": 800000,
+    "outDir": "../src/static",
+    "emptyOutDir": true
+  }
 })

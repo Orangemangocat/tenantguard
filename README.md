@@ -2,7 +2,10 @@
 
 ## Overview
 
-TenantGuard is a comprehensive landlord-tenant legal platform designed for Davidson County, Tennessee. It connects tenants with qualified attorneys through a technology-enabled self-service platform that streamlines dispute resolution.
+TenantGuard is a comprehensive landlord-tenant legal platform designed for 
+Davidson County, Tennessee. It connects tenants with qualified attorneys 
+through a technology-enabled self-service platform that streamlines dispute 
+resolution.
 
 ## Architecture
 
@@ -126,7 +129,7 @@ tenantdefend-complete-source/
 
 ### Backend Setup
 ```bash
-cd tenantdefend-complete-source
+cd /var/www/tenantguard
 pip install -r requirements.txt
 python src/main.py
 ```
