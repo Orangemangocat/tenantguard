@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPostBySlug, getPublishedPosts } from "@/lib/blogApi";
+import Link from "next/link";
 
 export const revalidate = 300;
 
@@ -61,7 +62,7 @@ export default async function BlogPostPage({ params }) {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
-      <a href="/blog" className="text-sm underline underline-offset-4">← Back to blog</a>
+      <Link href="/blog" className="text-sm underline underline-offset-4">← Back to blog</Link>
 
       <div className="mt-6">
         <div className="text-xs opacity-70">

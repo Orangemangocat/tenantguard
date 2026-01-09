@@ -2,12 +2,16 @@
 
 Summary
 ---
-Persist AI analysis results for intake submissions by adding a `case_analyses` table and saving analysis output when `/cases/<case_number>/process` is called. This patch adds a SQLAlchemy model `CaseAnalysis` and updates the route to store analysis JSON, provider, and confidence.
+Persist AI analysis results for intake submissions by adding a `case_analyses` table and saving analysis output when `/cases/<case_number>/process` is called. This patch adds a SQLAlchemy model `CaseAnalysis` and updates the route to store analysis JSON, provider, and confidence. It also queues intake conversation JSON for GCS persistence using the existing RQ worker setup.
 
 Files changed/added
 ---
 - src/models/case_analysis.py (new): SQLAlchemy model for analysis records
 - src/routes/case.py (updated): now saves analysis result after processing
+- src/tasks/llm_tasks.py (updated): intake conversation persistence task for GCS
+- src/services/gcs_storage.py (new): GCS JSON upload helper
+- .env.example (updated): GCS env vars
+- requirements.txt (updated): add GCS client library
 - frontend components unchanged from previous work — modal shows returned analysis and now results are persisted on backend
 
 Migration note

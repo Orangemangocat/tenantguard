@@ -51,6 +51,7 @@ Agents may modify ONLY:
 - `.github/**`
 - `workorders/**`
 - `AGENTS.md`
+- `.env.example`
 
 ---
 
@@ -97,7 +98,7 @@ Frontend (from `frontend/package.json`):
 - `cd frontend && pnpm build`
 
 Backend (repo-safe checks without assuming dependencies):
-- `python -m pip install -r requirements.txt -r requirements_auth.txt`
+- `python -m pip install -r requirements.txt`
 - `python -m compileall src`
 - `python -c "import importlib; importlib.import_module('src.main')"`
 
@@ -108,16 +109,23 @@ Agents must not invent test commands.
 
 ---
 
-## 6) Manus Prompt Template (Mandatory)
+## 6) Prompt Template (Mandatory)
 
-You are operating under AGENTS.md (Patch-Only).
-Repo layout: `src/` Flask backend, `frontend/` Vite React frontend.
+You are operating under AGENTS.md (Patch-Only) mode.
+
+Repo (rough) layout: 
+- `AGENTS.md`: This file
+- `docs/`: Documentation
+- `docs/control-plane`: Agent instructions "control-plane"
+- `src/` Flask backend
+- `frontend/` Vite React frontend
+- `frontend-next/` blog static file generation
+
 Output: (1) plan (2) unified diff patch (3) verification commands.
 Do NOT overwrite files. Do NOT output full file replacements.
-Do NOT touch blocked paths (env/secrets/credentials/__pycache__/*.pyc/sqlite db/build output/lockfile unless required).
+Do NOT touch blocked paths (env/secrets/credentials/__pycache__/*.pyc/sqlite db/build output, lockfile, unless strictly required and verified by user).
 
-Begin by listing the exact files you will change.
+Begin by listing the exact files you will change and follow with your plan (proposed solution).
 
 ---
 Version: v0
-

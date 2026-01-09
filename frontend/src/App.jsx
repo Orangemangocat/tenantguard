@@ -269,8 +269,6 @@ function App() {
               setShowContactPage(true);
             }
           }}
-          onTenantClick={() => handleRequireOnboarding('tenant')}
-          onAttorneyClick={() => handleRequireOnboarding('attorney')}
         />
 
         {/* Hero Section */}
