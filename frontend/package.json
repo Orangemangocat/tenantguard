@@ -1,11 +1,11 @@
 {
-  "name": "tenantdefend",
+  "name": "tenantguard",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --outputDirectory=public",
     "lint": "eslint .",
     "preview": "vite preview"
   },
