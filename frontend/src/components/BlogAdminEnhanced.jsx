@@ -6,6 +6,7 @@ const BlogAdminEnhanced = () => {
   const [topics, setTopics] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [schedule, setSchedule] = useState(null);
+  const [showMajorUpdateForm, setShowMajorUpdateForm] = useState(false);
   
   // Post form state
   const [postForm, setPostForm] = useState({
@@ -32,6 +33,12 @@ const BlogAdminEnhanced = () => {
   const [editingPost, setEditingPost] = useState(null);
   const [showPostForm, setShowPostForm] = useState(false);
   const [showTopicForm, setShowTopicForm] = useState(false);
+  const [majorUpdateForm, setMajorUpdateForm] = useState({
+    title: '',
+    description: '',
+    research_links: '',
+    research_notes: ''
+  });
 
   useEffect(() => {
     fetchPosts();
@@ -149,6 +156,42 @@ const BlogAdminEnhanced = () => {
       }
     } catch (error) {
       console.error('Error creating topic:', error);
+    }
+  };
+
+  const handleMajorUpdateSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const linksArray = majorUpdateForm.research_links
+        .split('\n')
+        .filter(link => link.trim())
+        .map(link => link.trim());
+
+      const response = await fetch('/api/blog/topics/major-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: majorUpdateForm.title,
+          description: majorUpdateForm.description,
+          research_links: linksArray,
+          research_notes: majorUpdateForm.research_notes
+        })
+      });
+
+      if (response.ok) {
+        fetchTopics();
+        fetchAnalytics();
+        setShowMajorUpdateForm(false);
+        setMajorUpdateForm({
+          title: '',
+          description: '',
+          research_links: '',
+          research_notes: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error queuing major update:', error);
     }
   };
 
@@ -289,6 +332,82 @@ const BlogAdminEnhanced = () => {
             >
               {schedule.auto_posting_enabled ? 'Enabled' : 'Disabled'}
             </button>
+          </div>
+          <div className="mt-6 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-md font-semibold">Major Technical Update</h4>
+                <p className="text-sm text-gray-600">
+                  Queue an urgent technical post immediately, regardless of cadence.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowMajorUpdateForm((show) => !show)}
+                className="px-4 py-2 rounded-lg font-semibold bg-blue-600 text-white hover:bg-blue-700"
+              >
+                {showMajorUpdateForm ? 'Hide Form' : 'Queue Major Update'}
+              </button>
+            </div>
+            {showMajorUpdateForm && (
+              <form onSubmit={handleMajorUpdateSubmit} className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Update Title *</label>
+                  <input
+                    type="text"
+                    value={majorUpdateForm.title}
+                    onChange={(e) => setMajorUpdateForm({...majorUpdateForm, title: e.target.value})}
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="e.g., Major Case Intake Workflow Upgrade"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Summary / Angle</label>
+                  <textarea
+                    value={majorUpdateForm.description}
+                    onChange={(e) => setMajorUpdateForm({...majorUpdateForm, description: e.target.value})}
+                    className="w-full border rounded px-3 py-2"
+                    rows="3"
+                    placeholder="Describe the upgrade and key benefits"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Release Notes / Sources</label>
+                  <textarea
+                    value={majorUpdateForm.research_links}
+                    onChange={(e) => setMajorUpdateForm({...majorUpdateForm, research_links: e.target.value})}
+                    className="w-full border rounded px-3 py-2"
+                    rows="3"
+                    placeholder="Paste URLs (one per line)"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Key Details</label>
+                  <textarea
+                    value={majorUpdateForm.research_notes}
+                    onChange={(e) => setMajorUpdateForm({...majorUpdateForm, research_notes: e.target.value})}
+                    className="w-full border rounded px-3 py-2"
+                    rows="4"
+                    placeholder="Important facts or requirements to include"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Queue Major Update
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowMajorUpdateForm(false)}
+                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

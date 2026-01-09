@@ -124,6 +124,77 @@ def delete_topic(current_user, topic_id):
         return jsonify({'error': str(e)}), 500
 
 
+@blog_admin_bp.route('/api/blog/topics/major-update', methods=['POST'])
+@admin_required
+def create_major_update_topic(current_user):
+    """Create and enqueue a major technical update topic for immediate generation."""
+    try:
+        data = request.json or {}
+        title = data.get('title')
+        if not title:
+            return jsonify({'error': 'Title is required'}), 400
+
+        def _normalize_links(links):
+            if isinstance(links, list):
+                return [link for link in links if link]
+            if isinstance(links, str):
+                return [link.strip() for link in links.splitlines() if link.strip()]
+            return []
+
+        links = _normalize_links(data.get('research_links', []))
+        changelog_url = os.environ.get('CHANGELOG_URL')
+        if changelog_url and changelog_url not in links:
+            links.append(changelog_url)
+        description = data.get('description', '')
+        research_notes = data.get('research_notes', '')
+
+        topic = BlogTopic(
+            title=title,
+            description=description,
+            category='technical',
+            research_links=json.dumps(links),
+            research_notes=research_notes,
+            priority='urgent',
+            status='pending',
+            created_by=current_user.email or 'admin'
+        )
+
+        db.session.add(topic)
+        db.session.commit()
+
+        from redis import Redis
+        from rq import Queue
+        from src.tasks.blog_ai_tasks import generate_blog_post
+
+        payload = {
+            'topic': topic.title,
+            'category': topic.category,
+            'author': 'Manus AI',
+            'links': links,
+            'text_snippets': research_notes,
+            'additional_context': description,
+            'llm_provider': 'openai',
+            'generation_source': 'major_update',
+        }
+
+        redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        redis_conn = Redis.from_url(redis_url)
+        q = Queue('default', connection=redis_conn)
+        job = q.enqueue(generate_blog_post, payload, submit_for_approval=True, topic_id=topic.id)
+
+        topic.status = 'in_progress'
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Major update queued for generation',
+            'topic': topic.to_dict(),
+            'job_id': job.get_id()
+        }), 202
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
 # ============================================================================
 # SCHEDULING ROUTES
 # ============================================================================
