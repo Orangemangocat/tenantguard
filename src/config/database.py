@@ -3,17 +3,18 @@ Database Configuration Module
 Handles database connection configuration for both SQLite and PostgreSQL
 """
 import os
+from urllib.parse import quote_plus
 
 # Database type: 'sqlite' or 'postgresql'
 DB_TYPE = os.getenv('DB_TYPE', 'postgresql')
 
 # PostgreSQL Configuration
 POSTGRES_CONFIG = {
-    'host': os.getenv('POSTGRES_HOST', '34.173.34.153'),
+    'host': os.getenv('POSTGRES_HOST', 'localhost'),
     'port': os.getenv('POSTGRES_PORT', '5432'),
     'database': os.getenv('POSTGRES_DB', 'tenantguard'),
     'user': os.getenv('POSTGRES_USER', 'tenantguard'),
-    'password': os.getenv('POSTGRES_PASSWORD', 'R00t12288$'),
+    'password': os.getenv('POSTGRES_PASSWORD'),
 }
 
 # SSL Certificate paths (relative to project root)
@@ -38,10 +39,18 @@ def get_database_uri():
             db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'tenantguard.db')
             return f"sqlite:///{db_path}"
 
+        required_keys = ('host', 'port', 'database', 'user', 'password')
+        missing_keys = [key for key in required_keys if not POSTGRES_CONFIG.get(key)]
+        if missing_keys:
+            print(f"[DB_CONFIG] Missing Postgres env vars: {', '.join(missing_keys)}; falling back to SQLite")
+            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'tenantguard.db')
+            return f"sqlite:///{db_path}"
+
         # Build PostgreSQL connection string WITHOUT SSL params in URI
         # SSL params will be passed via connect_args in SQLAlchemy
+        safe_password = quote_plus(POSTGRES_CONFIG['password'])
         uri = (
-            f"postgresql://{POSTGRES_CONFIG['user']}:{POSTGRES_CONFIG['password']}"
+            f"postgresql://{POSTGRES_CONFIG['user']}:{safe_password}"
             f"@{POSTGRES_CONFIG['host']}:{POSTGRES_CONFIG['port']}"
             f"/{POSTGRES_CONFIG['database']}"
         )

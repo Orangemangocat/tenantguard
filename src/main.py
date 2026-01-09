@@ -1,5 +1,6 @@
 import os
 import sys
+import secrets
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -22,7 +23,11 @@ from src.routes.groups import groups_bp
 from src.routes.admin_queue import admin_queue_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+secret_key = os.getenv('FLASK_SECRET_KEY') or os.getenv('SECRET_KEY')
+if not secret_key:
+    secret_key = secrets.token_urlsafe(32)
+    print('[SECURITY] FLASK_SECRET_KEY not set; using an ephemeral key for this process.')
+app.config['SECRET_KEY'] = secret_key
 
 # Enable CORS for all routes
 CORS(app, origins=['*'])
