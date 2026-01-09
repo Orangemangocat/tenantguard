@@ -18,7 +18,7 @@ export default defineConfig({
   },
   build: {
     "chunkSizeWarningLimit": 800000,
-    "outDir": "../src/static",
-    "emptyOutDir": true
+    // "outDir": "../src/static",
+    "emptyOutDir": true,
   }
 })

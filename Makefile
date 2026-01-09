@@ -33,6 +33,8 @@ backend-install:
 
 backend-check:
 	$(PYTHON) -m compileall src
+	$(PYTHON) -c 'import importlib; importlib.import_module("src.main")'
+	$(PYTHON) -c 'import importlib; importlib.import_module("src.worker")'
 
 backend-run:
 	$(PYTHON) -m src.main
@@ -58,4 +60,4 @@ frontend-build:
 frontend-preview:
 	cd $(FRONTEND_DIR) && $(PNPM) run preview
 
-verify: backend-check frontend-install frontend-build
+verify: backend-check frontend-install frontend-lint frontend-build
