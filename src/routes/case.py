@@ -298,6 +298,36 @@ def get_case_analyses(current_user, case_number):
         return jsonify({'error': 'Failed to fetch analyses', 'details': str(e)}), 500
 
 
+@case_bp.route('/cases/<case_number>/intake-conversations', methods=['POST'])
+def enqueue_intake_conversation(case_number):
+    """Queue intake conversation persistence to GCS."""
+    try:
+        case = Case.query.filter_by(case_number=case_number).first()
+        if not case:
+            return jsonify({'error': 'Case not found'}), 404
+
+        payload = request.get_json()
+        if not payload:
+            return jsonify({'error': 'No intake conversation payload provided'}), 400
+
+        from redis import Redis
+        from rq import Queue
+        from src.tasks.llm_tasks import persist_intake_conversation
+
+        redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        redis_conn = Redis.from_url(redis_url)
+        q = Queue('default', connection=redis_conn)
+        job = q.enqueue(persist_intake_conversation, case.id, payload)
+
+        return jsonify({
+            'success': True,
+            'queued': True,
+            'job_id': job.get_id()
+        }), 202
+    except Exception as e:
+        return jsonify({'error': 'Failed to queue intake conversation', 'details': str(e)}), 500
+
+
 @case_bp.route('/cases/<case_number>/process', methods=['POST'])
 def process_case(case_number):
     """Analyze a case with the AI processor and return suggestions.
