@@ -2,7 +2,7 @@
 
 Agents must operate in PATCH-ONLY mode. No direct overwrites. All changes are delivered as unified diff patches and merged via PR.
 
-- After every workorder is completed ALL AGENTS MUST UPDATE CHANGELOG.md
+- After every workorder is completed all agents MUST update the CHANGELOG.md accordingly
 
 ## ALL AGENTS MUST READ 'docs/control-plane' IMMEDIATELY
 
