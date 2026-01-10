@@ -89,7 +89,7 @@ export default function BlogAIManagement() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/blog-posts`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/blog-posts`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
         }
