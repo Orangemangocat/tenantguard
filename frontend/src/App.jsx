@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, Menu, X } from 'lucide-react'
-import CaseIntakeForm from './components/CaseIntakeForm.jsx'
+import IntakeChat from './components/IntakeChat.tsx'
 import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
 import ContactPage from './components/ContactPage.jsx'
 import BlogList from './components/BlogList.jsx'
@@ -168,11 +168,7 @@ function App() {
     return (
       <ThemeProvider>
         <ProtectedRoute>
-          <div className="min-h-screen bg-gray-50">
-            <div className="max-w-4xl mx-auto py-12 px-4">
-              <CaseIntakeForm />
-            </div>
-          </div>
+          <IntakeChat />
         </ProtectedRoute>
       </ThemeProvider>
     )
