@@ -51,7 +51,8 @@ const BlogAdminEnhanced = () => {
     try {
       const response = await fetch('/api/blog/posts');
       const data = await response.json();
-      setPosts(data);
+      const postsList = Array.isArray(data) ? data : (data.posts || []);
+      setPosts(postsList);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
