@@ -89,7 +89,7 @@ const IntakeChat = () => {
   const [submitError, setSubmitError] = useState('')
   const [caseNumber, setCaseNumber] = useState('')
   const [conversationId] = useState(generateId())
-  const chatEndRef = useRef(null)
+  const chatContainerRef = useRef(null)
 
   const appendMessage = (role, content) => {
     setMessages((prev) => [
@@ -495,7 +495,11 @@ const IntakeChat = () => {
   const isComplete = stepIndex >= steps.length
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (!chatContainerRef.current) return
+    chatContainerRef.current.scrollTo({
+      top: chatContainerRef.current.scrollHeight,
+      behavior: 'smooth'
+    })
   }, [messages])
 
   useEffect(() => {
@@ -599,7 +603,10 @@ const IntakeChat = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="h-[60vh] overflow-y-auto px-6 py-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white">
+              <div
+                ref={chatContainerRef}
+                className="h-[60vh] overflow-y-auto px-6 py-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white"
+              >
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -616,7 +623,6 @@ const IntakeChat = () => {
                     </div>
                   </div>
                 ))}
-                <div ref={chatEndRef} />
                 {isComplete && (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
                     Intake questions complete. Review the summary and submit when ready.

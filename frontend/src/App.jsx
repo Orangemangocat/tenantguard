@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, Menu, X } from 'lucide-react'
 import IntakeChat from './components/IntakeChat.jsx'
-import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
+import AttorneyIntakeChat from './components/AttorneyIntakeChat.jsx'
 import ContactPage from './components/ContactPage.jsx'
 import BlogList from './components/BlogList.jsx'
 import BlogPost from './components/BlogPost.jsx'
@@ -179,13 +179,11 @@ function App() {
   if (pathname === '/attorney-intake') {
     return (
       <ThemeProvider>
-        <ProtectedRoute>
-          <div className="min-h-screen bg-gray-50">
-            <div className="max-w-4xl mx-auto py-12 px-4">
-              <AttorneyIntakeForm />
-            </div>
-          </div>
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute>
+            <AttorneyIntakeChat />
+          </ProtectedRoute>
+        </AuthProvider>
       </ThemeProvider>
     )
   }
