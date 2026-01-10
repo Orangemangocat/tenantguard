@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, Menu, X } from 'lucide-react'
-import IntakeChat from './components/IntakeChat.tsx'
+import IntakeChat from './components/IntakeChat.jsx'
 import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
 import ContactPage from './components/ContactPage.jsx'
 import BlogList from './components/BlogList.jsx'
@@ -167,9 +167,11 @@ function App() {
   if (pathname === '/tenant-intake') {
     return (
       <ThemeProvider>
-        <ProtectedRoute>
-          <IntakeChat />
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute>
+            <IntakeChat />
+          </ProtectedRoute>
+        </AuthProvider>
       </ThemeProvider>
     )
   }

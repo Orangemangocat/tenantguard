@@ -18,7 +18,6 @@ Repo layout:
 - `scripts/` = Utility scripts (Python/JS)
 - `AGENTS.md` = This file
 
-
 ---
 
 ## 1) Non-Negotiable Rules
@@ -39,6 +38,9 @@ Repo layout:
    - Do not delete directories or do sweeping rewrites without explicit approval.
    - Avoid mass formatting unless it is the task.
 
+5. Required MCP server usage:
+   - Always use the OpenAI developer documentation MCP server if you need to work with the OpenAI API, ChatGPT Apps SDK, Codex, or related docs without me having to explicitly ask.
+
 ---
 
 ## 2) Allowed Paths (Strict)
@@ -46,11 +48,12 @@ Repo layout:
 Agents may modify ONLY:
 - `src/**`
 - `frontend/**`
-- `docs/**`
+- `frontend-next/**`
+- `docs/**` (Only with strict permission)
 - `scripts/**`
 - `.github/**`
 - `workorders/**`
-- `AGENTS.md`
+- `AGENTS.md` (Only with strict permission)
 - `.env.example`
 
 ---

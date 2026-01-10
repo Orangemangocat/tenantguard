@@ -1,70 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 
-type Role = 'assistant' | 'user'
-
-type ChatMessage = {
-  id: string
-  role: Role
-  content: string
-  timestampUtc: string
-}
-
-type IntakeData = {
-  state: string
-  county: string
-  rentalAddress: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  preferredContact: string
-  monthlyRent: string
-  evictionNoticeReceived: boolean | null
-  evictionNoticeType: string
-  evictionNoticeReceivedDate: string
-  evictionNoticeDocumentDate: string
-  evictionDeliveryMethod: string
-  courtDate: string
-  amountOwed: string
-  lastPaymentDate: string
-  rentAcceptedAfterNotice: boolean | null
-  rentAcceptedDates: string
-  warningDetails: string
-  leaseType: string
-  leaseStartDate: string
-  leaseEndDate: string
-  moveInDate: string
-  housingAssistance: boolean | null
-  landlordName: string
-  issueType: string
-  habitabilityIssues: string
-  habitabilityFirstReportDate: string
-  habitabilityReportMethod: string
-  habitabilityEvidence: string
-  retaliationAction: string
-  retaliationActionDate: string
-  retaliationResponse: string
-  retaliationResponseDate: string
-  discriminationDetails: string
-  discriminationDate: string
-  urgencyLevel: string
-  caseSummary: string
-  desiredOutcome: string
-  evidenceList: string
-}
-
-type Step = {
-  id: string
-  prompt: string
-  inputType: 'text' | 'date' | 'choice'
-  choices?: { label: string; value: string }[]
-  allowUnknown?: boolean
-  apply: (value: string) => void
-}
-
-const initialData: IntakeData = {
+const initialData = {
   state: '',
   county: '',
   rentalAddress: '',
@@ -117,7 +55,7 @@ const generateId = () => {
   return `msg-${Math.random().toString(36).slice(2)}`
 }
 
-const buildConversationPayload = (conversationId: string, messages: ChatMessage[]) => ({
+const buildConversationPayload = (conversationId, messages) => ({
   conversation_id: conversationId,
   platform: 'in-app-chat',
   created_utc: messages[0]?.timestampUtc || formatIsoNow(),
@@ -130,7 +68,7 @@ const buildConversationPayload = (conversationId: string, messages: ChatMessage[
 })
 
 const IntakeChat = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [messages, setMessages] = useState([
     {
       id: generateId(),
       role: 'assistant',
@@ -146,13 +84,14 @@ const IntakeChat = () => {
   ])
   const [inputValue, setInputValue] = useState('')
   const [stepIndex, setStepIndex] = useState(0)
-  const [intakeData, setIntakeData] = useState<IntakeData>(initialData)
+  const [intakeData, setIntakeData] = useState(initialData)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [caseNumber, setCaseNumber] = useState('')
   const [conversationId] = useState(generateId())
+  const chatEndRef = useRef(null)
 
-  const appendMessage = (role: Role, content: string) => {
+  const appendMessage = (role, content) => {
     setMessages((prev) => [
       ...prev,
       {
@@ -164,7 +103,7 @@ const IntakeChat = () => {
     ])
   }
 
-  const updateJurisdiction = (value: string) => {
+  const updateJurisdiction = (value) => {
     const parts = value.split(',').map((part) => part.trim())
     let county = ''
     let state = ''
@@ -184,8 +123,8 @@ const IntakeChat = () => {
     }))
   }
 
-  const steps = useMemo<Step[]>(() => {
-    const list: Step[] = [
+  const steps = useMemo(() => {
+    const list = [
       {
         id: 'jurisdiction',
         prompt: 'What state and county is the rental property in?',
@@ -556,6 +495,10 @@ const IntakeChat = () => {
   const isComplete = stepIndex >= steps.length
 
   useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  useEffect(() => {
     if (!currentStep || isComplete) return
     const lastMessage = messages[messages.length - 1]
     if (!lastMessage || lastMessage.content !== currentStep.prompt || lastMessage.role !== 'assistant') {
@@ -563,7 +506,7 @@ const IntakeChat = () => {
     }
   }, [currentStep, isComplete, messages])
 
-  const handleAnswer = (value: string) => {
+  const handleAnswer = (value) => {
     if (!currentStep) return
     const trimmed = value.trim()
     if (!trimmed) return
@@ -574,7 +517,7 @@ const IntakeChat = () => {
   }
 
   const openQuestions = () => {
-    const missing: string[] = []
+    const missing = []
     if (intakeData.evictionNoticeReceived) {
       if (!intakeData.evictionNoticeType) missing.push('Notice type')
       if (!intakeData.evictionNoticeReceivedDate) missing.push('Notice received date')
@@ -632,7 +575,7 @@ const IntakeChat = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-    } catch (error: any) {
+    } catch (error) {
       setSubmitError(error?.message || 'Failed to submit intake')
     } finally {
       setIsSubmitting(false)
@@ -673,6 +616,7 @@ const IntakeChat = () => {
                     </div>
                   </div>
                 ))}
+                <div ref={chatEndRef} />
                 {isComplete && (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
                     Intake questions complete. Review the summary and submit when ready.
