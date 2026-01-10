@@ -6,6 +6,8 @@ const BlogAdminEnhanced = () => {
   const [topics, setTopics] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [schedule, setSchedule] = useState(null);
+  const [scheduleHours, setScheduleHours] = useState('');
+  const [scheduleSaving, setScheduleSaving] = useState(false);
   const [showMajorUpdateForm, setShowMajorUpdateForm] = useState(false);
   
   // Post form state
@@ -83,6 +85,8 @@ const BlogAdminEnhanced = () => {
       const response = await fetch('/api/blog/schedule');
       const data = await response.json();
       setSchedule(data);
+      const hoursValue = data?.max_hours_between_posts ?? data?.max_days_between_posts ?? '';
+      setScheduleHours(hoursValue === null || hoursValue === undefined ? '' : String(hoursValue));
     } catch (error) {
       console.error('Error fetching schedule:', error);
     }
@@ -262,6 +266,35 @@ const BlogAdminEnhanced = () => {
     }
   };
 
+  const updateScheduleHours = async (e) => {
+    e.preventDefault();
+    if (scheduleHours === '') {
+      return;
+    }
+    const nextValue = Number(scheduleHours);
+    if (!Number.isFinite(nextValue) || nextValue < 1) {
+      return;
+    }
+    try {
+      setScheduleSaving(true);
+      const response = await fetch('/api/blog/schedule', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          max_hours_between_posts: Math.round(nextValue)
+        })
+      });
+      
+      if (response.ok) {
+        fetchSchedule();
+      }
+    } catch (error) {
+      console.error('Error updating schedule cadence:', error);
+    } finally {
+      setScheduleSaving(false);
+    }
+  };
+
   const getPriorityColor = (priority) => {
     const colors = {
       low: 'bg-gray-100 text-gray-800',
@@ -306,9 +339,11 @@ const BlogAdminEnhanced = () => {
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="text-2xl font-bold text-purple-600">
-              {analytics.days_since_last_post !== null ? analytics.days_since_last_post : 'N/A'}
+              {analytics.hours_since_last_post !== null && analytics.hours_since_last_post !== undefined
+                ? analytics.hours_since_last_post
+                : (analytics.days_since_last_post !== null ? analytics.days_since_last_post : 'N/A')}
             </div>
-            <div className="text-sm text-gray-600">Days Since Last Post</div>
+            <div className="text-sm text-gray-600">Hours Since Last Post</div>
           </div>
         </div>
       )}
@@ -320,7 +355,7 @@ const BlogAdminEnhanced = () => {
             <div>
               <h3 className="text-lg font-semibold mb-2">Automated Posting</h3>
               <p className="text-sm text-gray-600">
-                Manus will automatically generate and publish a post every {schedule.max_days_between_posts} days
+                Manus will automatically generate and publish a post every {schedule.max_hours_between_posts} hours
               </p>
             </div>
             <button
@@ -334,6 +369,28 @@ const BlogAdminEnhanced = () => {
               {schedule.auto_posting_enabled ? 'Enabled' : 'Disabled'}
             </button>
           </div>
+          <form onSubmit={updateScheduleHours} className="mt-4 flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <label className="block text-sm font-medium mb-1" htmlFor="scheduleHours">
+                Max hours between posts
+              </label>
+              <input
+                id="scheduleHours"
+                type="number"
+                min="1"
+                value={scheduleHours}
+                onChange={(e) => setScheduleHours(e.target.value)}
+                className="w-full border rounded px-3 py-2"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={scheduleSaving}
+              className="px-4 py-2 rounded-lg font-semibold bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-70"
+            >
+              {scheduleSaving ? 'Saving...' : 'Save Cadence'}
+            </button>
+          </form>
           <div className="mt-6 border-t pt-4">
             <div className="flex items-center justify-between">
               <div>

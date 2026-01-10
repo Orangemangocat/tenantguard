@@ -32,6 +32,8 @@ export default function BlogAIManagement() {
   const [posts, setPosts] = useState([]);
   const [topics, setTopics] = useState([]);
   const [schedule, setSchedule] = useState(null);
+  const [scheduleHours, setScheduleHours] = useState('');
+  const [scheduleSaving, setScheduleSaving] = useState(false);
   const [queueJobs, setQueueJobs] = useState([]);
   const [queueLoading, setQueueLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -144,6 +146,8 @@ export default function BlogAIManagement() {
       }
       const data = await response.json();
       setSchedule(data);
+      const hoursValue = data?.max_hours_between_posts ?? data?.max_days_between_posts ?? '';
+      setScheduleHours(hoursValue === null || hoursValue === undefined ? '' : String(hoursValue));
     } catch (err) {
       console.error('Error fetching schedule:', err);
     }
@@ -191,6 +195,42 @@ export default function BlogAIManagement() {
     }
   };
 
+  const updateScheduleHours = async (e) => {
+    e.preventDefault();
+    if (scheduleHours === '') {
+      setError('Please enter a cadence in hours.');
+      return;
+    }
+    const nextValue = Number(scheduleHours);
+    if (!Number.isFinite(nextValue) || nextValue < 1) {
+      setError('Cadence must be at least 1 hour.');
+      return;
+    }
+    try {
+      setScheduleSaving(true);
+      const response = await fetch(`${API_BASE_URL}/api/blog/schedule`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: JSON.stringify({
+          max_hours_between_posts: Math.round(nextValue)
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update schedule');
+      }
+      setSuccess('Schedule cadence updated.');
+      fetchSchedule();
+    } catch (err) {
+      console.error('Error updating schedule cadence:', err);
+      setError('Failed to update schedule cadence');
+    } finally {
+      setScheduleSaving(false);
+    }
+  };
+
   const handleMajorUpdateSubmit = async (e) => {
     e.preventDefault();
 
@@ -218,7 +258,13 @@ export default function BlogAIManagement() {
         throw new Error('Failed to queue major update');
       }
 
-      setSuccess('Major update queued for generation.');
+      const data = await response.json().catch(() => ({}));
+      const jobId = data && data.job_id ? String(data.job_id) : '';
+      setSuccess(
+        jobId
+          ? `Major update queued for generation (job ${jobId}).`
+          : 'Major update queued for generation.'
+      );
       setMajorUpdateForm({
         title: '',
         description: '',
@@ -269,7 +315,13 @@ export default function BlogAIManagement() {
         throw new Error('Failed to generate post');
       }
 
-      setSuccess('Blog post queued. It will appear as a draft when generation completes.');
+      const data = await response.json().catch(() => ({}));
+      const jobId = data && data.job_id ? String(data.job_id) : '';
+      setSuccess(
+        jobId
+          ? `Blog post queued (job ${jobId}). It will appear as a draft when generation completes.`
+          : 'Blog post queued. It will appear as a draft when generation completes.'
+      );
       setFormData({
         llmProvider: 'openai',
         providerIndex: '',
@@ -1029,7 +1081,7 @@ export default function BlogAIManagement() {
                   <div>
                     <h3 className="text-lg font-semibold">Automated Posting</h3>
                     <p className="text-sm text-gray-600">
-                      Generates posts every {schedule.max_days_between_posts} days when enabled.
+                      Scheduler runs daily. It generates posts when the last published post is at least {schedule.max_hours_between_posts} hours old.
                     </p>
                   </div>
                   <Button
@@ -1039,6 +1091,21 @@ export default function BlogAIManagement() {
                     {schedule.auto_posting_enabled ? 'Enabled' : 'Disabled'}
                   </Button>
                 </div>
+                <form onSubmit={updateScheduleHours} className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1">
+                    <Label htmlFor="scheduleHours">Max hours between posts</Label>
+                    <Input
+                      id="scheduleHours"
+                      type="number"
+                      min="1"
+                      value={scheduleHours}
+                      onChange={(e) => setScheduleHours(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" disabled={scheduleSaving}>
+                    {scheduleSaving ? 'Saving...' : 'Save Cadence'}
+                  </Button>
+                </form>
 
                 <div className="border-t pt-4">
                   <h4 className="text-md font-semibold mb-2">Major Technical Update</h4>
