@@ -271,7 +271,7 @@ function App() {
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <Badge variant="outline" style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primaryLight)' }} className="mb-6">
-              Tennessee
+              Tenant-first
             </Badge>
             <h1 className="text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>
               Transforming Tenant
@@ -279,7 +279,7 @@ function App() {
             </h1>
             <p className="text-xl mb-8 max-w-3xl mx-auto" style={{ color: 'var(--color-textSecondary)' }}>
               Technology-enabled self-service platform connecting tenants with qualified attorneys
-              for streamlined landlord-tenant dispute resolution in Tennessee.
+              for streamlined landlord-tenant dispute resolution.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button

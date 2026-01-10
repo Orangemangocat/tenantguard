@@ -90,6 +90,7 @@ const IntakeChat = () => {
   const [caseNumber, setCaseNumber] = useState('')
   const [conversationId] = useState(generateId())
   const chatContainerRef = useRef(null)
+  const shouldStickToBottomRef = useRef(true)
 
   const appendMessage = (role, content) => {
     setMessages((prev) => [
@@ -495,11 +496,16 @@ const IntakeChat = () => {
   const isComplete = stepIndex >= steps.length
 
   useEffect(() => {
-    if (!chatContainerRef.current) return
-    chatContainerRef.current.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
-      behavior: 'smooth'
-    })
+    const container = chatContainerRef.current
+    if (!container || !shouldStickToBottomRef.current) return
+    const scrollToBottom = () => {
+      container.scrollTop = container.scrollHeight
+    }
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(scrollToBottom)
+    } else {
+      scrollToBottom()
+    }
   }, [messages])
 
   useEffect(() => {
@@ -530,6 +536,12 @@ const IntakeChat = () => {
     if (!intakeData.leaseType) missing.push('Lease type')
     if (!intakeData.monthlyRent) missing.push('Monthly rent')
     return missing.slice(0, 4)
+  }
+
+  const handleChatScroll = (event) => {
+    const container = event.currentTarget
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+    shouldStickToBottomRef.current = distanceFromBottom < 24
   }
 
   const handleSubmit = async () => {
@@ -605,7 +617,9 @@ const IntakeChat = () => {
             <CardContent className="p-0">
               <div
                 ref={chatContainerRef}
-                className="h-[60vh] overflow-y-auto px-6 py-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white"
+                className="h-[60vh] overflow-y-auto overscroll-contain px-6 py-5 space-y-4 bg-gradient-to-br from-white via-gray-50 to-white"
+                onScroll={handleChatScroll}
+                style={{ overflowAnchor: 'none' }}
               >
                 {messages.map((message) => (
                   <div

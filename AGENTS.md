@@ -22,7 +22,7 @@ Repo layout:
 - `workorders/` = Work Orders (Markdown)
 - `.github/` = GitHub Actions workflows
 - `scripts/` = Utility scripts (Python/JS)
-- `AGENTS.md` = This file
+- `CHANGELOG.md` = CHANGELOG
 
 ---
 
