@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button.jsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import ApprovalQueue from './ApprovalQueue.jsx';
-import BlogManagement from './BlogManagement.jsx';
+import BlogAIManagement from './BlogAIManagement.jsx';
 import UserManagement from './UserManagement.jsx';
 import IntakeReview from './IntakeReview.jsx';
 import DashboardOverview from './DashboardOverview.jsx';
 import AdminQueue from './AdminQueue.jsx';
+import BlogManagement from './BlogManagement.jsx';
 
 /**
  * Main Admin Dashboard Component
@@ -88,6 +89,18 @@ export default function AdminDashboard({ user, onLogout, onClose }) {
             )}
             {isAdmin && (
               <button
+                onClick={() => setActiveTab('blogAi')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'blogAi'
+                    ? 'border-red-800 text-red-800'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                AI Blog Automation
+              </button>
+            )}
+            {isAdmin && (
+              <button
                 onClick={() => setActiveTab('users')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'users'
@@ -131,6 +144,7 @@ export default function AdminDashboard({ user, onLogout, onClose }) {
         {activeTab === 'overview' && <DashboardOverview user={user} />}
         {activeTab === 'approvals' && isAdmin && <ApprovalQueue user={user} />}
         {activeTab === 'blogManagement' && isAdmin && <BlogManagement />}
+        {activeTab === 'blogAi' && isAdmin && <BlogAIManagement />}
         {activeTab === 'users' && isAdmin && <UserManagement user={user} />}
         {activeTab === 'intakes' && isAdmin && <IntakeReview user={user} />}
         {activeTab === 'queue' && isAdmin && <AdminQueue />}

@@ -48,7 +48,7 @@ class BlogSchedule(db.Model):
     last_post_date = db.Column(db.DateTime)
     next_auto_post_date = db.Column(db.DateTime)
     auto_posting_enabled = db.Column(db.Boolean, default=True)
-    max_days_between_posts = db.Column(db.Integer, default=5)
+    max_hours_between_posts = db.Column('max_days_between_posts', db.Integer, default=72)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -58,7 +58,8 @@ class BlogSchedule(db.Model):
             'last_post_date': self.last_post_date.isoformat() if self.last_post_date else None,
             'next_auto_post_date': self.next_auto_post_date.isoformat() if self.next_auto_post_date else None,
             'auto_posting_enabled': self.auto_posting_enabled,
-            'max_days_between_posts': self.max_days_between_posts,
+            'max_hours_between_posts': self.max_hours_between_posts,
+            'max_days_between_posts': self.max_hours_between_posts,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

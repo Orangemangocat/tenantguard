@@ -9,6 +9,7 @@ Agents must:
 5. Default to safety, accuracy, and reproducibility.
 
 This directory replaces:
+
 - prompt memory
 - chat history reliance
 - undocumented assumptions

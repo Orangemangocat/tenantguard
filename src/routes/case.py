@@ -333,9 +333,9 @@ def process_case(case_number):
     """Analyze a case with the AI processor and return suggestions.
 
     This endpoint runs a lightweight analysis using local heuristics and
-    the ai_processor service. It does NOT persist analysis results to the
-    database (to avoid schema migrations). If you want persistence, add a
-    separate table/column and a migration in a follow-up work order.
+    the ai_processor service. By default, analysis runs synchronously
+    and persists results; set AI_ANALYSIS_ASYNC=true to enqueue a background
+    job instead.
     """
     try:
         case = Case.query.filter_by(case_number=case_number).first()
@@ -343,34 +343,53 @@ def process_case(case_number):
         if not case:
             return jsonify({'error': 'Case not found'}), 404
 
-        # Dedupe: check for existing queued/started job for this case
-        from src.lib.queue_utils import find_existing_case_job, acquire_case_lock
-        from redis import Redis
-        from rq import Queue
-        from src.tasks.llm_tasks import perform_case_analysis
+        async_mode = os.environ.get('AI_ANALYSIS_ASYNC', '').lower() in ('1', 'true', 'yes')
+        if async_mode:
+            # Dedupe: check for existing queued/started job for this case
+            from src.lib.queue_utils import find_existing_case_job, acquire_case_lock
+            from redis import Redis
+            from rq import Queue
+            from src.tasks.llm_tasks import perform_case_analysis
 
-        existing = find_existing_case_job(case.id)
-        if existing:
-            return jsonify({'success': False, 'message': 'Analysis already queued or running', 'job_id': existing}), 409
+            existing = find_existing_case_job(case.id)
+            if existing:
+                return jsonify({'success': False, 'message': 'Analysis already queued or running', 'job_id': existing}), 409
 
-        # Rate-limit enqueue attempts per-case for short window
-        locked = acquire_case_lock(case.id, ttl=60)
-        if not locked:
-            return jsonify({'error': 'Too many enqueue attempts for this case, try again later'}), 429
+            # Rate-limit enqueue attempts per-case for short window
+            locked = acquire_case_lock(case.id, ttl=60)
+            if not locked:
+                return jsonify({'error': 'Too many enqueue attempts for this case, try again later'}), 429
 
-        redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-        redis_conn = Redis.from_url(redis_url)
-        q = Queue('default', connection=redis_conn)
+            redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+            redis_conn = Redis.from_url(redis_url)
+            q = Queue('default', connection=redis_conn)
 
-        job = q.enqueue(perform_case_analysis, case.id)
+            job = q.enqueue(perform_case_analysis, case.id)
+
+            return jsonify({
+                'success': True,
+                'queued': True,
+                'job_id': job.get_id()
+            }), 202
+
+        analysis = ai_processor.analyze_case(case.to_dict())
+        analysis_record = CaseAnalysis(
+            case_id=case.id,
+            analysis=json.dumps(analysis),
+            provider=analysis.get('notes', {}).get('provider'),
+            confidence=analysis.get('confidence')
+        )
+        db.session.add(analysis_record)
+        db.session.commit()
 
         return jsonify({
             'success': True,
-            'queued': True,
-            'job_id': job.get_id()
-        }), 202
+            'analysis_id': analysis_record.id,
+            'analysis': analysis
+        }), 200
 
     except Exception as e:
+        db.session.rollback()
         return jsonify({
             'error': 'Failed to process case',
             'details': str(e)

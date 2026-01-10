@@ -14,6 +14,7 @@ from src.routes.case import case_bp
 from src.routes.attorney import attorney_bp
 from src.routes.contact import contact_bp
 from src.routes.blog import blog_bp
+from src.routes.blog_ai import blog_ai_bp
 from src.routes.sitemap import sitemap_bp
 from src.routes.blog_admin import blog_admin_bp
 from src.routes.admin_panel import admin_panel_bp
@@ -37,6 +38,7 @@ app.register_blueprint(case_bp, url_prefix='/api')
 app.register_blueprint(attorney_bp)
 app.register_blueprint(contact_bp)
 app.register_blueprint(blog_bp)
+app.register_blueprint(blog_ai_bp)
 app.register_blueprint(sitemap_bp)
 app.register_blueprint(blog_admin_bp)
 app.register_blueprint(admin_panel_bp)

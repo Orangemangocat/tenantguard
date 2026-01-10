@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, Menu, X } from 'lucide-react'
-import CaseIntakeForm from './components/CaseIntakeForm.jsx'
-import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
+import IntakeChat from './components/IntakeChat.jsx'
+import AttorneyIntakeChat from './components/AttorneyIntakeChat.jsx'
 import ContactPage from './components/ContactPage.jsx'
 import BlogList from './components/BlogList.jsx'
 import BlogPost from './components/BlogPost.jsx'
@@ -167,13 +167,11 @@ function App() {
   if (pathname === '/tenant-intake') {
     return (
       <ThemeProvider>
-        <ProtectedRoute>
-          <div className="min-h-screen bg-gray-50">
-            <div className="max-w-4xl mx-auto py-12 px-4">
-              <CaseIntakeForm />
-            </div>
-          </div>
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute>
+            <IntakeChat />
+          </ProtectedRoute>
+        </AuthProvider>
       </ThemeProvider>
     )
   }
@@ -181,13 +179,11 @@ function App() {
   if (pathname === '/attorney-intake') {
     return (
       <ThemeProvider>
-        <ProtectedRoute>
-          <div className="min-h-screen bg-gray-50">
-            <div className="max-w-4xl mx-auto py-12 px-4">
-              <AttorneyIntakeForm />
-            </div>
-          </div>
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute>
+            <AttorneyIntakeChat />
+          </ProtectedRoute>
+        </AuthProvider>
       </ThemeProvider>
     )
   }
@@ -275,7 +271,7 @@ function App() {
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <Badge variant="outline" style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primaryLight)' }} className="mb-6">
-              Tennessee
+              Tenant-first
             </Badge>
             <h1 className="text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>
               Transforming Tenant
@@ -283,7 +279,7 @@ function App() {
             </h1>
             <p className="text-xl mb-8 max-w-3xl mx-auto" style={{ color: 'var(--color-textSecondary)' }}>
               Technology-enabled self-service platform connecting tenants with qualified attorneys
-              for streamlined landlord-tenant dispute resolution in Tennessee.
+              for streamlined landlord-tenant dispute resolution.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button

@@ -1,5 +1,5 @@
 # vscode
-.vscode/*.code-workspace
+.vscode/
 
 # Python
 **/__pycache__/

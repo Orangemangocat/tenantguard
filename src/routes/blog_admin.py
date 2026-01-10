@@ -124,6 +124,77 @@ def delete_topic(current_user, topic_id):
         return jsonify({'error': str(e)}), 500
 
 
+@blog_admin_bp.route('/api/blog/topics/major-update', methods=['POST'])
+@admin_required
+def create_major_update_topic(current_user):
+    """Create and enqueue a major technical update topic for immediate generation."""
+    try:
+        data = request.json or {}
+        title = data.get('title')
+        if not title:
+            return jsonify({'error': 'Title is required'}), 400
+
+        def _normalize_links(links):
+            if isinstance(links, list):
+                return [link for link in links if link]
+            if isinstance(links, str):
+                return [link.strip() for link in links.splitlines() if link.strip()]
+            return []
+
+        links = _normalize_links(data.get('research_links', []))
+        changelog_url = os.environ.get('CHANGELOG_URL')
+        if changelog_url and changelog_url not in links:
+            links.append(changelog_url)
+        description = data.get('description', '')
+        research_notes = data.get('research_notes', '')
+
+        topic = BlogTopic(
+            title=title,
+            description=description,
+            category='technical',
+            research_links=json.dumps(links),
+            research_notes=research_notes,
+            priority='urgent',
+            status='pending',
+            created_by=current_user.email or 'admin'
+        )
+
+        db.session.add(topic)
+        db.session.commit()
+
+        from redis import Redis
+        from rq import Queue
+        from src.tasks.blog_ai_tasks import generate_blog_post
+
+        payload = {
+            'topic': topic.title,
+            'category': topic.category,
+            'author': 'Manus AI',
+            'links': links,
+            'text_snippets': research_notes,
+            'additional_context': description,
+            'llm_provider': 'openai',
+            'generation_source': 'major_update',
+        }
+
+        redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        redis_conn = Redis.from_url(redis_url)
+        q = Queue('default', connection=redis_conn)
+        job = q.enqueue(generate_blog_post, payload, submit_for_approval=True, topic_id=topic.id)
+
+        topic.status = 'in_progress'
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Major update queued for generation',
+            'topic': topic.to_dict(),
+            'job_id': job.get_id()
+        }), 202
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
 # ============================================================================
 # SCHEDULING ROUTES
 # ============================================================================
@@ -138,7 +209,7 @@ def get_schedule(current_user):
             # Create default schedule
             schedule = BlogSchedule(
                 auto_posting_enabled=True,
-                max_days_between_posts=5
+                max_hours_between_posts=72
             )
             db.session.add(schedule)
             db.session.commit()
@@ -163,8 +234,16 @@ def update_schedule(current_user):
         
         if 'auto_posting_enabled' in data:
             schedule.auto_posting_enabled = data['auto_posting_enabled']
-        if 'max_days_between_posts' in data:
-            schedule.max_days_between_posts = data['max_days_between_posts']
+        if 'max_hours_between_posts' in data:
+            try:
+                schedule.max_hours_between_posts = max(1, int(data['max_hours_between_posts']))
+            except (TypeError, ValueError):
+                return jsonify({'error': 'max_hours_between_posts must be an integer'}), 400
+        if 'max_days_between_posts' in data and 'max_hours_between_posts' not in data:
+            try:
+                schedule.max_hours_between_posts = max(1, int(data['max_days_between_posts']))
+            except (TypeError, ValueError):
+                return jsonify({'error': 'max_days_between_posts must be an integer'}), 400
         
         db.session.commit()
         return jsonify(schedule.to_dict()), 200
@@ -195,17 +274,20 @@ def check_schedule():
                 'days_since_last_post': None
             }), 200
         
-        # Calculate days since last post
-        days_since_last = (datetime.utcnow() - latest_post.published_at).days
+        # Calculate hours since last post
+        hours_since_last = (datetime.utcnow() - latest_post.published_at).total_seconds() / 3600
+        days_since_last = hours_since_last / 24
         
-        should_post = days_since_last >= schedule.max_days_between_posts
+        should_post = hours_since_last >= schedule.max_hours_between_posts
         
         return jsonify({
             'should_post': should_post,
-            'days_since_last_post': days_since_last,
-            'max_days_between_posts': schedule.max_days_between_posts,
+            'hours_since_last_post': int(hours_since_last),
+            'days_since_last_post': int(days_since_last),
+            'max_hours_between_posts': schedule.max_hours_between_posts,
+            'max_days_between_posts': schedule.max_hours_between_posts,
             'last_post_date': latest_post.published_at.isoformat(),
-            'reason': f'Last post was {days_since_last} days ago' if should_post else 'Recent post exists'
+            'reason': f'Last post was {int(hours_since_last)} hours ago' if should_post else 'Recent post exists'
         }), 200
     
     except Exception as e:
@@ -233,14 +315,19 @@ def get_analytics(current_user):
             
             # Get posting frequency
             latest_post = BlogPost.query.filter_by(status='published').order_by(BlogPost.published_at.desc()).first()
+            hours_since_last_post = None
             days_since_last_post = None
             if latest_post:
-                days_since_last_post = (datetime.utcnow() - latest_post.published_at).days
+                hours_since_last_post = int(
+                    (datetime.utcnow() - latest_post.published_at).total_seconds() / 3600
+                )
+                days_since_last_post = int(hours_since_last_post / 24)
         except Exception as db_error:
             # If tables don't exist yet, return empty data
             print(f"[blog_analytics] Database query error: {db_error}")
             total_posts = draft_posts = technical_posts = research_posts = 0
             pending_topics = in_progress_topics = 0
+            hours_since_last_post = None
             days_since_last_post = None
             latest_post = None
         
@@ -251,6 +338,7 @@ def get_analytics(current_user):
             'market_research': research_posts,
             'pending_topics': pending_topics,
             'in_progress_topics': in_progress_topics,
+            'hours_since_last_post': hours_since_last_post,
             'days_since_last_post': days_since_last_post,
             'last_post_date': latest_post.published_at.isoformat() if latest_post else None
         }), 200

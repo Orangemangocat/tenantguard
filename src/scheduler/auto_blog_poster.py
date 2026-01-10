@@ -45,13 +45,16 @@ def check_and_generate_post():
             should_post = True
             reason = "No posts exist yet"
         else:
-            days_since_last = (datetime.utcnow() - latest_post.published_at).days
-            if days_since_last >= schedule.max_days_between_posts:
+            hours_since_last = (datetime.utcnow() - latest_post.published_at).total_seconds() / 3600
+            if hours_since_last >= schedule.max_hours_between_posts:
                 should_post = True
-                reason = f"Last post was {days_since_last} days ago (max: {schedule.max_days_between_posts})"
+                reason = (
+                    f"Last post was {int(hours_since_last)} hours ago "
+                    f"(max: {schedule.max_hours_between_posts})"
+                )
         
         if not should_post:
-            print(f"No post needed. Last post was {days_since_last} days ago.")
+            print(f"No post needed. Last post was {int(hours_since_last)} hours ago.")
             return
         
         print(f"Generating new post. Reason: {reason}")
