@@ -22,6 +22,26 @@ const initialFormState = {
 const statusOptions = ['draft', 'pending', 'pending_approval', 'published', 'rejected'];
 const categoryOptions = ['general', 'legal', 'technical', 'market-research'];
 
+const BlockEmbed = Quill.import('blots/block/embed');
+
+class AudioBlot extends BlockEmbed {
+  static blotName = 'audio';
+  static tagName = 'audio';
+
+  static create(value) {
+    const node = super.create();
+    node.setAttribute('controls', '');
+    node.setAttribute('src', value);
+    return node;
+  }
+
+  static value(node) {
+    return node.getAttribute('src');
+  }
+}
+
+Quill.register(AudioBlot);
+
 const toLocalInputValue = (value) => {
   if (!value) {
     return '';
@@ -91,7 +111,7 @@ export default function BlogManagement() {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to upload media');
+      throw new Error(data.error || `Failed to upload media (status ${response.status})`);
     }
     return data.url;
   };
@@ -171,12 +191,18 @@ export default function BlogManagement() {
         }
 
         if (kind === 'audio' || isAudioType) {
-          insertHtmlAtCursor(`<audio controls src="${url}"></audio>`);
+          const range = quill.getSelection(true);
+          const index = range ? range.index : quill.getLength();
+          quill.insertEmbed(index, 'audio', url, 'user');
+          quill.setSelection(index + 1, 0);
           return;
         }
 
         if (kind === 'video' || isVideoType) {
-          insertHtmlAtCursor(`<video controls src="${url}"></video>`);
+          const range = quill.getSelection(true);
+          const index = range ? range.index : quill.getLength();
+          quill.insertEmbed(index, 'video', url, 'user');
+          quill.setSelection(index + 1, 0);
           return;
         }
 
@@ -621,6 +647,9 @@ export default function BlogManagement() {
                     </span>
                   </div>
                   <div id="content" ref={editorContainerRef} className="min-h-[320px] border border-t-0 border-gray-200 rounded-b-md" />
+                  {imageUploadError && (
+                    <p className="text-sm text-red-600">{imageUploadError}</p>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
