@@ -12,7 +12,7 @@ import sys
 from urllib.parse import urlparse
 from uuid import uuid4
 
-from sqlalchemy import or_
+# from sqlalchemy import or_
 import requests
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -39,7 +39,7 @@ IMAGE_URL_PREFIX = "/static/uploads/blog"
 def _split_env_list(value):
     if not value:
         return []
-    return [item.strip() for item in value.split(',') if item.strip()]
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 def _has_openai_keys():
@@ -100,7 +100,7 @@ def _local_image_path(value):
         path = f"/{path}"
 
     if path.startswith("/static/"):
-        return os.path.join(app.static_folder, path[len("/static/"):])
+        return os.path.join(app.static_folder, path[len("/static/") :])
 
     if path.startswith("/assets/"):
         return os.path.join(app.static_folder, path.lstrip("/"))
@@ -147,7 +147,7 @@ def build_image_prompt(post):
 
 def generate_ai_image(post, provider_index=None):
     api_key = _select_openai_key(provider_index)
-    model = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
+    model = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1-mini")
     size = os.getenv("OPENAI_IMAGE_SIZE", "1024x1024")
     quality = os.getenv("OPENAI_IMAGE_QUALITY")
     timeout = float(os.getenv("OPENAI_REQUEST_TIMEOUT", "30"))
