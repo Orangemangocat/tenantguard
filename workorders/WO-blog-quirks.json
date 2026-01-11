@@ -1,0 +1,45 @@
+{
+  "id": "WO-blog-quirks",
+  "title": "Blog admin image/date fields and ordering fixes",
+  "scope": [
+    "Expose featured image and published date fields in the blog admin editor.",
+    "Persist featured image and published date values through admin blog endpoints.",
+    "Order public blog listings by published date with a created date fallback.",
+    "Ensure admin modal actions remain accessible on smaller viewports.",
+    "Support uploading a featured image from the blog admin editor.",
+    "Remove the /blog admin overlay and rely on the dashboard admin experience.",
+    "Replace the blog editor textarea with a rich text editor that supports uploads and media embeds."
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "frontend-next/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Blog admin create/edit form includes featured image and published date fields.",
+    "Admin blog create/update endpoints store featured image and published date values when provided.",
+    "Public blog listings sort by published date and gracefully fall back to created date when missing.",
+    "Blog admin modal remains scrollable with visible submit controls on small screens.",
+    "Blog admin editor can upload a featured image and store the resulting URL on the post.",
+    "The /blog overlay no longer shows a Blog Admin view or entry point.",
+    "Blog post create/edit uses a rich text editor with image uploads and media embeds."
+  ],
+  "risk_notes": [
+    "Datetime parsing could reject unexpected formats if the admin UI sends invalid values.",
+    "Ordering changes may affect how legacy posts are displayed when dates are missing."
+  ],
+  "rollback_plan": [
+    "Revert the blog admin UI and backend endpoint changes and remove the workorder entry."
+  ]
+}

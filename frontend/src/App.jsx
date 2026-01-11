@@ -8,7 +8,6 @@ import AttorneyIntakeChat from './components/AttorneyIntakeChat.jsx'
 import ContactPage from './components/ContactPage.jsx'
 import BlogList from './components/BlogList.jsx'
 import BlogPost from './components/BlogPost.jsx'
-import BlogAdmin from './components/BlogAdmin.jsx'
 import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
@@ -34,7 +33,6 @@ function App() {
   const [showContactPage, setShowContactPage] = useState(false)
   const [_currentPage, setCurrentPage] = useState('home')
   const [showBlog, setShowBlog] = useState(false)
-  const [showBlogAdmin, setShowBlogAdmin] = useState(false)
   const [selectedBlogPost, setSelectedBlogPost] = useState(null)
   const [showLogin, setShowLogin] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
@@ -668,7 +666,7 @@ function App() {
         )}
 
         {/* Blog Pages */}
-        {showBlog && !selectedBlogPost && !showBlogAdmin && (
+        {showBlog && !selectedBlogPost && (
           <div className="fixed inset-0 bg-white z-50 overflow-y-auto" style={{ backgroundColor: 'var(--color-background)' }}>
             <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b sticky top-0 z-10">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -678,9 +676,6 @@ function App() {
                     <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard Blog</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {currentUser && currentUser.role === 'admin' && (
-                      <Button variant="outline" onClick={() => setShowBlogAdmin(true)}>Admin</Button>
-                    )}
                     <Button onClick={() => setShowBlog(false)}>Close</Button>
                   </div>
                 </div>
@@ -704,23 +699,6 @@ function App() {
               </div>
             </header>
             <BlogPost slug={selectedBlogPost} onBack={() => setSelectedBlogPost(null)} />
-          </div>
-        )}
-
-        {showBlogAdmin && currentUser && currentUser.role === 'admin' && (
-          <div className="fixed inset-0 bg-white z-50 overflow-y-auto" style={{ backgroundColor: 'var(--color-background)' }}>
-            <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b sticky top-0 z-10">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center py-4">
-                  <div className="flex items-center space-x-3">
-                    <img src={logo} alt="TenantGuard" className="h-8 w-8" />
-                    <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard Blog Admin</span>
-                  </div>
-                  <Button onClick={() => setShowBlogAdmin(false)}>Close</Button>
-                </div>
-              </div>
-            </header>
-            <BlogAdmin onBack={() => setShowBlogAdmin(false)} currentUser={currentUser} />
           </div>
         )}
 

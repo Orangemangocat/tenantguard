@@ -26,7 +26,13 @@ function BlogPost({ slug, onBack }) {
   }, [fetchPost])
 
   const formatDate = (dateString) => {
+    if (!dateString) {
+      return ''
+    }
     const date = new Date(dateString)
+    if (Number.isNaN(date.getTime())) {
+      return ''
+    }
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
@@ -48,6 +54,16 @@ function BlogPost({ slug, onBack }) {
       'market-research': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
     }
     return colors[category] || 'bg-gray-100 text-gray-800'
+  }
+
+  const formatContent = (content) => {
+    if (!content) {
+      return ''
+    }
+    if (content.includes('<')) {
+      return content
+    }
+    return content.replace(/\n/g, '<br />')
   }
 
   if (loading) {
@@ -114,7 +130,7 @@ function BlogPost({ slug, onBack }) {
           <div className="flex flex-wrap items-center gap-4 text-sm mb-6" style={{ color: 'var(--color-textSecondary)' }}>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>{formatDate(post.published_at)}</span>
+              <span>{formatDate(post.published_at || post.created_at)}</span>
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -142,7 +158,7 @@ function BlogPost({ slug, onBack }) {
           <div 
             className="prose prose-lg max-w-none"
             style={{ color: 'var(--color-text)' }}
-            dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }}
+            dangerouslySetInnerHTML={{ __html: formatContent(post.content) }}
           />
         </CardContent>
       </Card>

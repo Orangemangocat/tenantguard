@@ -41,7 +41,13 @@ function BlogList({ onPostClick }) {
   }, [fetchPosts])
 
   const formatDate = (dateString) => {
+    if (!dateString) {
+      return ''
+    }
     const date = new Date(dateString)
+    if (Number.isNaN(date.getTime())) {
+      return ''
+    }
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
@@ -161,7 +167,7 @@ function BlogList({ onPostClick }) {
                 <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--color-textSecondary)' }}>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <span>{formatDate(post.published_at)}</span>
+                    <span>{formatDate(post.published_at || post.created_at)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="h-4 w-4" />

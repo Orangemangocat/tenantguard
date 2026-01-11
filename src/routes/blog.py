@@ -31,8 +31,8 @@ def get_posts():
         if status:
             query = query.filter_by(status=status)
         
-        # Order by published date (most recent first)
-        query = query.order_by(BlogPost.published_at.desc())
+        # Order by published date (most recent first), fall back to created_at
+        query = query.order_by(db.func.coalesce(BlogPost.published_at, BlogPost.created_at).desc())
         
         # Pagination
         paginated = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -203,7 +203,7 @@ def get_recent_posts():
         limit = int(request.args.get('limit', 5))
         
         posts = BlogPost.query.filter_by(status='published')\
-            .order_by(BlogPost.published_at.desc())\
+            .order_by(db.func.coalesce(BlogPost.published_at, BlogPost.created_at).desc())\
             .limit(limit).all()
         
         return jsonify([post.to_dict() for post in posts]), 200
