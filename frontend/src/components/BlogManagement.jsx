@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label.jsx';
 import { Textarea } from '@/components/ui/textarea.jsx';
 import { API_BASE_URL } from '../lib/apiBase.js';
+import Quill from 'quill';
+import 'quill/dist/quill.snow.css';
 
 const initialFormState = {
   title: '',
@@ -19,11 +21,6 @@ const initialFormState = {
 
 const statusOptions = ['draft', 'pending', 'pending_approval', 'published', 'rejected'];
 const categoryOptions = ['general', 'legal', 'technical', 'market-research'];
-const TINYMCE_API_KEY =
-  import.meta.env.VITE_TINYMCE_API_KEY ||
-  import.meta.env.TINYMCE_API_KEY ||
-  'no-api-key';
-const TINYMCE_SCRIPT_SRC = `https://cdn.tiny.cloud/1/${TINYMCE_API_KEY}/tinymce/6/tinymce.min.js`;
 
 const toLocalInputValue = (value) => {
   if (!value) {
@@ -64,134 +61,159 @@ export default function BlogManagement() {
   const [imageUploadError, setImageUploadError] = useState(null);
   const editorContainerRef = useRef(null);
   const editorInstanceRef = useRef(null);
+  const editorChangeHandlerRef = useRef(null);
   const lastEditorContentRef = useRef('');
-  const [editorReady, setEditorReady] = useState(false);
 
   useEffect(() => {
     fetchPosts();
   }, []);
 
+  const pickFile = (accept) => new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.onchange = () => resolve(input.files?.[0] || null);
+    input.click();
+  });
+
+  const uploadMediaFile = async (file) => {
+    const accessToken = localStorage.getItem('access_token');
+    const payload = new FormData();
+    payload.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/api/admin/blog-posts/media`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: payload
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to upload media');
+    }
+    return data.url;
+  };
+
   useEffect(() => {
-    if (window.tinymce) {
-      setEditorReady(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = TINYMCE_SCRIPT_SRC;
-    script.referrerPolicy = 'origin';
-    script.onload = () => setEditorReady(true);
-    script.onerror = () => setEditorReady(false);
-    document.body.appendChild(script);
-  }, []);
-
-  useEffect(() => {
-    if (!showDialog || !editorReady || !editorContainerRef.current) {
-      return;
-    }
-
-    if (editorInstanceRef.current) {
-      return;
-    }
-
-    const initEditor = () => {
-      window.tinymce.init({
-        target: editorContainerRef.current,
-        height: 420,
-        menubar: false,
-        plugins: [
-          'lists',
-          'link',
-          'image',
-          'media',
-          'code',
-          'table'
-        ],
-        toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code',
-        automatic_uploads: true,
-        images_upload_handler: async (blobInfo) => {
-          const accessToken = localStorage.getItem('access_token');
-          const payload = new FormData();
-          payload.append('file', blobInfo.blob(), blobInfo.filename());
-
-          const response = await fetch(`${API_BASE_URL}/api/admin/blog-posts/media`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            },
-            body: payload
-          });
-
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            throw new Error(data.error || 'Failed to upload image');
-          }
-          return data.url;
-        },
-        file_picker_callback: (callback, _value, meta) => {
-          if (meta.filetype !== 'image') {
-            return;
-          }
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = 'image/*';
-          input.onchange = async () => {
-            const file = input.files?.[0];
-            if (!file) {
-              return;
-            }
-            try {
-              const accessToken = localStorage.getItem('access_token');
-              const payload = new FormData();
-              payload.append('file', file);
-              const response = await fetch(`${API_BASE_URL}/api/admin/blog-posts/media`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`
-                },
-                body: payload
-              });
-              const data = await response.json().catch(() => ({}));
-              if (!response.ok) {
-                throw new Error(data.error || 'Failed to upload image');
-              }
-              callback(data.url, { title: file.name });
-            } catch (err) {
-              console.error('Editor image upload failed:', err);
-              setImageUploadError(err.message);
-            }
-          };
-          input.click();
-        },
-        setup: (editor) => {
-          editorInstanceRef.current = editor;
-          editor.on('init', () => {
-            const content = formData.content || '';
-            editor.setContent(content);
-            lastEditorContentRef.current = content;
-          });
-          editor.on('change keyup undo redo', () => {
-            const content = editor.getContent();
-            lastEditorContentRef.current = content;
-            setFormData((prev) => ({
-              ...prev,
-              content
-            }));
-          });
+    if (!showDialog) {
+      if (editorInstanceRef.current) {
+        if (editorChangeHandlerRef.current) {
+          editorInstanceRef.current.off('text-change', editorChangeHandlerRef.current);
         }
-      });
+        editorInstanceRef.current = null;
+        editorChangeHandlerRef.current = null;
+        if (editorContainerRef.current) {
+          editorContainerRef.current.innerHTML = '';
+        }
+      }
+      return;
+    }
+
+    if (!editorContainerRef.current || editorInstanceRef.current) {
+      return;
+    }
+
+    const quill = new Quill(editorContainerRef.current, {
+      theme: 'snow',
+      modules: {
+        toolbar: {
+          container: '#blog-editor-toolbar'
+        }
+      }
+    });
+
+    editorInstanceRef.current = quill;
+    const content = formData.content || '';
+    if (content) {
+      quill.clipboard.dangerouslyPasteHTML(content);
+    }
+    lastEditorContentRef.current = content;
+
+    const handleChange = () => {
+      const html = quill.root.innerHTML;
+      lastEditorContentRef.current = html;
+      setFormData((prev) => ({
+        ...prev,
+        content: html
+      }));
     };
 
-    initEditor();
+    editorChangeHandlerRef.current = handleChange;
+    quill.on('text-change', handleChange);
 
-    return () => {
-      if (editorInstanceRef.current) {
-        const editor = editorInstanceRef.current;
-        editorInstanceRef.current = null;
-        editor.remove();
+    const insertHtmlAtCursor = (html) => {
+      const range = quill.getSelection(true);
+      const index = range ? range.index : quill.getLength();
+      quill.clipboard.dangerouslyPasteHTML(index, html);
+      quill.setSelection(index + 1, 0);
+    };
+
+    const handleMediaUpload = async ({ accept, kind }) => {
+      const file = await pickFile(accept);
+      if (!file) {
+        return;
+      }
+      try {
+        setImageUploadError(null);
+        const url = await uploadMediaFile(file);
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        const isAudioType = file.type.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'm4a'].includes(ext);
+        const isVideoType = file.type.startsWith('video/') || ['mp4', 'webm', 'mov'].includes(ext);
+
+        if (kind === 'image') {
+          const range = quill.getSelection(true);
+          const index = range ? range.index : quill.getLength();
+          quill.insertEmbed(index, 'image', url, 'user');
+          quill.setSelection(index + 1, 0);
+          return;
+        }
+
+        if (kind === 'audio' || isAudioType) {
+          insertHtmlAtCursor(`<audio controls src="${url}"></audio>`);
+          return;
+        }
+
+        if (kind === 'video' || isVideoType) {
+          insertHtmlAtCursor(`<video controls src="${url}"></video>`);
+          return;
+        }
+
+        insertHtmlAtCursor(`<a href="${url}" target="_blank" rel="noopener noreferrer">${file.name}</a>`);
+      } catch (err) {
+        console.error('Media upload failed:', err);
+        setImageUploadError(err.message);
       }
     };
-  }, [API_BASE_URL, editorReady, formData.content, showDialog]);
+
+    const toolbar = quill.getModule('toolbar');
+    if (toolbar) {
+      toolbar.addHandler('image', () => {
+        handleMediaUpload({ accept: 'image/*', kind: 'image' });
+      });
+      toolbar.addHandler('video', () => {
+        handleMediaUpload({ accept: 'video/*,audio/*,.mp4,.m4a', kind: 'video' });
+      });
+      toolbar.addHandler('audio', () => {
+        handleMediaUpload({ accept: 'audio/*,.mp4,.m4a', kind: 'audio' });
+      });
+    }
+
+    return () => {
+      if (!editorInstanceRef.current) {
+        return;
+      }
+      if (editorChangeHandlerRef.current) {
+        editorInstanceRef.current.off('text-change', editorChangeHandlerRef.current);
+      }
+      editorInstanceRef.current = null;
+      editorChangeHandlerRef.current = null;
+      if (editorContainerRef.current) {
+        editorContainerRef.current.innerHTML = '';
+      }
+    };
+  }, [showDialog]);
 
   useEffect(() => {
     if (!showDialog || !editorInstanceRef.current) {
@@ -199,7 +221,7 @@ export default function BlogManagement() {
     }
     const content = formData.content || '';
     if (content !== lastEditorContentRef.current) {
-      editorInstanceRef.current.setContent(content);
+      editorInstanceRef.current.clipboard.dangerouslyPasteHTML(content);
       lastEditorContentRef.current = content;
     }
   }, [formData.content, showDialog]);
@@ -270,14 +292,18 @@ export default function BlogManagement() {
     event.preventDefault();
 
     try {
+      setError(null);
+      setSuccess(null);
       const accessToken = localStorage.getItem('access_token');
       const isEdit = dialogMode === 'edit' && selectedPost;
       const url = isEdit
         ? `${API_BASE_URL}/api/admin/blog-posts/${selectedPost.id}`
         : `${API_BASE_URL}/api/admin/blog-posts`;
       const method = isEdit ? 'PUT' : 'POST';
+      const editorContent = editorInstanceRef.current?.root?.innerHTML;
       const payload = {
-        ...formData
+        ...formData,
+        content: editorContent !== undefined ? editorContent : formData.content
       };
       const normalizedPublishedAt = toIsoStringOrNull(formData.published_at);
       if (normalizedPublishedAt) {
@@ -561,10 +587,40 @@ export default function BlogManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="content">Content</Label>
-                  {!editorReady && (
-                    <div className="text-sm text-gray-500">Loading editor...</div>
-                  )}
-                  <div id="content" ref={editorContainerRef} />
+                  <div id="blog-editor-toolbar" className="border border-gray-200 rounded-t-md">
+                    <span className="ql-formats">
+                      <select className="ql-header" defaultValue="">
+                        <option value="1">H1</option>
+                        <option value="2">H2</option>
+                        <option value="3">H3</option>
+                        <option value="">Normal</option>
+                      </select>
+                    </span>
+                    <span className="ql-formats">
+                      <button className="ql-bold" />
+                      <button className="ql-italic" />
+                      <button className="ql-underline" />
+                      <button className="ql-strike" />
+                    </span>
+                    <span className="ql-formats">
+                      <button className="ql-list" value="ordered" />
+                      <button className="ql-list" value="bullet" />
+                    </span>
+                    <span className="ql-formats">
+                      <button className="ql-link" />
+                      <button className="ql-blockquote" />
+                      <button className="ql-code-block" />
+                    </span>
+                    <span className="ql-formats">
+                      <button className="ql-image" />
+                      <button className="ql-video" />
+                      <button className="ql-audio">Audio</button>
+                    </span>
+                    <span className="ql-formats">
+                      <button className="ql-clean" />
+                    </span>
+                  </div>
+                  <div id="content" ref={editorContainerRef} className="min-h-[320px] border border-t-0 border-gray-200 rounded-b-md" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">

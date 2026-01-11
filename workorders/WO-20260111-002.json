@@ -1,0 +1,40 @@
+{
+  "id": "WO-20260111-002",
+  "title": "Ensure blog posts have images in frontend",
+  "scope": [
+    "Update frontend blog rendering to ensure each post displays an image.",
+    "Provide graceful fallback behavior when a post lacks an image URL."
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "frontend-next/**",
+    "scripts/**",
+    "docs/**",
+    ".github/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Every blog post card/page renders an image (real or fallback).",
+    "Missing image URLs do not break layout or cause console errors.",
+    "Frontend changes prioritize presentable visuals without backend dependency changes."
+  ],
+  "risk_notes": [
+    "Fallback image choice could conflict with current design language.",
+    "Assumptions about image field names could hide real data issues."
+  ],
+  "rollback_plan": [
+    "Revert frontend image rendering changes.",
+    "Restore previous blog card layout if regressions appear."
+  ]
+}

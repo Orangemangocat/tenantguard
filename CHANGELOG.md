@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-01-11: Added Quill media upload handlers for image, video, and audio embeds (WO-20260111-004).
+- 2026-01-11: Replaced TinyMCE with Quill in blog management to remove API key dependency (WO-20260111-003).
+- 2026-01-11: Ensured blog list and detail views always render a fallback image when posts lack one (WO-20260111-002).
+- 2026-01-11: Blog management update now reads editor content on submit to stabilize the Update Post flow (WO-20260111-001).
 - 2026-01-11: Expanded `scripts/update_blog_posts.py` to validate existing featured images and backfill missing files (WO-update-blog-posts-db-fix).
 - 2026-01-11: Updated `scripts/update_blog_posts.py` to generate AI featured images for posts missing images (WO-update-blog-posts-db-fix).
 - 2026-01-10: Added workorder `WO-blog-quirks` to fix blog admin image/date fields and ordering issues.

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { Button } from '@/components/ui/button.jsx'
 import { Calendar, User, ArrowLeft, Tag } from 'lucide-react'
+import blogFallbackImage from '../assets/tenantguard-shield.png'
 
 function BlogPost({ slug, onBack }) {
   const [post, setPost] = useState(null)
@@ -56,6 +57,8 @@ function BlogPost({ slug, onBack }) {
     return colors[category] || 'bg-gray-100 text-gray-800'
   }
 
+  const resolveFeaturedImage = (postData) => postData.featured_image || blogFallbackImage
+
   const formatContent = (content) => {
     if (!content) {
       return ''
@@ -103,15 +106,17 @@ function BlogPost({ slug, onBack }) {
 
       {/* Post Content */}
       <Card style={{ backgroundColor: 'var(--color-cardBg)', borderColor: 'var(--color-cardBorder)' }}>
-        {post.featured_image && (
-          <div className="w-full h-96 overflow-hidden rounded-t-lg">
-            <img 
-              src={post.featured_image} 
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+        <div className="w-full h-96 overflow-hidden rounded-t-lg">
+          <img 
+            src={resolveFeaturedImage(post)} 
+            alt={post.title}
+            className="w-full h-full object-cover"
+            onError={(event) => {
+              event.currentTarget.onerror = null
+              event.currentTarget.src = blogFallbackImage
+            }}
+          />
+        </div>
         
         <CardHeader>
           {/* Category Badge */}

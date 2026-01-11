@@ -1,0 +1,40 @@
+{
+  "id": "WO-20260111-001",
+  "title": "Fix update post button not working",
+  "scope": [
+    "Investigate and fix the update post button behavior in the blog/admin UI.",
+    "Ensure update actions persist and the UI reflects success/failure states."
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "frontend-next/**",
+    "scripts/**",
+    "docs/**",
+    ".github/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Clicking the Update Post button updates the post and shows a success state.",
+    "Errors are surfaced to the user if the update fails.",
+    "No regression in create or delete post flows."
+  ],
+  "risk_notes": [
+    "Possible mismatch between frontend payload shape and backend expectations.",
+    "Async state handling could mask request failures."
+  ],
+  "rollback_plan": [
+    "Revert frontend update handler changes.",
+    "Revert backend update endpoint changes if modified."
+  ]
+}
