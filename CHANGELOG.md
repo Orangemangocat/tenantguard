@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-01-11: Expanded `scripts/update_blog_posts.py` to validate existing featured images and backfill missing files (WO-update-blog-posts-db-fix).
+- 2026-01-11: Updated `scripts/update_blog_posts.py` to generate AI featured images for posts missing images (WO-update-blog-posts-db-fix).
 - 2026-01-10: Added workorder `WO-blog-quirks` to fix blog admin image/date fields and ordering issues.
 - 2026-01-10: Added blog admin image/date inputs, stored published dates, and ordered public listings by published/created date.
 - 2026-01-10: Added featured image upload endpoint and admin UI uploader for blog posts (WO-blog-quirks).
