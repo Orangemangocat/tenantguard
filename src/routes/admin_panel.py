@@ -281,7 +281,7 @@ def list_blog_posts(current_user):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>/approve', methods=['PUT'])
 @admin_required
-def approve_blog_post(post_id):
+def approve_blog_post(current_user, post_id):
     """Approve a blog post"""
     try:
         post = BlogPost.query.get(post_id)
@@ -301,7 +301,7 @@ def approve_blog_post(post_id):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>/reject', methods=['PUT'])
 @admin_required
-def reject_blog_post(post_id):
+def reject_blog_post(current_user, post_id):
     """Reject a blog post"""
     data = request.json
     reason = data.get('reason', '')
@@ -325,7 +325,7 @@ def reject_blog_post(post_id):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>', methods=['PUT'])
 @admin_required
-def update_blog_post(post_id):
+def update_blog_post(current_user, post_id):
     """Update blog post details"""
     data = request.json
     
@@ -372,7 +372,7 @@ def update_blog_post(post_id):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>/publish', methods=['PUT'])
 @admin_required
-def publish_blog_post(post_id):
+def publish_blog_post(current_user, post_id):
     """Publish a blog post"""
     try:
         post = BlogPost.query.get(post_id)
@@ -392,7 +392,7 @@ def publish_blog_post(post_id):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>/unpublish', methods=['PUT'])
 @admin_required
-def unpublish_blog_post(post_id):
+def unpublish_blog_post(current_user, post_id):
     """Unpublish a blog post (set to draft)"""
     try:
         post = BlogPost.query.get(post_id)
@@ -470,7 +470,7 @@ def upload_blog_media(current_user):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>', methods=['DELETE'])
 @admin_required
-def delete_blog_post(post_id):
+def delete_blog_post(current_user, post_id):
     """Delete a blog post"""
     try:
         post = BlogPost.query.get(post_id)
