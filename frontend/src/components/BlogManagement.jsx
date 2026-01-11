@@ -19,7 +19,11 @@ const initialFormState = {
 
 const statusOptions = ['draft', 'pending', 'pending_approval', 'published', 'rejected'];
 const categoryOptions = ['general', 'legal', 'technical', 'market-research'];
-const TINYMCE_SCRIPT_SRC = 'https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js';
+const TINYMCE_API_KEY =
+  import.meta.env.VITE_TINYMCE_API_KEY ||
+  import.meta.env.TINYMCE_API_KEY ||
+  'no-api-key';
+const TINYMCE_SCRIPT_SRC = `https://cdn.tiny.cloud/1/${TINYMCE_API_KEY}/tinymce/6/tinymce.min.js`;
 
 const toLocalInputValue = (value) => {
   if (!value) {
@@ -439,6 +443,7 @@ export default function BlogManagement() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
@@ -457,6 +462,9 @@ export default function BlogManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{post.category}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {post.published_at ? new Date(post.published_at).toLocaleString() : 'Unpublished'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {post.updated_at ? new Date(post.updated_at).toLocaleString() : 'Never'}
                     </td>
