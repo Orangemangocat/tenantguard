@@ -6,6 +6,7 @@ from src.models.blog import BlogPost
 from src.models.blog_topic import BlogTopic
 from src.models.user import db
 from src.services.blog_ai import call_openai_chat, parse_llm_json
+from src.services.blog_content import normalize_blog_content
 
 
 ALLOWED_CATEGORIES = {'technical', 'market-research'}
@@ -126,6 +127,7 @@ def generate_blog_post(payload, submit_for_approval=False, topic_id=None):
         if not content:
             return {'error': 'LLM response missing content'}
 
+        normalized_content = normalize_blog_content(content)
         title = response_data.get('title') or topic
         excerpt = response_data.get('excerpt') or (content[:200] + '...')
         tags = _normalize_tags(response_data.get('suggested_tags', []))
@@ -138,7 +140,7 @@ def generate_blog_post(payload, submit_for_approval=False, topic_id=None):
         post = BlogPost(
             title=title,
             slug=slug,
-            content=content,
+            content=normalized_content,
             excerpt=excerpt,
             category=category,
             author=author,
@@ -186,7 +188,7 @@ def revise_blog_post(post_id, payload):
             post.title = response_data['title']
 
         if response_data.get('content'):
-            post.content = response_data['content']
+            post.content = normalize_blog_content(response_data['content'])
         else:
             return {'error': 'LLM response missing content'}
 

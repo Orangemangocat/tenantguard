@@ -14,6 +14,7 @@ from src.models.user import db
 from src.models.auth_user import AuthUser
 from src.models.blog import BlogPost
 from src.models.case import Case
+from src.services.blog_content import normalize_blog_content
 
 admin_panel_bp = Blueprint('admin_panel', __name__, url_prefix='/api/admin')
 from src.routes.auth import admin_required
@@ -265,7 +266,7 @@ def list_blog_posts(current_user):
             'id': post.id,
             'title': post.title,
             'slug': post.slug,
-            'content': post.content,
+            'content': normalize_blog_content(post.content),
             'excerpt': post.excerpt,
             'author': post.author,
             'status': post.status,
@@ -339,7 +340,7 @@ def update_blog_post(current_user, post_id):
             post.title = data['title']
         
         if 'content' in data:
-            post.content = data['content']
+            post.content = normalize_blog_content(data['content'])
         
         if 'excerpt' in data:
             post.excerpt = data['excerpt']
@@ -712,10 +713,11 @@ def create_blog_post(current_user):
         if status == 'published' and not published_at:
             published_at = datetime.utcnow()
         
+        content = normalize_blog_content(data['content'])
         post = BlogPost(
             title=data['title'],
             slug=slug,
-            content=data['content'],
+            content=content,
             excerpt=data.get('excerpt', ''),
             author=data.get('author', 'Admin'),
             status=status,
@@ -749,7 +751,7 @@ def get_blog_post(post_id):
             'id': post.id,
             'title': post.title,
             'slug': post.slug,
-            'content': post.content,
+            'content': normalize_blog_content(post.content),
             'excerpt': post.excerpt,
             'author': post.author,
             'status': post.status,
