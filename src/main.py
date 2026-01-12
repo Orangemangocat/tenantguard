@@ -29,6 +29,8 @@ if not secret_key:
     secret_key = secrets.token_urlsafe(32)
     print('[SECURITY] FLASK_SECRET_KEY not set; using an ephemeral key for this process.')
 app.config['SECRET_KEY'] = secret_key
+upload_limit_mb = int(os.getenv('MAX_CONTENT_LENGTH_MB', '50'))
+app.config['MAX_CONTENT_LENGTH'] = upload_limit_mb * 1024 * 1024
 
 # Enable CORS for all routes
 CORS(app, origins=['*'])
