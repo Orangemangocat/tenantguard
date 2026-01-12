@@ -1,0 +1,35 @@
+{
+  "id": "WO-20260112-005",
+  "title": "Increase upload size limit for blog media",
+  "scope": [
+    "Configure Flask MAX_CONTENT_LENGTH to support larger media uploads",
+    "Allow size to be configured via environment variable",
+    "Record the update in the changelog"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Flask app enforces an increased upload size limit (default 50MB)",
+    "Upload limit can be overridden with an environment variable",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "Large uploads could increase memory usage during request processing"
+  ],
+  "rollback_plan": [
+    "Remove MAX_CONTENT_LENGTH configuration or lower its default value"
+  ]
+}
