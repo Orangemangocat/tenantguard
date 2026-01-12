@@ -433,7 +433,7 @@ def upload_blog_featured_image(current_user):
         file_path = os.path.join(upload_dir, unique_name)
         file.save(file_path)
 
-        public_url = f"/static/uploads/blog/{unique_name}"
+        public_url = f"/uploads/blog/{unique_name}"
         return jsonify({'url': public_url}), 201
     except Exception as e:
         print(f"[ADMIN_ERROR] Upload blog featured image error: {e}")
@@ -462,7 +462,7 @@ def upload_blog_media(current_user):
         file_path = os.path.join(upload_dir, unique_name)
         file.save(file_path)
 
-        public_url = f"/static/uploads/blog/{unique_name}"
+        public_url = f"/uploads/blog/{unique_name}"
         return jsonify({'url': public_url}), 201
     except Exception as e:
         print(f"[ADMIN_ERROR] Upload blog media error: {e}")

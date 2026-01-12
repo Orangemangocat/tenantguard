@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-01-12: Normalized blog media URLs to drop the /static prefix in admin uploads and UI (WO-20260112-001).
 - 2026-01-11: Registered a Quill audio blot and improved media upload error messaging in blog management (WO-20260111-004).
 - 2026-01-11: Fixed admin blog post update/approve/publish handlers to accept admin user from the decorator (WO-20260111-001).
 - 2026-01-11: Added Quill media upload handlers for image, video, and audio embeds (WO-20260111-004).

@@ -1,0 +1,37 @@
+{
+  "id": "WO-20260112-001",
+  "title": "Normalize blog media URLs to drop /static prefix",
+  "scope": [
+    "Normalize blog media URLs returned from uploads to remove the leading /static prefix",
+    "Ensure featured image values and placeholders use /uploads paths",
+    "Record the update in the changelog"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "workorders/**",
+    "AGENTS.md",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Blog media upload responses provide /uploads/blog/* URLs (no /static prefix)",
+    "Featured image values saved from the admin UI do not include the /static prefix",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "Existing posts with /static paths may still render until edited or re-uploaded"
+  ],
+  "rollback_plan": [
+    "Revert the URL normalization changes and restore /static in upload responses"
+  ]
+}

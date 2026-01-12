@@ -65,6 +65,16 @@ const toIsoStringOrNull = (value) => {
   return date.toISOString();
 };
 
+const normalizeBlogMediaUrl = (value) => {
+  if (!value) {
+    return '';
+  }
+  if (value.startsWith('/static/')) {
+    return value.replace(/^\/static/, '');
+  }
+  return value;
+};
+
 export default function BlogManagement() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -113,7 +123,7 @@ export default function BlogManagement() {
     if (!response.ok) {
       throw new Error(data.error || `Failed to upload media (status ${response.status})`);
     }
-    return data.url;
+    return normalizeBlogMediaUrl(data.url);
   };
 
   useEffect(() => {
@@ -296,7 +306,7 @@ export default function BlogManagement() {
         author: post.author || 'Admin',
         category: post.category || 'general',
         status: post.status || 'draft',
-        featured_image: post.featured_image || '',
+        featured_image: normalizeBlogMediaUrl(post.featured_image || ''),
         published_at: toLocalInputValue(post.published_at)
       });
     } else {
@@ -329,6 +339,7 @@ export default function BlogManagement() {
       const editorContent = editorInstanceRef.current?.root?.innerHTML;
       const payload = {
         ...formData,
+        featured_image: normalizeBlogMediaUrl(formData.featured_image),
         content: editorContent !== undefined ? editorContent : formData.content
       };
       const normalizedPublishedAt = toIsoStringOrNull(formData.published_at);
@@ -390,7 +401,7 @@ export default function BlogManagement() {
       const data = await response.json();
       setFormData((prev) => ({
         ...prev,
-        featured_image: data.url || ''
+        featured_image: normalizeBlogMediaUrl(data.url || '')
       }));
       setFeaturedImageFile(null);
     } catch (err) {
@@ -578,7 +589,7 @@ export default function BlogManagement() {
                     type="text"
                     value={formData.featured_image}
                     onChange={(event) => setFormData({ ...formData, featured_image: event.target.value })}
-                    placeholder="/static/uploads/blog/example.jpg"
+                    placeholder="/uploads/blog/example.jpg"
                   />
                 </div>
                 <div className="space-y-2">
