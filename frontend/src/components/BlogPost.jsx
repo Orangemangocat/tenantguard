@@ -59,6 +59,94 @@ function BlogPost({ slug, onBack }) {
 
   const resolveFeaturedImage = (postData) => postData.featured_image || blogFallbackImage
 
+  const escapeHtml = (value) => (
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+  )
+
+  const renderInlineMarkdown = (value) => {
+    let output = escapeHtml(value)
+    output = output.replace(/`([^`]+)`/g, '<code>$1</code>')
+    output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    output = output.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>')
+    output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    return output
+  }
+
+  const renderMarkdown = (value) => {
+    const sections = value.split('```')
+    const rendered = sections.map((section, index) => {
+      if (index % 2 === 1) {
+        const trimmed = section.replace(/^[^\n]*\n/, '')
+        return `<pre><code>${escapeHtml(trimmed)}</code></pre>`
+      }
+
+      const lines = section.split('\n')
+      const output = []
+      let inUnorderedList = false
+      let inOrderedList = false
+
+      const closeLists = () => {
+        if (inUnorderedList) {
+          output.push('</ul>')
+          inUnorderedList = false
+        }
+        if (inOrderedList) {
+          output.push('</ol>')
+          inOrderedList = false
+        }
+      }
+
+      lines.forEach((line) => {
+        const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
+        const unorderedMatch = line.match(/^\s*[-*]\s+(.*)$/)
+        const orderedMatch = line.match(/^\s*\d+\.\s+(.*)$/)
+
+        if (headingMatch) {
+          closeLists()
+          const level = headingMatch[1].length
+          output.push(`<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`)
+          return
+        }
+
+        if (unorderedMatch) {
+          if (!inUnorderedList) {
+            closeLists()
+            output.push('<ul>')
+            inUnorderedList = true
+          }
+          output.push(`<li>${renderInlineMarkdown(unorderedMatch[1])}</li>`)
+          return
+        }
+
+        if (orderedMatch) {
+          if (!inOrderedList) {
+            closeLists()
+            output.push('<ol>')
+            inOrderedList = true
+          }
+          output.push(`<li>${renderInlineMarkdown(orderedMatch[1])}</li>`)
+          return
+        }
+
+        if (!line.trim()) {
+          closeLists()
+          return
+        }
+
+        closeLists()
+        output.push(`<p>${renderInlineMarkdown(line)}</p>`)
+      })
+
+      closeLists()
+      return output.join('\n')
+    })
+
+    return rendered.join('\n')
+  }
+
   const formatContent = (content) => {
     if (!content) {
       return ''
@@ -66,7 +154,7 @@ function BlogPost({ slug, onBack }) {
     if (content.includes('<')) {
       return content
     }
-    return content.replace(/\n/g, '<br />')
+    return renderMarkdown(content)
   }
 
   if (loading) {
