@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge.jsx'
 import { Button } from '@/components/ui/button.jsx'
 import { Calendar, User, ArrowRight, Tag } from 'lucide-react'
+import blogFallbackImage from '../assets/tenantguard-shield.png'
 
 function BlogList({ onPostClick }) {
   const [posts, setPosts] = useState([])
@@ -41,7 +42,13 @@ function BlogList({ onPostClick }) {
   }, [fetchPosts])
 
   const formatDate = (dateString) => {
+    if (!dateString) {
+      return ''
+    }
     const date = new Date(dateString)
+    if (Number.isNaN(date.getTime())) {
+      return ''
+    }
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
@@ -64,6 +71,8 @@ function BlogList({ onPostClick }) {
     }
     return colors[category] || 'bg-gray-100 text-gray-800'
   }
+
+  const resolveFeaturedImage = (post) => post.featured_image || blogFallbackImage
 
   if (loading) {
     return (
@@ -135,15 +144,18 @@ function BlogList({ onPostClick }) {
               onClick={() => onPostClick(post.slug)}
               style={{ backgroundColor: 'var(--color-cardBg)', borderColor: 'var(--color-cardBorder)' }}
             >
-              {post.featured_image && (
-                <div className="w-full h-48 overflow-hidden rounded-t-lg">
-                  <img 
-                    src={post.featured_image} 
-                    alt={post.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+              <div className="w-full h-48 overflow-hidden rounded-t-lg">
+                <img 
+                  src={resolveFeaturedImage(post)} 
+                  alt={post.title}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.onerror = null
+                    event.currentTarget.src = blogFallbackImage
+                  }}
+                />
+              </div>
               <CardHeader>
                 <div className="flex items-center gap-2 mb-2">
                   <Badge className={getCategoryColor(post.category)}>
@@ -161,7 +173,7 @@ function BlogList({ onPostClick }) {
                 <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--color-textSecondary)' }}>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <span>{formatDate(post.published_at)}</span>
+                    <span>{formatDate(post.published_at || post.created_at)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="h-4 w-4" />

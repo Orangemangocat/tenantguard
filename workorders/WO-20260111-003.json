@@ -1,0 +1,41 @@
+{
+  "id": "WO-20260111-003",
+  "title": "Replace TinyMCE with Quill editor in blog management",
+  "scope": [
+    "Remove TinyMCE usage from the blog management editor.",
+    "Implement Quill as the rich text editor without API keys.",
+    "Preserve create/update blog post behavior with HTML content."
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "frontend-next/**",
+    "scripts/**",
+    "docs/**",
+    ".github/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Blog management editor loads without API keys or external scripts.",
+    "Create and update actions preserve rich text HTML content.",
+    "No runtime errors when opening or saving blog posts."
+  ],
+  "risk_notes": [
+    "HTML output differences between editors could affect styling.",
+    "Toolbar configuration may limit formatting compared to TinyMCE."
+  ],
+  "rollback_plan": [
+    "Revert `frontend/src/components/BlogManagement.jsx` to TinyMCE integration.",
+    "Remove `quill` dependency if rollback is required."
+  ]
+}

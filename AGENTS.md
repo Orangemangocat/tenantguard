@@ -61,6 +61,7 @@ Agents may modify ONLY:
 - `.github/**`
 - `workorders/**`
 - `AGENTS.md` (Only with strict permission)
+- `CHANGELOG.md`
 - `.env.example`
 
 ---

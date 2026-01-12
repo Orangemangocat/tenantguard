@@ -8,13 +8,55 @@ from functools import wraps
 import jwt
 import os
 from datetime import datetime
+from uuid import uuid4
+from werkzeug.utils import secure_filename
 from src.models.user import db
 from src.models.auth_user import AuthUser
 from src.models.blog import BlogPost
 from src.models.case import Case
+from src.services.blog_content import normalize_blog_content
 
 admin_panel_bp = Blueprint('admin_panel', __name__, url_prefix='/api/admin')
 from src.routes.auth import admin_required
+
+def _parse_optional_datetime(value):
+    if not value:
+        return None
+    if isinstance(value, (int, float)):
+        try:
+            return datetime.utcfromtimestamp(value)
+        except (OverflowError, OSError, ValueError):
+            return None
+    if isinstance(value, str):
+        cleaned = value.strip()
+        if not cleaned:
+            return None
+        if cleaned.endswith('Z'):
+            cleaned = f"{cleaned[:-1]}+00:00"
+        try:
+            return datetime.fromisoformat(cleaned)
+        except ValueError:
+            try:
+                return datetime.strptime(cleaned, '%Y-%m-%d')
+            except ValueError:
+                return None
+    return None
+
+def _is_allowed_image(filename):
+    if not filename or '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in {'png', 'jpg', 'jpeg', 'webp', 'gif'}
+
+def _is_allowed_media(filename):
+    if not filename or '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in {
+        'png', 'jpg', 'jpeg', 'webp', 'gif',
+        'mp4', 'webm', 'mov',
+        'mp3', 'wav', 'ogg', 'm4a'
+    }
 
 # Dashboard Stats
 @admin_panel_bp.route('/stats', methods=['GET'])
@@ -224,11 +266,12 @@ def list_blog_posts(current_user):
             'id': post.id,
             'title': post.title,
             'slug': post.slug,
-            'content': post.content,
+            'content': normalize_blog_content(post.content),
             'excerpt': post.excerpt,
             'author': post.author,
             'status': post.status,
             'category': post.category,
+            'featured_image': post.featured_image,
             'created_at': post.created_at.isoformat() if post.created_at else None,
             'updated_at': post.updated_at.isoformat() if post.updated_at else None,
             'published_at': post.published_at.isoformat() if post.published_at else None
@@ -239,7 +282,7 @@ def list_blog_posts(current_user):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>/approve', methods=['PUT'])
 @admin_required
-def approve_blog_post(post_id):
+def approve_blog_post(current_user, post_id):
     """Approve a blog post"""
     try:
         post = BlogPost.query.get(post_id)
@@ -259,7 +302,7 @@ def approve_blog_post(post_id):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>/reject', methods=['PUT'])
 @admin_required
-def reject_blog_post(post_id):
+def reject_blog_post(current_user, post_id):
     """Reject a blog post"""
     data = request.json
     reason = data.get('reason', '')
@@ -283,7 +326,7 @@ def reject_blog_post(post_id):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>', methods=['PUT'])
 @admin_required
-def update_blog_post(post_id):
+def update_blog_post(current_user, post_id):
     """Update blog post details"""
     data = request.json
     
@@ -297,7 +340,7 @@ def update_blog_post(post_id):
             post.title = data['title']
         
         if 'content' in data:
-            post.content = data['content']
+            post.content = normalize_blog_content(data['content'])
         
         if 'excerpt' in data:
             post.excerpt = data['excerpt']
@@ -312,7 +355,13 @@ def update_blog_post(post_id):
         
         if 'category' in data:
             post.category = data['category']
-        
+
+        if 'featured_image' in data:
+            post.featured_image = data['featured_image']
+
+        if 'published_at' in data:
+            post.published_at = _parse_optional_datetime(data.get('published_at'))
+
         post.updated_at = datetime.utcnow()
         db.session.commit()
         
@@ -324,7 +373,7 @@ def update_blog_post(post_id):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>/publish', methods=['PUT'])
 @admin_required
-def publish_blog_post(post_id):
+def publish_blog_post(current_user, post_id):
     """Publish a blog post"""
     try:
         post = BlogPost.query.get(post_id)
@@ -344,7 +393,7 @@ def publish_blog_post(post_id):
 
 @admin_panel_bp.route('/blog-posts/<int:post_id>/unpublish', methods=['PUT'])
 @admin_required
-def unpublish_blog_post(post_id):
+def unpublish_blog_post(current_user, post_id):
     """Unpublish a blog post (set to draft)"""
     try:
         post = BlogPost.query.get(post_id)
@@ -362,9 +411,67 @@ def unpublish_blog_post(post_id):
         print(f"[ADMIN_ERROR] Unpublish blog post error: {e}")
         return jsonify({'error': str(e)}), 500
 
+@admin_panel_bp.route('/blog-posts/featured-image', methods=['POST'])
+@admin_required
+def upload_blog_featured_image(current_user):
+    """Upload a featured image for a blog post."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['file']
+    if not file or not file.filename:
+        return jsonify({'error': 'No file selected'}), 400
+
+    if not _is_allowed_image(file.filename):
+        return jsonify({'error': 'Unsupported image type'}), 400
+
+    try:
+        filename = secure_filename(file.filename)
+        ext = filename.rsplit('.', 1)[1].lower()
+        unique_name = f"{uuid4().hex}.{ext}"
+        upload_dir = os.path.join(current_app.static_folder, 'uploads', 'blog')
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, unique_name)
+        file.save(file_path)
+
+        public_url = f"/uploads/blog/{unique_name}"
+        return jsonify({'url': public_url}), 201
+    except Exception as e:
+        print(f"[ADMIN_ERROR] Upload blog featured image error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@admin_panel_bp.route('/blog-posts/media', methods=['POST'])
+@admin_required
+def upload_blog_media(current_user):
+    """Upload media assets for blog content."""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['file']
+    if not file or not file.filename:
+        return jsonify({'error': 'No file selected'}), 400
+
+    if not _is_allowed_media(file.filename):
+        return jsonify({'error': 'Unsupported media type'}), 400
+
+    try:
+        filename = secure_filename(file.filename)
+        ext = filename.rsplit('.', 1)[1].lower()
+        unique_name = f"{uuid4().hex}.{ext}"
+        upload_dir = os.path.join(current_app.static_folder, 'uploads', 'blog')
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, unique_name)
+        file.save(file_path)
+
+        public_url = f"/uploads/blog/{unique_name}"
+        return jsonify({'url': public_url}), 201
+    except Exception as e:
+        print(f"[ADMIN_ERROR] Upload blog media error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @admin_panel_bp.route('/blog-posts/<int:post_id>', methods=['DELETE'])
 @admin_required
-def delete_blog_post(post_id):
+def delete_blog_post(current_user, post_id):
     """Delete a blog post"""
     try:
         post = BlogPost.query.get(post_id)
@@ -602,16 +709,20 @@ def create_blog_post(current_user):
             slug = f"{slug}-{int(datetime.utcnow().timestamp())}"
         
         status = data.get('status', 'draft')
-        published_at = datetime.utcnow() if status == 'published' else None
+        published_at = _parse_optional_datetime(data.get('published_at'))
+        if status == 'published' and not published_at:
+            published_at = datetime.utcnow()
         
+        content = normalize_blog_content(data['content'])
         post = BlogPost(
             title=data['title'],
             slug=slug,
-            content=data['content'],
+            content=content,
             excerpt=data.get('excerpt', ''),
             author=data.get('author', 'Admin'),
             status=status,
             category=data.get('category', 'general'),
+            featured_image=data.get('featured_image'),
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
             published_at=published_at
@@ -640,11 +751,12 @@ def get_blog_post(post_id):
             'id': post.id,
             'title': post.title,
             'slug': post.slug,
-            'content': post.content,
+            'content': normalize_blog_content(post.content),
             'excerpt': post.excerpt,
             'author': post.author,
             'status': post.status,
             'category': post.category,
+            'featured_image': post.featured_image,
             'created_at': post.created_at.isoformat() if post.created_at else None,
             'updated_at': post.updated_at.isoformat() if post.updated_at else None,
             'published_at': post.published_at.isoformat() if post.published_at else None

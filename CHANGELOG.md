@@ -1,5 +1,24 @@
 # Changelog
 
+- 2026-01-12: Added markdown rendering fallback in the public blog post view (WO-20260112-004).
+- 2026-01-12: Normalized markdown in public blog endpoints to preserve formatting after edits (WO-20260112-003).
+- 2026-01-12: Converted AI blog markdown to HTML for admin edits and saves to preserve formatting (WO-20260112-002).
+- 2026-01-12: Normalized blog media URLs to drop the /static prefix in admin uploads and UI (WO-20260112-001).
+- 2026-01-11: Registered a Quill audio blot and improved media upload error messaging in blog management (WO-20260111-004).
+- 2026-01-11: Fixed admin blog post update/approve/publish handlers to accept admin user from the decorator (WO-20260111-001).
+- 2026-01-11: Added Quill media upload handlers for image, video, and audio embeds (WO-20260111-004).
+- 2026-01-11: Replaced TinyMCE with Quill in blog management to remove API key dependency (WO-20260111-003).
+- 2026-01-11: Ensured blog list and detail views always render a fallback image when posts lack one (WO-20260111-002).
+- 2026-01-11: Blog management update now reads editor content on submit to stabilize the Update Post flow (WO-20260111-001).
+- 2026-01-11: Expanded `scripts/update_blog_posts.py` to validate existing featured images and backfill missing files (WO-update-blog-posts-db-fix).
+- 2026-01-11: Updated `scripts/update_blog_posts.py` to generate AI featured images for posts missing images (WO-update-blog-posts-db-fix).
+- 2026-01-10: Added workorder `WO-blog-quirks` to fix blog admin image/date fields and ordering issues.
+- 2026-01-10: Added blog admin image/date inputs, stored published dates, and ordered public listings by published/created date.
+- 2026-01-10: Added featured image upload endpoint and admin UI uploader for blog posts (WO-blog-quirks).
+- 2026-01-10: Allowed relative paths in the blog featured image field (WO-blog-quirks).
+- 2026-01-10: Removed the /blog admin overlay and added a rich text editor with media uploads for blog posts (WO-blog-quirks).
+- 2026-01-10: Wired TinyMCE to read the API key from env configuration (WO-blog-quirks).
+- 2026-01-10: Added published date column to the blog management table (WO-blog-quirks).
 - 2026-01-10: Stabilized IntakeChat auto-scroll to prevent window scroll jumps (WO-20260110-003).
 - 2026-01-10: Added workorder `WO-20260110-003` to investigate IntakeChat scrollbar behavior.
 - 2026-01-10: Added workorder `WO-20260110-002` and removed Tennessee references from the front-page hero copy.

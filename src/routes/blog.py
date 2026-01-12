@@ -3,6 +3,7 @@ from datetime import datetime
 from src.models.user import db
 from src.models.blog import BlogPost
 from src.routes.auth import admin_required
+from src.services.blog_content import normalize_blog_content
 import re
 
 blog_bp = Blueprint('blog', __name__)
@@ -31,14 +32,20 @@ def get_posts():
         if status:
             query = query.filter_by(status=status)
         
-        # Order by published date (most recent first)
-        query = query.order_by(BlogPost.published_at.desc())
+        # Order by published date (most recent first), fall back to created_at
+        query = query.order_by(db.func.coalesce(BlogPost.published_at, BlogPost.created_at).desc())
         
         # Pagination
         paginated = query.paginate(page=page, per_page=per_page, error_out=False)
         
         return jsonify({
-            'posts': [post.to_dict() for post in paginated.items],
+            'posts': [
+                {
+                    **post.to_dict(),
+                    'content': normalize_blog_content(post.content)
+                }
+                for post in paginated.items
+            ],
             'total': paginated.total,
             'pages': paginated.pages,
             'current_page': page
@@ -56,7 +63,9 @@ def get_post(slug):
         if not post:
             return jsonify({'error': 'Post not found'}), 404
         
-        return jsonify(post.to_dict()), 200
+        post_data = post.to_dict()
+        post_data['content'] = normalize_blog_content(post.content)
+        return jsonify(post_data), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -84,10 +93,11 @@ def create_post(current_user):
             slug = f"{slug}-{int(datetime.utcnow().timestamp())}"
         
         # Create new post
+        content = normalize_blog_content(data['content'])
         post = BlogPost(
             title=data['title'],
             slug=slug,
-            content=data['content'],
+            content=content,
             excerpt=data.get('excerpt', data['content'][:200] + '...'),
             category=data['category'],
             author=data['author'],
@@ -128,7 +138,7 @@ def update_post(current_user, post_id):
             post.slug = create_slug(data['title'])
         
         if 'content' in data:
-            post.content = data['content']
+            post.content = normalize_blog_content(data['content'])
         
         if 'excerpt' in data:
             post.excerpt = data['excerpt']
@@ -155,7 +165,9 @@ def update_post(current_user, post_id):
         
         db.session.commit()
         
-        return jsonify(post.to_dict()), 200
+        post_data = post.to_dict()
+        post_data['content'] = normalize_blog_content(post.content)
+        return jsonify(post_data), 200
         
     except Exception as e:
         db.session.rollback()
@@ -203,10 +215,16 @@ def get_recent_posts():
         limit = int(request.args.get('limit', 5))
         
         posts = BlogPost.query.filter_by(status='published')\
-            .order_by(BlogPost.published_at.desc())\
+            .order_by(db.func.coalesce(BlogPost.published_at, BlogPost.created_at).desc())\
             .limit(limit).all()
         
-        return jsonify([post.to_dict() for post in posts]), 200
+        return jsonify([
+            {
+                **post.to_dict(),
+                'content': normalize_blog_content(post.content)
+            }
+            for post in posts
+        ]), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -227,6 +245,7 @@ def render_blog_post(slug):
         
         # Prepare post data
         post_dict = post.to_dict()
+        post_dict['content'] = normalize_blog_content(post.content)
         
         # Convert tags list back to string for template
         if isinstance(post_dict.get('tags'), list):

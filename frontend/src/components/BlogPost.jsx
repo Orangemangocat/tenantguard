@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { Button } from '@/components/ui/button.jsx'
 import { Calendar, User, ArrowLeft, Tag } from 'lucide-react'
+import blogFallbackImage from '../assets/tenantguard-shield.png'
 
 function BlogPost({ slug, onBack }) {
   const [post, setPost] = useState(null)
@@ -26,7 +27,13 @@ function BlogPost({ slug, onBack }) {
   }, [fetchPost])
 
   const formatDate = (dateString) => {
+    if (!dateString) {
+      return ''
+    }
     const date = new Date(dateString)
+    if (Number.isNaN(date.getTime())) {
+      return ''
+    }
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
@@ -48,6 +55,106 @@ function BlogPost({ slug, onBack }) {
       'market-research': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
     }
     return colors[category] || 'bg-gray-100 text-gray-800'
+  }
+
+  const resolveFeaturedImage = (postData) => postData.featured_image || blogFallbackImage
+
+  const escapeHtml = (value) => (
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+  )
+
+  const renderInlineMarkdown = (value) => {
+    let output = escapeHtml(value)
+    output = output.replace(/`([^`]+)`/g, '<code>$1</code>')
+    output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    output = output.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>')
+    output = output.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+    return output
+  }
+
+  const renderMarkdown = (value) => {
+    const sections = value.split('```')
+    const rendered = sections.map((section, index) => {
+      if (index % 2 === 1) {
+        const trimmed = section.replace(/^[^\n]*\n/, '')
+        return `<pre><code>${escapeHtml(trimmed)}</code></pre>`
+      }
+
+      const lines = section.split('\n')
+      const output = []
+      let inUnorderedList = false
+      let inOrderedList = false
+
+      const closeLists = () => {
+        if (inUnorderedList) {
+          output.push('</ul>')
+          inUnorderedList = false
+        }
+        if (inOrderedList) {
+          output.push('</ol>')
+          inOrderedList = false
+        }
+      }
+
+      lines.forEach((line) => {
+        const headingMatch = line.match(/^(#{1,6})\s+(.*)$/)
+        const unorderedMatch = line.match(/^\s*[-*]\s+(.*)$/)
+        const orderedMatch = line.match(/^\s*\d+\.\s+(.*)$/)
+
+        if (headingMatch) {
+          closeLists()
+          const level = headingMatch[1].length
+          output.push(`<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`)
+          return
+        }
+
+        if (unorderedMatch) {
+          if (!inUnorderedList) {
+            closeLists()
+            output.push('<ul>')
+            inUnorderedList = true
+          }
+          output.push(`<li>${renderInlineMarkdown(unorderedMatch[1])}</li>`)
+          return
+        }
+
+        if (orderedMatch) {
+          if (!inOrderedList) {
+            closeLists()
+            output.push('<ol>')
+            inOrderedList = true
+          }
+          output.push(`<li>${renderInlineMarkdown(orderedMatch[1])}</li>`)
+          return
+        }
+
+        if (!line.trim()) {
+          closeLists()
+          return
+        }
+
+        closeLists()
+        output.push(`<p>${renderInlineMarkdown(line)}</p>`)
+      })
+
+      closeLists()
+      return output.join('\n')
+    })
+
+    return rendered.join('\n')
+  }
+
+  const formatContent = (content) => {
+    if (!content) {
+      return ''
+    }
+    if (content.includes('<')) {
+      return content
+    }
+    return renderMarkdown(content)
   }
 
   if (loading) {
@@ -87,15 +194,17 @@ function BlogPost({ slug, onBack }) {
 
       {/* Post Content */}
       <Card style={{ backgroundColor: 'var(--color-cardBg)', borderColor: 'var(--color-cardBorder)' }}>
-        {post.featured_image && (
-          <div className="w-full h-96 overflow-hidden rounded-t-lg">
-            <img 
-              src={post.featured_image} 
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+        <div className="w-full h-96 overflow-hidden rounded-t-lg">
+          <img 
+            src={resolveFeaturedImage(post)} 
+            alt={post.title}
+            className="w-full h-full object-cover"
+            onError={(event) => {
+              event.currentTarget.onerror = null
+              event.currentTarget.src = blogFallbackImage
+            }}
+          />
+        </div>
         
         <CardHeader>
           {/* Category Badge */}
@@ -114,7 +223,7 @@ function BlogPost({ slug, onBack }) {
           <div className="flex flex-wrap items-center gap-4 text-sm mb-6" style={{ color: 'var(--color-textSecondary)' }}>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>{formatDate(post.published_at)}</span>
+              <span>{formatDate(post.published_at || post.created_at)}</span>
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -142,7 +251,7 @@ function BlogPost({ slug, onBack }) {
           <div 
             className="prose prose-lg max-w-none"
             style={{ color: 'var(--color-text)' }}
-            dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }}
+            dangerouslySetInnerHTML={{ __html: formatContent(post.content) }}
           />
         </CardContent>
       </Card>
