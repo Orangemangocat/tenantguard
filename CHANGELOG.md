@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-01-13: Added frontpage hero audio embed and listen prompt (WO-20260113-001).
+- 2026-01-13: Added workorder `WO-20260113-001` for the frontpage update.
 - 2026-01-12: Added byte-based MAX_CONTENT_LENGTH override support for large blog media uploads (WO-20260112-005).
 - 2026-01-12: Added blog media attachment field with audio/video embeds and admin preview (WO-20260112-006).
 - 2026-01-12: Increased Flask upload size limit for blog media uploads (WO-20260112-005).

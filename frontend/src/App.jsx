@@ -298,6 +298,17 @@ function App() {
                 Attorney Portal
               </Button>
             </div>
+            <div className="mt-10 max-w-3xl mx-auto">
+              <p className="text-base sm:text-lg mb-4" style={{ color: 'var(--color-textSecondary)' }}>
+                Listen to this audio and you'll hear many of the resons why we are here!
+              </p>
+              <div className="rounded-xl border border-gray-200 bg-white/70 p-4 shadow-sm">
+                <audio className="w-full" controls preload="none">
+                  <source src="/uploads/blog/ce266929685a41989eb78dc5a79e60e8.m4a" type="audio/mp4" />
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+            </div>
           </div>
         </section>
 
