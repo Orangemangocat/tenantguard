@@ -164,8 +164,11 @@ const Navbar = ({
                   }}
                 >
                   {/* User Info Header */}
-                  <DropdownMenuLabel style={{ color: 'var(--color-text)' }}>
-                    <div className="flex flex-col space-y-1">
+                  <DropdownMenuLabel
+                    className="text-right sm:text-left"
+                    style={{ color: 'var(--color-text)' }}
+                  >
+                    <div className="flex flex-col items-end space-y-1 sm:items-start">
                       <p className="text-sm font-medium leading-none">
                         {getUserDisplayName()}
                       </p>
@@ -186,7 +189,7 @@ const Navbar = ({
                   {currentUser?.role === 'admin' && (
                     <DropdownMenuItem 
                       onClick={() => onDashboard && onDashboard()}
-                      className="cursor-pointer"
+                      className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
                       style={{ color: 'var(--color-text)' }}
                     >
                       <Settings className="mr-2 h-4 w-4" />
@@ -198,7 +201,7 @@ const Navbar = ({
                   {currentUser?.role !== 'admin' && (
                     <DropdownMenuItem
                       onClick={() => { window.location.href = '/onboarding'; }}
-                      className="cursor-pointer"
+                      className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
                       style={{ color: 'var(--color-text)' }}
                     >
                       <User className="mr-2 h-4 w-4" />
@@ -213,7 +216,7 @@ const Navbar = ({
                   {/* Logout Action */}
                   <DropdownMenuItem 
                     onClick={handleLogout}
-                    className="cursor-pointer text-red-600 focus:text-red-600"
+                    className="cursor-pointer justify-end text-right text-red-600 focus:text-red-600 sm:justify-start sm:text-left"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
@@ -262,7 +265,7 @@ const Navbar = ({
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div id="mobile-nav" className="md:hidden border-t" style={{ borderColor: 'var(--color-navBorder)' }}>
-            <nav className="flex flex-col py-2">
+            <nav className="flex flex-col items-end py-2 pr-[10px]">
               {navItems.map((item) => (
                 <Button
                   key={item.id}
@@ -275,7 +278,7 @@ const Navbar = ({
                 </Button>
               ))}
             </nav>
-            <div className="flex flex-col gap-2 px-4 pb-4">
+            <div className="flex flex-col items-end gap-2 pb-4 pl-4 pr-[10px]">
               {currentUser ? (
                 <div className="flex flex-col gap-2">
                   <Button

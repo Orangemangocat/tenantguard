@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-01-13: Added 10px right padding to mobile navbar dropdown content (WO-20260113-002).
+- 2026-01-13: Refined mobile dropdown alignment for navbar menu items (WO-20260113-002).
 - 2026-01-13: Right-aligned mobile dropdown menu items in the navbar (WO-20260113-002).
 - 2026-01-13: Added workorder `WO-20260113-002` for mobile dropdown alignment.
 - 2026-01-13: Added frontpage hero audio embed and listen prompt (WO-20260113-001).
