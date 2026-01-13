@@ -268,7 +268,7 @@ const Navbar = ({
                   key={item.id}
                   variant="ghost"
                   style={{ color: 'var(--color-textSecondary)' }}
-                  className="hover:opacity-80 justify-start"
+                  className="w-full justify-end text-right hover:opacity-80"
                   onClick={() => handleNavClick(item.id)}
                 >
                   {item.label}
@@ -280,7 +280,7 @@ const Navbar = ({
                 <div className="flex flex-col gap-2">
                   <Button
                     variant="ghost"
-                    className="justify-between"
+                    className="w-full justify-end gap-2"
                     onClick={() => setIsMobileUserOpen((open) => !open)}
                     aria-expanded={isMobileUserOpen}
                     aria-controls="mobile-user-menu"
@@ -292,11 +292,11 @@ const Navbar = ({
                     <ChevronDown className={`h-4 w-4 transition-transform ${isMobileUserOpen ? 'rotate-180' : ''}`} />
                   </Button>
                   {isMobileUserOpen && (
-                    <div id="mobile-user-menu" className="flex flex-col gap-1 pl-6">
+                    <div id="mobile-user-menu" className="flex flex-col gap-1 pr-6">
                       {currentUser?.role === 'admin' && (
                         <Button
                           variant="ghost"
-                          className="justify-start"
+                          className="w-full justify-end text-right"
                           onClick={() => {
                             setIsMobileMenuOpen(false)
                             setIsMobileUserOpen(false)
@@ -312,7 +312,7 @@ const Navbar = ({
                       {currentUser?.role !== 'admin' && (
                         <Button
                           variant="ghost"
-                          className="justify-start"
+                          className="w-full justify-end text-right"
                           onClick={() => {
                             setIsMobileMenuOpen(false)
                             setIsMobileUserOpen(false)
@@ -325,7 +325,7 @@ const Navbar = ({
                       )}
                       <Button
                         variant="ghost"
-                        className="justify-start text-red-600 hover:text-red-600"
+                        className="w-full justify-end text-right text-red-600 hover:text-red-600"
                         onClick={() => {
                           setIsMobileMenuOpen(false)
                           setIsMobileUserOpen(false)
@@ -341,7 +341,7 @@ const Navbar = ({
               ) : (
                 <Button
                   variant="ghost"
-                  className="justify-start"
+                  className="w-full justify-end text-right"
                   onClick={() => {
                     setIsMobileMenuOpen(false)
                     if (onLogin) {

@@ -1,0 +1,32 @@
+{
+  "id": "WO-20260113-002",
+  "title": "Right-align mobile dropdown menu items",
+  "scope": [
+    "Adjust the mobile dropdown menu styling so items are right-justified",
+    "Limit changes to the frontend navigation/menu components and styles"
+  ],
+  "allowed_paths": ["frontend/**", "workorders/**"],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "On mobile viewports, dropdown menu items are right-justified",
+    "Desktop navigation layout remains unchanged",
+    "No changes outside frontend menu-related files"
+  ],
+  "risk_notes": [
+    "Misaligned menu could impact mobile usability",
+    "CSS changes might affect other breakpoints if selectors are too broad"
+  ],
+  "rollback_plan": [
+    "Revert the menu styling changes in the affected frontend files",
+    "Remove this workorder file if the task is canceled"
+  ]
+}
