@@ -30,6 +30,26 @@ if not secret_key:
     print('[SECURITY] FLASK_SECRET_KEY not set; using an ephemeral key for this process.')
 app.config['SECRET_KEY'] = secret_key
 
+def _get_max_content_length_bytes() -> int:
+    raw_bytes = os.getenv('MAX_CONTENT_LENGTH')
+    if raw_bytes:
+        try:
+            bytes_limit = int(raw_bytes)
+        except ValueError:
+            print('[CONFIG] Invalid MAX_CONTENT_LENGTH; falling back to MAX_CONTENT_LENGTH_MB.')
+        else:
+            if bytes_limit > 0:
+                return bytes_limit
+            print('[CONFIG] MAX_CONTENT_LENGTH must be positive; falling back to MAX_CONTENT_LENGTH_MB.')
+    try:
+        upload_limit_mb = int(os.getenv('MAX_CONTENT_LENGTH_MB', '50'))
+    except ValueError:
+        print('[CONFIG] Invalid MAX_CONTENT_LENGTH_MB; falling back to 50MB.')
+        upload_limit_mb = 50
+    return upload_limit_mb * 1024 * 1024
+
+app.config['MAX_CONTENT_LENGTH'] = _get_max_content_length_bytes()
+
 # Enable CORS for all routes
 CORS(app, origins=['*'])
 

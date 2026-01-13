@@ -1,5 +1,14 @@
 # Changelog
 
+- 2026-01-13: Added 10px right padding to mobile navbar dropdown content (WO-20260113-002).
+- 2026-01-13: Refined mobile dropdown alignment for navbar menu items (WO-20260113-002).
+- 2026-01-13: Right-aligned mobile dropdown menu items in the navbar (WO-20260113-002).
+- 2026-01-13: Added workorder `WO-20260113-002` for mobile dropdown alignment.
+- 2026-01-13: Added frontpage hero audio embed and listen prompt (WO-20260113-001).
+- 2026-01-13: Added workorder `WO-20260113-001` for the frontpage update.
+- 2026-01-12: Added byte-based MAX_CONTENT_LENGTH override support for large blog media uploads (WO-20260112-005).
+- 2026-01-12: Added blog media attachment field with audio/video embeds and admin preview (WO-20260112-006).
+- 2026-01-12: Increased Flask upload size limit for blog media uploads (WO-20260112-005).
 - 2026-01-12: Added markdown rendering fallback in the public blog post view (WO-20260112-004).
 - 2026-01-12: Normalized markdown in public blog endpoints to preserve formatting after edits (WO-20260112-003).
 - 2026-01-12: Converted AI blog markdown to HTML for admin edits and saves to preserve formatting (WO-20260112-002).

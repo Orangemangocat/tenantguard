@@ -164,8 +164,11 @@ const Navbar = ({
                   }}
                 >
                   {/* User Info Header */}
-                  <DropdownMenuLabel style={{ color: 'var(--color-text)' }}>
-                    <div className="flex flex-col space-y-1">
+                  <DropdownMenuLabel
+                    className="text-right sm:text-left"
+                    style={{ color: 'var(--color-text)' }}
+                  >
+                    <div className="flex flex-col items-end space-y-1 sm:items-start">
                       <p className="text-sm font-medium leading-none">
                         {getUserDisplayName()}
                       </p>
@@ -186,7 +189,7 @@ const Navbar = ({
                   {currentUser?.role === 'admin' && (
                     <DropdownMenuItem 
                       onClick={() => onDashboard && onDashboard()}
-                      className="cursor-pointer"
+                      className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
                       style={{ color: 'var(--color-text)' }}
                     >
                       <Settings className="mr-2 h-4 w-4" />
@@ -198,7 +201,7 @@ const Navbar = ({
                   {currentUser?.role !== 'admin' && (
                     <DropdownMenuItem
                       onClick={() => { window.location.href = '/onboarding'; }}
-                      className="cursor-pointer"
+                      className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
                       style={{ color: 'var(--color-text)' }}
                     >
                       <User className="mr-2 h-4 w-4" />
@@ -213,7 +216,7 @@ const Navbar = ({
                   {/* Logout Action */}
                   <DropdownMenuItem 
                     onClick={handleLogout}
-                    className="cursor-pointer text-red-600 focus:text-red-600"
+                    className="cursor-pointer justify-end text-right text-red-600 focus:text-red-600 sm:justify-start sm:text-left"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
@@ -262,25 +265,25 @@ const Navbar = ({
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div id="mobile-nav" className="md:hidden border-t" style={{ borderColor: 'var(--color-navBorder)' }}>
-            <nav className="flex flex-col py-2">
+            <nav className="flex flex-col items-end py-2 pr-[10px]">
               {navItems.map((item) => (
                 <Button
                   key={item.id}
                   variant="ghost"
                   style={{ color: 'var(--color-textSecondary)' }}
-                  className="hover:opacity-80 justify-start"
+                  className="w-full justify-end text-right hover:opacity-80"
                   onClick={() => handleNavClick(item.id)}
                 >
                   {item.label}
                 </Button>
               ))}
             </nav>
-            <div className="flex flex-col gap-2 px-4 pb-4">
+            <div className="flex flex-col items-end gap-2 pb-4 pl-4 pr-[10px]">
               {currentUser ? (
                 <div className="flex flex-col gap-2">
                   <Button
                     variant="ghost"
-                    className="justify-between"
+                    className="w-full justify-end gap-2"
                     onClick={() => setIsMobileUserOpen((open) => !open)}
                     aria-expanded={isMobileUserOpen}
                     aria-controls="mobile-user-menu"
@@ -292,11 +295,11 @@ const Navbar = ({
                     <ChevronDown className={`h-4 w-4 transition-transform ${isMobileUserOpen ? 'rotate-180' : ''}`} />
                   </Button>
                   {isMobileUserOpen && (
-                    <div id="mobile-user-menu" className="flex flex-col gap-1 pl-6">
+                    <div id="mobile-user-menu" className="flex flex-col gap-1 pr-6">
                       {currentUser?.role === 'admin' && (
                         <Button
                           variant="ghost"
-                          className="justify-start"
+                          className="w-full justify-end text-right"
                           onClick={() => {
                             setIsMobileMenuOpen(false)
                             setIsMobileUserOpen(false)
@@ -312,7 +315,7 @@ const Navbar = ({
                       {currentUser?.role !== 'admin' && (
                         <Button
                           variant="ghost"
-                          className="justify-start"
+                          className="w-full justify-end text-right"
                           onClick={() => {
                             setIsMobileMenuOpen(false)
                             setIsMobileUserOpen(false)
@@ -325,7 +328,7 @@ const Navbar = ({
                       )}
                       <Button
                         variant="ghost"
-                        className="justify-start text-red-600 hover:text-red-600"
+                        className="w-full justify-end text-right text-red-600 hover:text-red-600"
                         onClick={() => {
                           setIsMobileMenuOpen(false)
                           setIsMobileUserOpen(false)
@@ -341,7 +344,7 @@ const Navbar = ({
               ) : (
                 <Button
                   variant="ghost"
-                  className="justify-start"
+                  className="w-full justify-end text-right"
                   onClick={() => {
                     setIsMobileMenuOpen(false)
                     if (onLogin) {

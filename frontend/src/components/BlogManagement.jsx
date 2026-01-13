@@ -16,6 +16,7 @@ const initialFormState = {
   category: 'general',
   status: 'draft',
   featured_image: '',
+  media_url: '',
   published_at: ''
 };
 
@@ -65,14 +66,33 @@ const toIsoStringOrNull = (value) => {
   return date.toISOString();
 };
 
-const normalizeBlogMediaUrl = (value) => {
-  if (!value) {
-    return '';
-  }
+  const normalizeBlogMediaUrl = (value) => {
+    if (!value) {
+      return '';
+    }
   if (value.startsWith('/static/')) {
     return value.replace(/^\/static/, '');
   }
   return value;
+};
+
+const getMediaType = (value) => {
+  if (!value) {
+    return null;
+  }
+  const cleaned = value.split('?')[0].split('#')[0];
+  const parts = cleaned.split('.');
+  if (parts.length < 2) {
+    return null;
+  }
+  const ext = parts[parts.length - 1].toLowerCase();
+  if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) {
+    return 'audio';
+  }
+  if (['mp4', 'webm', 'mov'].includes(ext)) {
+    return 'video';
+  }
+  return null;
 };
 
 export default function BlogManagement() {
@@ -89,6 +109,9 @@ export default function BlogManagement() {
   const [featuredImageFile, setFeaturedImageFile] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageUploadError, setImageUploadError] = useState(null);
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const [mediaUploadError, setMediaUploadError] = useState(null);
   const editorContainerRef = useRef(null);
   const editorInstanceRef = useRef(null);
   const editorChangeHandlerRef = useRef(null);
@@ -292,6 +315,9 @@ export default function BlogManagement() {
     setFeaturedImageFile(null);
     setImageUploading(false);
     setImageUploadError(null);
+    setMediaFile(null);
+    setMediaUploading(false);
+    setMediaUploadError(null);
   };
 
   const handleOpenDialog = (mode, post = null) => {
@@ -307,6 +333,7 @@ export default function BlogManagement() {
         category: post.category || 'general',
         status: post.status || 'draft',
         featured_image: normalizeBlogMediaUrl(post.featured_image || ''),
+        media_url: normalizeBlogMediaUrl(post.media_url || ''),
         published_at: toLocalInputValue(post.published_at)
       });
     } else {
@@ -317,6 +344,7 @@ export default function BlogManagement() {
     setError(null);
     setSuccess(null);
     setImageUploadError(null);
+    setMediaUploadError(null);
   };
 
   const handleCloseDialog = () => {
@@ -340,6 +368,7 @@ export default function BlogManagement() {
       const payload = {
         ...formData,
         featured_image: normalizeBlogMediaUrl(formData.featured_image),
+        media_url: normalizeBlogMediaUrl(formData.media_url),
         content: editorContent !== undefined ? editorContent : formData.content
       };
       const normalizedPublishedAt = toIsoStringOrNull(formData.published_at);
@@ -410,6 +439,40 @@ export default function BlogManagement() {
     } finally {
       setImageUploading(false);
     }
+  };
+
+  const handleMediaAttachmentUpload = async () => {
+    if (!mediaFile) {
+      setMediaUploadError('Select a media file to upload.');
+      return;
+    }
+
+    try {
+      setMediaUploading(true);
+      setMediaUploadError(null);
+      const url = await uploadMediaFile(mediaFile);
+      setFormData((prev) => ({
+        ...prev,
+        media_url: normalizeBlogMediaUrl(url || '')
+      }));
+      setMediaFile(null);
+    } catch (err) {
+      console.error('Error uploading media attachment:', err);
+      setMediaUploadError(err.message);
+    } finally {
+      setMediaUploading(false);
+    }
+  };
+
+  const renderMediaPreview = (value) => {
+    const mediaType = getMediaType(value);
+    if (mediaType === 'audio') {
+      return <audio controls src={value} className="w-full" />;
+    }
+    if (mediaType === 'video') {
+      return <video controls src={value} className="w-full" />;
+    }
+    return null;
   };
 
   const handleDelete = async (postId, title) => {
@@ -593,6 +656,24 @@ export default function BlogManagement() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="media_url">Media Attachment Path</Label>
+                  <Input
+                    id="media_url"
+                    type="text"
+                    value={formData.media_url}
+                    onChange={(event) => setFormData({ ...formData, media_url: event.target.value })}
+                    placeholder="/uploads/blog/example.mp4"
+                  />
+                  {formData.media_url && (
+                    <div className="border border-gray-200 rounded-md p-3 bg-gray-50">
+                      <p className="text-xs text-gray-500 mb-2">Media preview</p>
+                      {renderMediaPreview(formData.media_url) || (
+                        <p className="text-sm text-gray-500">Unsupported media type.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="featured_image_upload">Upload Featured Image</Label>
                   <div className="flex flex-col md:flex-row md:items-center gap-2">
                     <Input
@@ -619,6 +700,36 @@ export default function BlogManagement() {
                   {formData.featured_image && (
                     <p className="text-xs text-gray-500">
                       Current image: {formData.featured_image}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="media_upload">Upload Media Attachment</Label>
+                  <div className="flex flex-col md:flex-row md:items-center gap-2">
+                    <Input
+                      id="media_upload"
+                      type="file"
+                      accept="audio/*,video/*,.mp4,.m4a,.mp3,.wav,.ogg,.webm,.mov"
+                      onChange={(event) => {
+                        setMediaFile(event.target.files?.[0] || null);
+                        setMediaUploadError(null);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!mediaFile || mediaUploading}
+                      onClick={handleMediaAttachmentUpload}
+                    >
+                      {mediaUploading ? 'Uploading...' : 'Upload'}
+                    </Button>
+                  </div>
+                  {mediaUploadError && (
+                    <p className="text-sm text-red-600">{mediaUploadError}</p>
+                  )}
+                  {formData.media_url && (
+                    <p className="text-xs text-gray-500">
+                      Current media: {formData.media_url}
                     </p>
                   )}
                 </div>

@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
+from urllib.parse import urlparse
 from src.models.user import db
 from src.models.blog import BlogPost
 from src.routes.auth import admin_required
@@ -14,6 +15,18 @@ def create_slug(title):
     slug = re.sub(r'[^\w\s-]', '', slug)
     slug = re.sub(r'[-\s]+', '-', slug)
     return slug.strip('-')
+
+def _detect_media_type(value):
+    if not value:
+        return None
+    path = urlparse(value).path if '://' in value else value
+    path = path.split('?', 1)[0].split('#', 1)[0]
+    ext = path.rsplit('.', 1)[-1].lower() if '.' in path else ''
+    if ext in {'mp3', 'wav', 'ogg', 'm4a'}:
+        return 'audio'
+    if ext in {'mp4', 'webm', 'mov'}:
+        return 'video'
+    return None
 
 @blog_bp.route('/api/blog/posts', methods=['GET'])
 def get_posts():
@@ -103,6 +116,7 @@ def create_post(current_user):
             author=data['author'],
             status=data.get('status', 'draft'),
             featured_image=data.get('featured_image'),
+            media_url=data.get('media_url'),
             tags=','.join(data.get('tags', [])) if isinstance(data.get('tags'), list) else data.get('tags', '')
         )
         
@@ -157,7 +171,10 @@ def update_post(current_user, post_id):
         
         if 'featured_image' in data:
             post.featured_image = data['featured_image']
-        
+
+        if 'media_url' in data:
+            post.media_url = data['media_url']
+
         if 'tags' in data:
             post.tags = ','.join(data['tags']) if isinstance(data['tags'], list) else data['tags']
         
@@ -258,6 +275,12 @@ def render_blog_post(slug):
         # Ensure featured_image has full URL
         if post_dict.get('featured_image') and not post_dict['featured_image'].startswith('http'):
             post_dict['featured_image'] = f"https://www.tenantguard.net{post_dict['featured_image']}"
+
+        media_url = post_dict.get('media_url')
+        if media_url and not media_url.startswith('http'):
+            media_url = f"https://www.tenantguard.net{media_url}"
+        post_dict['media_url'] = media_url
+        post_dict['media_type'] = _detect_media_type(media_url)
         
         # Generate Schema.org JSON-LD
         schema_markup = {

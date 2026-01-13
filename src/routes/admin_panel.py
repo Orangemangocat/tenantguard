@@ -272,6 +272,7 @@ def list_blog_posts(current_user):
             'status': post.status,
             'category': post.category,
             'featured_image': post.featured_image,
+            'media_url': post.media_url,
             'created_at': post.created_at.isoformat() if post.created_at else None,
             'updated_at': post.updated_at.isoformat() if post.updated_at else None,
             'published_at': post.published_at.isoformat() if post.published_at else None
@@ -358,6 +359,9 @@ def update_blog_post(current_user, post_id):
 
         if 'featured_image' in data:
             post.featured_image = data['featured_image']
+
+        if 'media_url' in data:
+            post.media_url = data['media_url']
 
         if 'published_at' in data:
             post.published_at = _parse_optional_datetime(data.get('published_at'))
@@ -723,6 +727,7 @@ def create_blog_post(current_user):
             status=status,
             category=data.get('category', 'general'),
             featured_image=data.get('featured_image'),
+            media_url=data.get('media_url'),
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
             published_at=published_at
@@ -757,6 +762,7 @@ def get_blog_post(post_id):
             'status': post.status,
             'category': post.category,
             'featured_image': post.featured_image,
+            'media_url': post.media_url,
             'created_at': post.created_at.isoformat() if post.created_at else None,
             'updated_at': post.updated_at.isoformat() if post.updated_at else None,
             'published_at': post.published_at.isoformat() if post.published_at else None
