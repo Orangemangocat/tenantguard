@@ -22,6 +22,7 @@ class BlogPostEnhanced(db.Model):
     status = db.Column(db.String(20), default='draft')
     
     featured_image = db.Column(db.String(500))
+    media_url = db.Column(db.String(500))
     tags = db.Column(db.String(200))  # Comma-separated tags
     
     # Approval workflow fields
@@ -135,6 +136,7 @@ class BlogPostEnhanced(db.Model):
             'author': self.author,
             'status': self.status,
             'featured_image': self.featured_image,
+            'media_url': self.media_url,
             'tags': self.tags.split(',') if self.tags else [],
             'generated_by': self.generated_by,
             'generation_source': self.generation_source,

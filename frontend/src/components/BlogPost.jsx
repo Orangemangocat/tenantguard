@@ -59,6 +59,29 @@ function BlogPost({ slug, onBack }) {
 
   const resolveFeaturedImage = (postData) => postData.featured_image || blogFallbackImage
 
+  const getMediaExtension = (value) => {
+    if (!value) {
+      return ''
+    }
+    const cleaned = value.split('?')[0].split('#')[0]
+    const parts = cleaned.split('.')
+    if (parts.length < 2) {
+      return ''
+    }
+    return parts[parts.length - 1].toLowerCase()
+  }
+
+  const getMediaType = (value) => {
+    const ext = getMediaExtension(value)
+    if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) {
+      return 'audio'
+    }
+    if (['mp4', 'webm', 'mov'].includes(ext)) {
+      return 'video'
+    }
+    return null
+  }
+
   const escapeHtml = (value) => (
     value
       .replace(/&/g, '&amp;')
@@ -157,6 +180,20 @@ function BlogPost({ slug, onBack }) {
     return renderMarkdown(content)
   }
 
+  const renderMediaEmbed = (value) => {
+    if (!value) {
+      return null
+    }
+    const mediaType = getMediaType(value)
+    if (mediaType === 'audio') {
+      return <audio controls src={value} className="w-full" />
+    }
+    if (mediaType === 'video') {
+      return <video controls src={value} className="w-full" />
+    }
+    return null
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -247,6 +284,11 @@ function BlogPost({ slug, onBack }) {
         </CardHeader>
 
         <CardContent>
+          {post.media_url && (
+            <div className="mb-6">
+              {renderMediaEmbed(post.media_url)}
+            </div>
+          )}
           {/* Post Content */}
           <div 
             className="prose prose-lg max-w-none"

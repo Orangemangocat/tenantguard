@@ -53,6 +53,8 @@ Repo layout:
 
 Agents may modify ONLY:
 
+- `alembic/**`
+- `alembic.ini`
 - `src/**`
 - `frontend/**`
 - `frontend-next/**`
