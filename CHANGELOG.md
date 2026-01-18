@@ -1,5 +1,11 @@
 # Changelog
 
+- 2026-01-13: Updated COMPLETE_SYSTEM_DOCUMENTATION.md to reflect current architecture, repo layout, and control-plane alignment (WO-20260113-003).
+- 2026-01-13: Updated GROUPS_SYSTEM_DOCUMENTATION.md to reflect current groups endpoints and permissions (WO-20260113-004).
+- 2026-01-13: Updated DEPLOYMENT.md to align paths, services, and configuration with current repo (WO-20260113-005).
+- 2026-01-13: Updated README.md to reflect current repo layout, features, and endpoints (WO-20260113-006).
+- 2026-01-13: Added group membership controls to admin user management (WO-20260113-007).
+- 2026-01-13: Added inline group role badges to the admin user list (WO-20260113-007).
 - 2026-01-13: Added 10px right padding to mobile navbar dropdown content (WO-20260113-002).
 - 2026-01-13: Refined mobile dropdown alignment for navbar menu items (WO-20260113-002).
 - 2026-01-13: Right-aligned mobile dropdown menu items in the navbar (WO-20260113-002).

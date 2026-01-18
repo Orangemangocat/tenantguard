@@ -1,0 +1,36 @@
+{
+  "id": "WO-20260113-004",
+  "title": "Review and update GROUPS_SYSTEM_DOCUMENTATION.md",
+  "scope": [
+    "Review GROUPS_SYSTEM_DOCUMENTATION.md against current repo structure and control-plane directives",
+    "Update GROUPS_SYSTEM_DOCUMENTATION.md to reflect accurate system behavior and components",
+    "Record changes in CHANGELOG.md once workorder is completed"
+  ],
+  "allowed_paths": [
+    "GROUPS_SYSTEM_DOCUMENTATION.md",
+    "CHANGELOG.md",
+    "docs/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "GROUPS_SYSTEM_DOCUMENTATION.md reflects the current repo layout, system roles, and control-plane constraints",
+    "Any outdated or incorrect statements are corrected with clear, factual language",
+    "CHANGELOG.md is updated when the documentation update is complete"
+  ],
+  "risk_notes": [
+    "Documentation may diverge from actual behavior if not cross-checked carefully"
+  ],
+  "rollback_plan": [
+    "Revert the documentation changes and restore the previous version"
+  ]
+}

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Groups/Teams system extends TenantGuard's authorization model by enabling team-based collaboration and permission management. Users can create groups, invite members, assign roles, and organize collaborative workflows.
+The Groups/Teams system extends TenantGuard's authorization model by enabling team-based collaboration and permission management. Users can create groups, add members, assign roles, and organize collaborative workflows.
 
 ## Database Schema
 
@@ -37,7 +37,7 @@ The Groups/Teams system extends TenantGuard's authorization model by enabling te
 
 ## API Endpoints
 
-All endpoints require JWT authentication via `Authorization: Bearer <token>` header.
+All endpoints require authentication via the `@token_required` decorator and expect an `Authorization: Bearer <token>` header.
 
 ### Group Management
 
@@ -49,6 +49,7 @@ GET /api/groups
 **Query Parameters:**
 - `my_groups` (optional): If "true", returns only groups the user is a member of
 - `owned` (optional): If "true", returns only groups owned by the user
+- `include_members` (optional): If "true", includes member lists in each group
 
 **Response:**
 ```json
@@ -72,7 +73,7 @@ GET /api/groups
       "updated_at": "2025-12-23T10:00:00"
     }
   ],
-  "total": 1
+  "count": 1
 }
 ```
 
@@ -84,37 +85,39 @@ GET /api/groups/<group_id>
 **Response:**
 ```json
 {
-  "id": 1,
-  "name": "Engineering Team",
-  "description": "Software development team",
-  "slug": "engineering-team",
-  "owner_id": 5,
-  "owner": {
-    "id": 5,
-    "username": "john_doe",
-    "email": "john@example.com",
-    "full_name": "John Doe"
-  },
-  "is_active": true,
-  "member_count": 12,
-  "members": [
-    {
-      "id": 1,
-      "group_id": 1,
-      "user_id": 5,
-      "user": {
-        "id": 5,
-        "username": "john_doe",
-        "email": "john@example.com",
-        "full_name": "John Doe",
-        "avatar_url": null
-      },
-      "role": "owner",
-      "joined_at": "2025-12-23T10:00:00"
-    }
-  ],
-  "created_at": "2025-12-23T10:00:00",
-  "updated_at": "2025-12-23T10:00:00"
+  "group": {
+    "id": 1,
+    "name": "Engineering Team",
+    "description": "Software development team",
+    "slug": "engineering-team",
+    "owner_id": 5,
+    "owner": {
+      "id": 5,
+      "username": "john_doe",
+      "email": "john@example.com",
+      "full_name": "John Doe"
+    },
+    "is_active": true,
+    "member_count": 12,
+    "members": [
+      {
+        "id": 1,
+        "group_id": 1,
+        "user_id": 5,
+        "user": {
+          "id": 5,
+          "username": "john_doe",
+          "email": "john@example.com",
+          "full_name": "John Doe",
+          "avatar_url": null
+        },
+        "role": "owner",
+        "joined_at": "2025-12-23T10:00:00"
+      }
+    ],
+    "created_at": "2025-12-23T10:00:00",
+    "updated_at": "2025-12-23T10:00:00"
+  }
 }
 ```
 
@@ -154,7 +157,7 @@ POST /api/groups
 PUT /api/groups/<group_id>
 ```
 
-**Permissions:** Only group admins (owner or admin role) can update groups
+**Permissions:** Only group admins (owner or admin role) can update groups. System admins can update any group.
 
 **Request Body:**
 ```json
@@ -188,7 +191,7 @@ PUT /api/groups/<group_id>
 DELETE /api/groups/<group_id>
 ```
 
-**Permissions:** Only the group owner can delete groups
+**Permissions:** Only the group owner can delete groups. System admins can delete any group.
 
 **Response:**
 ```json
@@ -235,7 +238,7 @@ GET /api/groups/<group_id>/members
 POST /api/groups/<group_id>/members
 ```
 
-**Permissions:** Only group admins can add members
+**Permissions:** Only group admins can add members. System admins can add members.
 
 **Request Body:**
 ```json
@@ -245,7 +248,7 @@ POST /api/groups/<group_id>/members
 }
 ```
 
-**Valid Roles:** `owner`, `admin`, `member`, `viewer`
+**Valid Roles:** `owner`, `admin`, `member`, `viewer` (owner role cannot be assigned via this endpoint)
 
 **Response:**
 ```json
@@ -263,10 +266,10 @@ POST /api/groups/<group_id>/members
 
 #### Update Member Role
 ```
-PUT /api/groups/<group_id>/members/<member_id>
+PUT /api/groups/<group_id>/members/<user_id>
 ```
 
-**Permissions:** Only group admins can update member roles. Owner role cannot be changed.
+**Permissions:** Only group admins can update member roles. Owner role cannot be changed. System admins can update member roles.
 
 **Request Body:**
 ```json
@@ -291,12 +294,13 @@ PUT /api/groups/<group_id>/members/<member_id>
 
 #### Remove Group Member
 ```
-DELETE /api/groups/<group_id>/members/<member_id>
+DELETE /api/groups/<group_id>/members/<user_id>
 ```
 
 **Permissions:** 
 - Group admins can remove any member except the owner
 - Members can remove themselves
+ - System admins can remove any member except the owner
 
 **Response:**
 ```json
@@ -352,7 +356,7 @@ All endpoints return standard error responses:
 
 ### Authentication
 
-The groups system integrates with the existing OAuth/JWT authentication system:
+The groups system integrates with the existing token-based authentication system:
 
 - All endpoints use the `@token_required` decorator from `src/routes/auth.py`
 - User identity is extracted from JWT tokens
@@ -360,11 +364,57 @@ The groups system integrates with the existing OAuth/JWT authentication system:
 
 ### Database
 
-Groups and memberships are stored in the same SQLite database as other TenantGuard data:
+Groups and memberships are stored in the same SQLAlchemy database as other TenantGuard data:
 
-- Database path: `/var/www/tenantguard/src/database/tenantguard.db`
 - Tables are created automatically via SQLAlchemy `db.create_all()`
 - Foreign key constraints ensure referential integrity
+
+## User Group Endpoints
+
+#### List Current User Groups
+```
+GET /api/users/me/groups
+```
+
+**Response:**
+```json
+{
+  "groups": [
+    {
+      "id": 1,
+      "name": "Engineering Team",
+      "my_role": "member"
+    }
+  ],
+  "count": 1
+}
+```
+
+#### List Specific User Groups (Admin or Self)
+```
+GET /api/users/<user_id>/groups
+```
+
+**Permissions:** Only admins or the user themselves
+
+**Response:**
+```json
+{
+  "user": {
+    "id": 5,
+    "username": "john_doe",
+    "email": "john@example.com"
+  },
+  "groups": [
+    {
+      "id": 1,
+      "name": "Engineering Team",
+      "user_role": "member"
+    }
+  ],
+  "count": 1
+}
+```
 
 ## Usage Examples
 
@@ -427,42 +477,14 @@ To complete the groups system, create React components:
 - Activity logs and audit trails
 - Group settings and preferences
 
-## Deployment
-
-The groups system is deployed and operational on production:
-
-- **URL:** https://www.tenantguard.net
-- **Server:** 35.237.102.136
-- **Service:** `tenantguard.service` (systemd)
-- **Code:** GitHub repository `Orangemangocat/tenantguard`
-
-### Files Added
+## Implementation Files
 
 - `src/models/group.py` - Group and GroupMember models
 - `src/routes/groups.py` - Groups API endpoints
 - `src/main.py` - Updated to register groups blueprint
 
-### Deployment Commands
-
-```bash
-# On production server
-cd /var/www/tenantguard
-sudo systemctl restart tenantguard.service
-sudo systemctl status tenantguard.service
-```
-
-## Support
-
-For questions or issues with the groups system:
-
-- Review this documentation
-- Check API error responses for debugging information
-- Examine server logs: `sudo journalctl -u tenantguard.service -n 100`
-- Test endpoints with curl or Postman
-- Submit feedback at https://help.manus.im
-
 ---
 
-**Last Updated:** December 23, 2025  
-**Version:** 1.0  
-**Status:** ✅ Deployed and Operational
+**Last Updated:** 2026-01-13  
+**Version:** 1.1  
+**Status:** Documented

@@ -2,66 +2,60 @@
 
 ## Overview
 
-TenantGuard is a comprehensive landlord-tenant legal platform designed for 
-Davidson County, Tennessee. It connects tenants with qualified attorneys 
-through a technology-enabled self-service platform that streamlines dispute 
-resolution.
+TenantGuard is a full-stack landlord-tenant legal support platform focused on Tennessee (Davidson County by default). It provides tenant and attorney intake, admin tooling, content management, and background processing. Authoritative AI behavior constraints live in `docs/control-plane/`.
 
 ## Architecture
 
 This is a **full-stack web application** consisting of:
 
-- **Frontend**: React 18 application with modern UI components
-- **Backend**: Flask API server with SQLite database
-- **Database**: SQLite with comprehensive schemas for cases and attorneys
-- **Deployment**: Production-ready with static file serving
+- **Frontend**: Vite + React application with modern UI components
+- **Backend**: Flask API server with SQLAlchemy models
+- **Database**: PostgreSQL configuration with SQLite fallback for local/dev
+- **Background**: RQ workers and scheduled jobs for blog/AI tasks
+- **Deployment**: Static file serving via Flask + optional Nginx reverse proxy
 
 ## Features
 
 ### For Tenants
-- **8-Step Case Intake Form**: Comprehensive data collection
-- **Document Upload**: Secure file handling
-- **Case Tracking**: Real-time status updates
-- **Legal Templates**: Tennessee-specific forms
+- **Guided Intake**: Multi-step intake form and intake chat flow
+- **Evidence Capture**: Intake fields capture evidence and notice details
+- **Status Updates**: Case status tracking via API
 - **Mobile Responsive**: Works on all devices
 
 ### For Attorneys
-- **7-Step Attorney Application**: Complete professional profile
-- **Budget & Pricing Configuration**: Hourly rates, fee structures
-- **Lead Generation Preferences**: Monthly budgets ($0-$500 to $5,000+)
-- **Case Matching**: Automated attorney-case matching
-- **Service Area Management**: Geographic coverage settings
+- **Attorney Intake**: Multi-step intake form and intake chat flow
+- **Profile Details**: Credentials, experience, service areas
+- **Case Matching**: Backend matching endpoint
 
-### Platform Benefits
-- **60% Cost Reduction**: From $2,500 to $1,000 average legal costs
-- **70% Time Savings**: Attorney case setup from 4.5 hours to under 1 hour
-- **90% Completeness**: Document organization and case preparation
+### Admin and Content
+- **Admin Dashboards**: Intake review and admin panels
+- **Blog Management**: Admin blog editor, approvals, and publishing
+- **Groups**: Team-based group and membership management
 
 ## Directory Structure
 
 ```
-tenantdefend-complete-source/
-├── src/                          # Flask Backend
-│   ├── main.py                   # Main Flask application
-│   ├── models/                   # Database models
-│   │   ├── case.py              # Case data model
-│   │   └── attorney.py          # Attorney data model
+tenantguard/
+├── src/                          # Flask backend
+│   ├── main.py                   # Flask application
+│   ├── worker.py                 # RQ worker entrypoint
+│   ├── config/                   # Database configuration
+│   ├── models/                   # SQLAlchemy models
 │   ├── routes/                   # API endpoints
-│   │   ├── case.py              # Case management APIs
-│   │   └── attorney.py          # Attorney management APIs
-│   └── static/                   # Built frontend files
-├── frontend/                     # React Frontend Source
-│   ├── src/
-│   │   ├── App.jsx              # Main React application
-│   │   ├── components/
-│   │   │   ├── CaseIntakeForm.jsx    # 8-step tenant form
-│   │   │   └── AttorneyIntakeForm.jsx # 7-step attorney form
-│   │   └── assets/              # Images and static assets
-│   ├── package.json             # Frontend dependencies
-│   └── vite.config.js           # Build configuration
-├── requirements.txt             # Python dependencies
-├── README.md                    # This file
-└── DEPLOYMENT.md               # Deployment instructions
+│   ├── services/                 # AI + storage helpers
+│   ├── tasks/                    # Background task definitions
+│   ├── scheduler/                # Scheduled job runners
+│   ├── templates/                # Server-rendered templates (blog)
+│   └── static/                   # Built frontend files (if deployed)
+├── frontend/                     # Vite + React frontend source
+├── frontend-next/                # Static blog generation frontend
+├── docs/                         # Documentation
+├── workorders/                   # Work orders and templates
+├── scripts/                      # Utility scripts
+├── alembic/                      # Database migrations
+├── requirements.txt              # Python dependencies
+├── README.md                     # This file
+└── DEPLOYMENT.md                 # Deployment instructions
 ```
 
 ## Technology Stack
@@ -75,14 +69,16 @@ tenantdefend-complete-source/
 
 ### Backend
 - **Flask**: Lightweight Python web framework
-- **SQLite**: Embedded database
+- **SQLAlchemy**: ORM and database layer
+- **PostgreSQL**: Primary database configuration
+- **SQLite**: Fallback for local/dev environments
 - **Flask-CORS**: Cross-origin resource sharing
 - **Python 3.11**: Modern Python runtime
 
 ### Infrastructure
 - **Static File Serving**: Integrated frontend/backend
 - **RESTful APIs**: Clean API design
-- **Database Migrations**: Automatic schema creation
+- **Database Migrations**: Alembic migrations
 - **Production Ready**: Optimized for deployment
 
 ## API Endpoints
@@ -92,8 +88,12 @@ tenantdefend-complete-source/
 - `GET /api/cases` - List all cases
 - `GET /api/cases/{case_number}` - Get specific case
 - `PUT /api/cases/{case_number}` - Update case
+- `PUT /api/cases/{case_number}/status` - Update case status
 - `GET /api/cases/search` - Search cases
 - `GET /api/cases/stats` - Case statistics
+- `GET /api/cases/{case_number}/analyses` - Get case analyses
+- `POST /api/cases/{case_number}/intake-conversations` - Log intake chat
+- `POST /api/cases/{case_number}/process` - Trigger case processing
 
 ### Attorney Management
 - `POST /api/attorneys` - Create attorney application
@@ -101,16 +101,25 @@ tenantdefend-complete-source/
 - `GET /api/attorneys/{application_id}` - Get specific attorney
 - `PUT /api/attorneys/{application_id}/status` - Update status
 - `GET /api/attorneys/search` - Search attorneys
+- `GET /api/attorneys/stats` - Attorney statistics
+- `GET /api/attorneys/email/{email}` - Get attorney by email
 - `POST /api/attorneys/match` - Match attorneys to cases
+
+### Group Management
+- `GET /api/groups` - List groups
+- `POST /api/groups` - Create group
+- `GET /api/groups/{group_id}` - Group details
+- `PUT /api/groups/{group_id}` - Update group
+- `DELETE /api/groups/{group_id}` - Delete group
+
+See `src/routes/` for the full API surface.
 
 ## Database Schema
 
 ### Cases Table
-- Complete tenant information (contact, demographics)
-- Property and lease details
-- Legal issue documentation
-- Financial information
-- Case status and timeline tracking
+- Tenant contact and property details
+- Legal issue and notice details
+- Case status tracking
 
 ### Attorneys Table
 - Professional credentials and experience
@@ -119,6 +128,11 @@ tenantdefend-complete-source/
 - Budget and pricing structure
 - Lead generation preferences
 - Service coverage areas
+
+### Additional Models
+- Auth users, groups, and group memberships
+- Blog content and topics
+- Case analyses and AI artifacts
 
 ## Quick Start
 
@@ -129,7 +143,9 @@ tenantdefend-complete-source/
 
 ### Backend Setup
 ```bash
-cd /var/www/tenantguard
+cd /path/to/tenantguard
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 python src/main.py
 ```
@@ -145,7 +161,8 @@ pnpm run dev
 ```bash
 cd frontend
 pnpm run build
-# Built files are automatically copied to src/static/
+# Copy build output into Flask static folder if serving via Flask
+rsync -a --delete dist/ ../src/static/
 ```
 
 ## Deployment
@@ -198,7 +215,7 @@ Comprehensive data handling with:
 - Image optimization
 
 ## Browser Support
-- Edge 90+
+Modern evergreen browsers (Chrome, Firefox, Safari, Edge)
 ## CI Secrets
 
 We use a dedicated CI secret name for repository CI tasks (notably running database migrations during preview/deploy workflows).
