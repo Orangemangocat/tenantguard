@@ -33,7 +33,7 @@ sudo apt install nginx -y
 # Install Git
 sudo apt install git -y
 
-# Install Node.js (for frontend development)
+# Install Node.js (for frontend build tooling)
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 npm install -g pnpm
@@ -43,9 +43,9 @@ npm install -g pnpm
 
 ```bash
 # Create application directory
-sudo mkdir -p /var/www/tenantdefend
-sudo chown -R $USER:$USER /var/www/tenantdefend
-cd /var/www/tenantdefend
+sudo mkdir -p /var/www/tenantguard
+sudo chown -R $USER:$USER /var/www/tenantguard
+cd /var/www/tenantguard
 ```
 
 ## Application Deployment
@@ -53,11 +53,11 @@ cd /var/www/tenantdefend
 ### Deploy Source Code
 
 ```bash
-# Copy the complete source code to the server
-# (Upload the tenantdefend-complete-source directory to /var/www/tenantdefend)
+# Copy the repository to the server
+# (Clone or upload the tenantguard repository to /var/www/tenantguard)
 
 # Set up Python virtual environment
-cd /var/www/tenantdefend
+cd /var/www/tenantguard
 python3.11 -m venv venv
 source venv/bin/activate
 
@@ -65,26 +65,49 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Build Frontend Assets
+
+The Flask app serves static assets from `src/static/`. Build the Vite frontend and copy its output:
+
+```bash
+cd /var/www/tenantguard/frontend
+pnpm install
+pnpm build
+
+# Copy build output into Flask static folder
+rsync -a --delete /var/www/tenantguard/frontend/dist/ /var/www/tenantguard/src/static/
+```
+
 ### Initialize Database
 
-The application automatically creates the SQLite database on first run. The database will be created at `/var/www/tenantdefend/tenantdefend.db` with the following tables:
+The application initializes tables via SQLAlchemy on startup. By default, the backend is configured for PostgreSQL with a SQLite fallback if drivers or credentials are missing.
 
-- **cases**: Stores all tenant case submissions
-- **attorneys**: Stores all attorney applications
+SQLite fallback path:
+- `/var/www/tenantguard/src/database/tenantguard.db`
 
 ### Configure Application
 
-Create a production configuration file:
+Configure environment variables at the process level (systemd, shell, or secrets manager). Do not commit secrets to the repo.
 
 ```bash
-# Create environment configuration
-cat > /var/www/tenantdefend/.env << EOF
+# Example environment variables (set real values outside the repo)
 FLASK_ENV=production
 FLASK_DEBUG=False
-DATABASE_PATH=/var/www/tenantdefend/tenantdefend.db
-SECRET_KEY=your-secret-key-here
-CORS_ORIGINS=*
-EOF
+FLASK_SECRET_KEY=<set-in-your-secret-store>
+
+# Database configuration (PostgreSQL)
+DB_TYPE=postgresql
+POSTGRES_HOST=<db-host>
+POSTGRES_PORT=5432
+POSTGRES_DB=tenantguard
+POSTGRES_USER=tenantguard
+POSTGRES_PASSWORD=<set-in-your-secret-store>
+
+# Optional upload size configuration
+MAX_CONTENT_LENGTH_MB=50
+
+# Optional background worker configuration
+REDIS_URL=redis://localhost:6379/0
 ```
 
 ## Nginx Configuration
@@ -92,7 +115,7 @@ EOF
 ### Create Nginx Server Block
 
 ```bash
-sudo nano /etc/nginx/sites-available/tenantdefend
+sudo nano /etc/nginx/sites-available/tenantguard
 ```
 
 Add the following configuration:
@@ -124,7 +147,7 @@ server {
     add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
     
     # Root directory for static files
-    root /var/www/tenantdefend/src/static;
+    root /var/www/tenantguard/src/static;
     index index.html;
     
     # Handle static files
@@ -162,7 +185,7 @@ server {
 
 ```bash
 # Enable the site
-sudo ln -s /etc/nginx/sites-available/tenantdefend /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/tenantguard /etc/nginx/sites-enabled/
 
 # Test Nginx configuration
 sudo nginx -t
@@ -176,7 +199,7 @@ sudo systemctl reload nginx
 ### Create Systemd Service
 
 ```bash
-sudo nano /etc/systemd/system/tenantdefend.service
+sudo nano /etc/systemd/system/tenantguard.service
 ```
 
 Add the following configuration:
@@ -190,9 +213,9 @@ After=network.target
 Type=simple
 User=www-data
 Group=www-data
-WorkingDirectory=/var/www/tenantdefend
-Environment=PATH=/var/www/tenantdefend/venv/bin
-ExecStart=/var/www/tenantdefend/venv/bin/python src/main.py
+WorkingDirectory=/var/www/tenantguard
+Environment=PATH=/var/www/tenantguard/venv/bin
+ExecStart=/var/www/tenantguard/venv/bin/python src/main.py
 Restart=always
 RestartSec=10
 
@@ -207,13 +230,13 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload
 
 # Enable the service
-sudo systemctl enable tenantdefend
+sudo systemctl enable tenantguard
 
 # Start the service
-sudo systemctl start tenantdefend
+sudo systemctl start tenantguard
 
 # Check service status
-sudo systemctl status tenantdefend
+sudo systemctl status tenantguard
 ```
 
 ## SSL Certificate Setup
@@ -254,7 +277,7 @@ sudo ufw enable
 
 ```bash
 # View Flask application logs
-sudo journalctl -u tenantdefend -f
+sudo journalctl -u tenantguard -f
 
 # View Nginx access logs
 sudo tail -f /var/log/nginx/access.log
@@ -267,22 +290,22 @@ sudo tail -f /var/log/nginx/error.log
 
 ```bash
 # Create backup script
-cat > /var/www/tenantdefend/backup.sh << 'EOF'
+cat > /var/www/tenantguard/backup.sh << 'EOF'
 #!/bin/bash
-BACKUP_DIR="/var/backups/tenantdefend"
+BACKUP_DIR="/var/backups/tenantguard"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 mkdir -p $BACKUP_DIR
-cp /var/www/tenantdefend/tenantdefend.db $BACKUP_DIR/tenantdefend_$DATE.db
+cp /var/www/tenantguard/src/database/tenantguard.db $BACKUP_DIR/tenantguard_$DATE.db
 
 # Keep only last 30 days of backups
-find $BACKUP_DIR -name "tenantdefend_*.db" -mtime +30 -delete
+find $BACKUP_DIR -name "tenantguard_*.db" -mtime +30 -delete
 EOF
 
-chmod +x /var/www/tenantdefend/backup.sh
+chmod +x /var/www/tenantguard/backup.sh
 
 # Add to crontab for daily backups
-echo "0 2 * * * /var/www/tenantdefend/backup.sh" | sudo crontab -
+echo "0 2 * * * /var/www/tenantguard/backup.sh" | sudo crontab -
 ```
 
 ## Performance Optimization
@@ -312,14 +335,14 @@ gzip_types
 
 ### Database Optimization
 
-The SQLite database includes appropriate indexes for optimal query performance. For high-traffic deployments, consider migrating to PostgreSQL.
+The SQLite database includes appropriate indexes for optimal query performance. For high-traffic deployments, use PostgreSQL with `DB_TYPE=postgresql` and `POSTGRES_*` settings.
 
 ## Troubleshooting
 
 ### Common Issues
 
 **Service won't start:**
-- Check logs: `sudo journalctl -u tenantdefend -n 50`
+- Check logs: `sudo journalctl -u tenantguard -n 50`
 - Verify Python virtual environment is activated
 - Ensure all dependencies are installed
 
@@ -339,7 +362,7 @@ Create a simple health check endpoint:
 
 ```bash
 # Test application health
-curl http://localhost:5000/api/health
+curl http://localhost:5000/api/cases
 
 # Test full stack
 curl https://your-domain.com

@@ -14,6 +14,7 @@ src/database/
 src/database/**
 
 # Frontend build output
+src/static
 frontend/dist/
 frontend-next/dist/
 
