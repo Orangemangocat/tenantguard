@@ -14,6 +14,123 @@ import { ArrowLeft, ArrowRight, Upload, CheckCircle, AlertCircle, Scale, Briefca
 const AttorneyIntakeForm = ({ onClose, onSuccess }) => {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
+
+  const stepRequirements = {
+    1: [
+      { key: 'firstName', label: 'First name' },
+      { key: 'lastName', label: 'Last name' },
+      { key: 'email', label: 'Email address' },
+      { key: 'phone', label: 'Phone number' },
+      { key: 'firmName', label: 'Firm name' },
+      { key: 'firmAddress', label: 'Firm address' },
+      { key: 'firmZip', label: 'Firm zip code' }
+    ],
+    2: [
+      { key: 'barNumber', label: 'Bar number' },
+      { key: 'barState', label: 'Bar state' },
+      { key: 'barAdmissionDate', label: 'Bar admission date' },
+      { key: 'yearsExperience', label: 'Years of experience' },
+      { key: 'lawSchool', label: 'Law school' },
+      { key: 'graduationYear', label: 'Graduation year' }
+    ],
+    3: [
+      { key: 'practiceAreas', label: 'Practice areas', type: 'array' },
+      { key: 'landlordTenantExperience', label: 'Landlord-tenant experience' },
+      { key: 'evictionExperience', label: 'Eviction experience' }
+    ],
+    4: [
+      { key: 'caseTypes', label: 'Preferred case types', type: 'array' },
+      { key: 'clientTypes', label: 'Preferred client types', type: 'array' }
+    ],
+    5: [
+      { key: 'hourlyRate', label: 'Hourly rate' },
+      { key: 'feeStructurePreference', label: 'Fee structure preference' },
+      { key: 'paymentMethods', label: 'Accepted payment methods', type: 'array' }
+    ],
+    6: [
+      { key: 'leadBudget', label: 'Lead budget' },
+      { key: 'leadVolume', label: 'Lead volume' },
+      { key: 'leadQuality', label: 'Lead quality' }
+    ],
+    7: [
+      { key: 'serviceAreas', label: 'Service areas', type: 'array' },
+      { key: 'responseTime', label: 'Response time commitment' },
+      { key: 'availabilityHours', label: 'Availability hours', type: 'array' }
+    ],
+    10: [
+      { key: 'motivation', label: 'Motivation' },
+      { key: 'termsAccepted', label: 'Terms acceptance', type: 'boolean' },
+      { key: 'privacyConsent', label: 'Privacy consent', type: 'boolean' }
+    ]
+  }
+
+  const validateStep = (step) => {
+    const requirements = stepRequirements[step] || []
+    const missing = []
+
+    requirements.forEach((field) => {
+      if (field.type === 'boolean') {
+        if (!formData[field.key]) {
+          missing.push(field.label)
+        }
+        return
+      }
+      if (field.type === 'array') {
+        const value = formData[field.key]
+        if (!Array.isArray(value) || value.length === 0) {
+          missing.push(field.label)
+        }
+        return
+      }
+      const value = formData[field.key]
+      if (!value || String(value).trim() === '') {
+        missing.push(field.label)
+      }
+    })
+
+    if (step === 8) {
+      formData.references.forEach((ref, index) => {
+        if (!ref.name?.trim()) {
+          missing.push(`Reference ${index + 1} name`)
+        }
+        if (!ref.relationship?.trim()) {
+          missing.push(`Reference ${index + 1} relationship`)
+        }
+        if (!ref.phone?.trim()) {
+          missing.push(`Reference ${index + 1} phone`)
+        }
+        if (!ref.email?.trim()) {
+          missing.push(`Reference ${index + 1} email`)
+        }
+      })
+    }
+
+    if (step === 9) {
+      if (!formData.malpracticeInsurance) {
+        missing.push('Malpractice insurance confirmation')
+      }
+      if (formData.malpracticeInsurance) {
+        if (!formData.insuranceCarrier?.trim()) {
+          missing.push('Insurance carrier')
+        }
+        if (!formData.coverageAmount?.trim()) {
+          missing.push('Coverage amount')
+        }
+      }
+      if (formData.disciplinaryHistory && !formData.disciplinaryDetails?.trim()) {
+        missing.push('Disciplinary details')
+      }
+    }
+
+    if (missing.length > 0) {
+      setFormError(`Please complete: ${missing.join(', ')}.`)
+      return false
+    }
+
+    setFormError('')
+    return true
+  }
   const [formData, setFormData] = useState({
     // Professional Information
     firstName: '',
@@ -122,18 +239,26 @@ const AttorneyIntakeForm = ({ onClose, onSuccess }) => {
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
+      if (!validateStep(currentStep)) {
+        return
+      }
       setCurrentStep(currentStep + 1)
+      setFormError('')
     }
   }
 
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
+      setFormError('')
     }
   }
 
   const handleSubmit = async () => {
     try {
+      if (!validateStep(currentStep)) {
+        return
+      }
       setIsSubmitting(true)
       
       // Submit data to backend API
@@ -160,7 +285,7 @@ const AttorneyIntakeForm = ({ onClose, onSuccess }) => {
       }
     } catch (error) {
       console.error('Error submitting attorney application:', error)
-      alert('There was an error submitting your application. Please try again or contact support.')
+      alert(error.message || 'There was an error submitting your application. Please try again or contact support.')
     } finally {
       setIsSubmitting(false)
     }
@@ -1077,6 +1202,11 @@ const AttorneyIntakeForm = ({ onClose, onSuccess }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          {formError && (
+            <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {formError}
+            </div>
+          )}
           {renderStep()}
         </div>
 
