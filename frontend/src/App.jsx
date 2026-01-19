@@ -38,6 +38,7 @@ function App() {
   const [showRegister, setShowRegister] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
+  const [pendingStartRole, setPendingStartRole] = useState(null)
 
   // Handle OAuth callback - extract tokens from URL
   useEffect(() => {
@@ -118,6 +119,11 @@ function App() {
   }
 
   const handleStartIntake = (role) => {
+    if (!currentUser) {
+      setPendingStartRole(role || null)
+      setShowLogin(true)
+      return
+    }
     if (typeof window === 'undefined') return
     const path = role === 'attorney' ? '/attorney-intake' : '/tenant-intake'
     window.location.href = path
@@ -127,13 +133,17 @@ function App() {
   if (pathname === '/tenant-intake') {
     return (
       <ThemeProvider>
-        <CaseIntakeForm
-          onSuccess={({ caseNumber }) => {
-            if (caseNumber && typeof window !== 'undefined') {
-              window.location.href = `/tenant-documents?case=${encodeURIComponent(caseNumber)}`
-            }
-          }}
-        />
+        <AuthProvider>
+          <ProtectedRoute>
+            <CaseIntakeForm
+              onSuccess={({ caseNumber }) => {
+                if (caseNumber && typeof window !== 'undefined') {
+                  window.location.href = `/tenant-documents?case=${encodeURIComponent(caseNumber)}`
+                }
+              }}
+            />
+          </ProtectedRoute>
+        </AuthProvider>
       </ThemeProvider>
     )
   }
@@ -141,13 +151,17 @@ function App() {
   if (pathname === '/attorney-intake') {
     return (
       <ThemeProvider>
-        <AttorneyIntakeForm
-          onSuccess={({ applicationId }) => {
-            if (applicationId && typeof window !== 'undefined') {
-              window.location.href = `/payment?type=attorney&application_id=${encodeURIComponent(applicationId)}`
-            }
-          }}
-        />
+        <AuthProvider>
+          <ProtectedRoute>
+            <AttorneyIntakeForm
+              onSuccess={({ applicationId }) => {
+                if (applicationId && typeof window !== 'undefined') {
+                  window.location.href = `/payment?type=attorney&application_id=${encodeURIComponent(applicationId)}`
+                }
+              }}
+            />
+          </ProtectedRoute>
+        </AuthProvider>
       </ThemeProvider>
     )
   }
@@ -676,10 +690,17 @@ function App() {
         {/* Login Modal */}
         {showLogin && !currentUser && (
           <Login
+            pendingStartRole={pendingStartRole}
+            setPendingStartRole={setPendingStartRole}
             onClose={() => setShowLogin(false)}
             onSuccess={(user) => {
               setCurrentUser(user)
               setShowLogin(false)
+              if (pendingStartRole) {
+                const path = pendingStartRole === 'attorney' ? '/attorney-intake' : '/tenant-intake'
+                setPendingStartRole(null)
+                if (typeof window !== 'undefined') window.location.href = path
+              }
             }}
             onSwitchToRegister={() => {
               setShowLogin(false)
