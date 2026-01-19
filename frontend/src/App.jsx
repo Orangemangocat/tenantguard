@@ -3,15 +3,17 @@ import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, Menu, X } from 'lucide-react'
-import IntakeChat from './components/IntakeChat.jsx'
-import AttorneyIntakeChat from './components/AttorneyIntakeChat.jsx'
 import ContactPage from './components/ContactPage.jsx'
 import BlogList from './components/BlogList.jsx'
 import BlogPost from './components/BlogPost.jsx'
 import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
-import Onboarding from './components/Onboarding.jsx'
+import CaseIntakeForm from './components/CaseIntakeForm.jsx'
+import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
+import TenantDocumentUpload from './components/TenantDocumentUpload.jsx'
+import CaseStatus from './components/CaseStatus.jsx'
+import PaymentPortal from './components/PaymentPortal.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Navbar from './components/Navbar.jsx'
 import AuthProvider from './components/AuthProvider.jsx'
@@ -28,8 +30,6 @@ import workflowDiagramImage from './assets/workflow_diagram.png'
 
 function App() {
   const [activeTab, setActiveTab] = useState('tenant')
-  const [showIntakeForm, setShowIntakeForm] = useState(false)
-  const [showAttorneyForm, setShowAttorneyForm] = useState(false)
   const [showContactPage, setShowContactPage] = useState(false)
   const [_currentPage, setCurrentPage] = useState('home')
   const [showBlog, setShowBlog] = useState(false)
@@ -38,9 +38,6 @@ function App() {
   const [showRegister, setShowRegister] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
-  const [userOnboarded, setUserOnboarded] = useState(false)
-  const [pendingStartRole, setPendingStartRole] = useState(null)
-  const API_BASE = import.meta.env.VITE_API_BASE_URL
 
   // Handle OAuth callback - extract tokens from URL
   useEffect(() => {
@@ -100,31 +97,6 @@ function App() {
     }
   }, [currentUser])
 
-  // Once currentUser is known, fetch their full user record to determine onboarding state
-  useEffect(() => {
-    const fetchStatus = async () => {
-      if (!currentUser || !currentUser.id) return
-      try {
-        const res = await fetch(`${API_BASE}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        })
-        if (!res.ok) return
-        const data = await res.json().catch(() => ({}))
-        const userRec = data.user || data
-
-        // Heuristics: look for common flags indicating onboarding/profile completion
-        const onboarded = !!(userRec.onboarded || userRec.profile_complete || userRec.has_tenant_profile || userRec.has_attorney_profile || userRec.full_name)
-        setUserOnboarded(onboarded)
-      } catch (e) {
-        console.debug('Could not fetch user onboarding status', e)
-      }
-    }
-
-    fetchStatus()
-  }, [currentUser, API_BASE])
-
   // Handle /blog URL routing early so hooks remain in consistent order
   useEffect(() => {
     if (typeof window !== 'undefined' && (window.location.pathname === '/blog' || window.location.pathname.startsWith('/blog/'))) {
@@ -132,7 +104,7 @@ function App() {
     }
   }, [])
 
-  // If user navigates directly to /admin-panel or /onboarding, render those views
+  // If user navigates directly to /admin-panel, render the admin view
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/'
 
   const handleLogout = () => {
@@ -145,31 +117,23 @@ function App() {
     }
   }
 
-  // When user clicks Tenants/Attorneys actions, ensure they're authenticated
-  // If not authenticated -> show login. If authenticated -> forward to onboarding
-  const handleRequireOnboarding = (role) => {
-    if (!currentUser) {
-      setPendingStartRole(role || null)
-      setShowLogin(true)
-      return
-    }
-
-    // Forward authenticated users to onboarding first with explicit start role.
-    if (typeof window !== 'undefined') {
-      const start = role ? `?start=${encodeURIComponent(role)}` : ''
-      window.location.href = `/onboarding${start}`
-    }
+  const handleStartIntake = (role) => {
+    if (typeof window === 'undefined') return
+    const path = role === 'attorney' ? '/attorney-intake' : '/tenant-intake'
+    window.location.href = path
   }
 
   // Full-page intake routes
   if (pathname === '/tenant-intake') {
     return (
       <ThemeProvider>
-        <AuthProvider>
-          <ProtectedRoute>
-            <IntakeChat />
-          </ProtectedRoute>
-        </AuthProvider>
+        <CaseIntakeForm
+          onSuccess={({ caseNumber }) => {
+            if (caseNumber && typeof window !== 'undefined') {
+              window.location.href = `/tenant-documents?case=${encodeURIComponent(caseNumber)}`
+            }
+          }}
+        />
       </ThemeProvider>
     )
   }
@@ -177,11 +141,37 @@ function App() {
   if (pathname === '/attorney-intake') {
     return (
       <ThemeProvider>
-        <AuthProvider>
-          <ProtectedRoute>
-            <AttorneyIntakeChat />
-          </ProtectedRoute>
-        </AuthProvider>
+        <AttorneyIntakeForm
+          onSuccess={({ applicationId }) => {
+            if (applicationId && typeof window !== 'undefined') {
+              window.location.href = `/payment?type=attorney&application_id=${encodeURIComponent(applicationId)}`
+            }
+          }}
+        />
+      </ThemeProvider>
+    )
+  }
+
+  if (pathname === '/tenant-documents') {
+    return (
+      <ThemeProvider>
+        <TenantDocumentUpload />
+      </ThemeProvider>
+    )
+  }
+
+  if (pathname === '/case-status') {
+    return (
+      <ThemeProvider>
+        <CaseStatus />
+      </ThemeProvider>
+    )
+  }
+
+  if (pathname === '/payment') {
+    return (
+      <ThemeProvider>
+        <PaymentPortal />
       </ThemeProvider>
     )
   }
@@ -201,26 +191,6 @@ function App() {
             />
           </ProtectedRoute>
         </AuthProvider>
-      </ThemeProvider>
-    )
-  }
-
-  if (pathname === '/onboarding') {
-    // If not authenticated, show login prompt
-    if (!currentUser) {
-      return (
-        <ThemeProvider>
-          <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            {(showLogin || !currentUser) && <Login onClose={() => setShowLogin(false)} pendingStartRole={pendingStartRole} setPendingStartRole={setPendingStartRole} onSuccess={(user) => { setCurrentUser(user); setShowLogin(false); }} onSwitchToRegister={() => { setShowLogin(false); setShowRegister(true); }} />}
-          </div>
-        </ThemeProvider>
-      )
-    }
-    
-    // User is authenticated, show onboarding
-    return (
-      <ThemeProvider>
-        <Onboarding user={currentUser} onFinish={() => { if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/') }} />
       </ThemeProvider>
     )
   }
@@ -284,7 +254,7 @@ function App() {
                 size="lg"
                 style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
                 className="hover:opacity-90"
-                onClick={() => handleRequireOnboarding('tenant')}
+                onClick={() => handleStartIntake('tenant')}
               >
                 Start Your Case <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -293,7 +263,7 @@ function App() {
                 variant="outline"
                 style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', backgroundColor: 'transparent' }}
                 className="hover:opacity-80"
-                onClick={() => handleRequireOnboarding('attorney')}
+                onClick={() => handleStartIntake('attorney')}
               >
                 Attorney Portal
               </Button>
@@ -411,7 +381,7 @@ function App() {
                     <div className="flex items-start space-x-4">
                       <Clock className="h-6 w-6 text-red-800 mt-1" />
                       <div>
-                        <h3 className="text-xl font-semibold mb-2">Reduced Onboarding</h3>
+                        <h3 className="text-xl font-semibold mb-2">Streamlined Intake</h3>
                         <p className="text-gray-600">70% reduction in case setup time</p>
                       </div>
                     </div>
@@ -530,7 +500,7 @@ function App() {
                   <div className="text-4xl font-bold text-red-800 mb-2">70%</div>
                   <CardTitle className="text-lg">Time Savings</CardTitle>
                   <CardDescription>
-                    Attorney case onboarding reduced from 4.5 hours to under 1 hour
+                    Attorney case intake setup reduced from 4.5 hours to under 1 hour
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -607,10 +577,10 @@ function App() {
               Join the platform that's revolutionizing landlord-tenant dispute resolution in Tennessee.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100" onClick={() => handleRequireOnboarding('tenant')}>
+              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100" onClick={() => handleStartIntake('tenant')}>
                 Get Started as Tenant
               </Button>
-              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100 border-2 border-white" onClick={() => handleRequireOnboarding('attorney')}>
+              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100 border-2 border-white" onClick={() => handleStartIntake('attorney')}>
                 Join as Attorney
               </Button>
             </div>
@@ -642,8 +612,8 @@ function App() {
               <div>
                 <h3 className="font-semibold mb-4">For Users</h3>
                 <ul className="space-y-2 text-gray-400 text-sm">
-                  <li><button onClick={() => handleRequireOnboarding('tenant')} className="hover:text-white">Tenant Portal</button></li>
-                  <li><button onClick={() => handleRequireOnboarding('attorney')} className="hover:text-white">Attorney Portal</button></li>
+                  <li><button onClick={() => handleStartIntake('tenant')} className="hover:text-white">Tenant Portal</button></li>
+                  <li><button onClick={() => handleStartIntake('attorney')} className="hover:text-white">Attorney Portal</button></li>
                 </ul>
               </div>
               <div>
@@ -660,16 +630,6 @@ function App() {
             </div>
           </div>
         </footer>
-
-        {/* Case Intake Form Modal */}
-        {showIntakeForm && (
-          <CaseIntakeForm onClose={() => setShowIntakeForm(false)} />
-        )}
-
-        {/* Attorney Intake Form Modal */}
-        {showAttorneyForm && (
-          <AttorneyIntakeForm onClose={() => setShowAttorneyForm(false)} />
-        )}
 
         {/* Contact Page Modal */}
         {showContactPage && (
@@ -716,22 +676,10 @@ function App() {
         {/* Login Modal */}
         {showLogin && !currentUser && (
           <Login
-            pendingStartRole={pendingStartRole}
-            setPendingStartRole={setPendingStartRole}
             onClose={() => setShowLogin(false)}
             onSuccess={(user) => {
               setCurrentUser(user)
               setShowLogin(false)
-              if (pendingStartRole) {
-                const start = `?start=${encodeURIComponent(pendingStartRole)}`
-                setPendingStartRole(null)
-                if (typeof window !== 'undefined') window.location.href = `/onboarding${start}`
-              } else {
-                // If user wasn't coming from a CTA, but isn't onboarded, send them to onboarding
-                if (!userOnboarded && typeof window !== 'undefined') {
-                  window.location.href = '/onboarding'
-                }
-              }
             }}
             onSwitchToRegister={() => {
               setShowLogin(false)

@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowLeft, ArrowRight, Upload, CheckCircle, AlertCircle, Phone, Mail, MessageSquare } from 'lucide-react'
 
-const CaseIntakeForm = ({ onClose }) => {
+const CaseIntakeForm = ({ onClose, onSuccess }) => {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     // Contact Information
@@ -116,9 +116,14 @@ const CaseIntakeForm = ({ onClose }) => {
       const result = await response.json()
       
       if (response.ok && result.success) {
+        const caseNumber = result.case?.case_number
+        if (onSuccess && caseNumber) {
+          onSuccess({ caseNumber, case: result.case })
+          return
+        }
         // Show success message with case number
-        alert(`Case submitted successfully! Your case number is: ${result.case.case_number}. You will receive a confirmation email shortly.`)
-        onClose()
+        alert(`Case submitted successfully! Your case number is: ${caseNumber}. You will receive a confirmation email shortly.`)
+        if (onClose) onClose()
       } else {
         throw new Error(result.error || 'Failed to submit case')
       }

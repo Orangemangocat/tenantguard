@@ -22,6 +22,7 @@ from src.routes.auth import auth_bp
 from src.routes.blog_approval import blog_approval_bp
 from src.routes.groups import groups_bp
 from src.routes.admin_queue import admin_queue_bp
+from src.routes.payments import payments_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 secret_key = os.getenv('FLASK_SECRET_KEY') or os.getenv('SECRET_KEY')
@@ -66,6 +67,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(blog_approval_bp)
 app.register_blueprint(groups_bp)
 app.register_blueprint(admin_queue_bp, url_prefix='/api')
+app.register_blueprint(payments_bp)
 
 # Database configuration - now supports both SQLite and PostgreSQL
 app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()

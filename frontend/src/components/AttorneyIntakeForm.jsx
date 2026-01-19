@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowLeft, ArrowRight, Upload, CheckCircle, AlertCircle, Scale, Briefcase, DollarSign, Users, Clock, FileText } from 'lucide-react'
 
-const AttorneyIntakeForm = ({ onClose }) => {
+const AttorneyIntakeForm = ({ onClose, onSuccess }) => {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -148,8 +148,13 @@ const AttorneyIntakeForm = ({ onClose }) => {
       const result = await response.json()
       
       if (response.ok && result.success) {
-        alert(`Attorney application submitted successfully! Your application ID is: ${result.attorney.application_id}. We will review your application and contact you within 2-3 business days.`)
-        onClose()
+        const applicationId = result.application_id || result.data?.application_id || result.attorney?.application_id
+        if (onSuccess && applicationId) {
+          onSuccess({ applicationId, attorney: result.data })
+          return
+        }
+        alert(`Attorney application submitted successfully! Your application ID is: ${applicationId}. We will review your application and contact you within 2-3 business days.`)
+        if (onClose) onClose()
       } else {
         throw new Error(result.error || 'Failed to submit attorney application')
       }

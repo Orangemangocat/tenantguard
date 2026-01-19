@@ -197,18 +197,6 @@ const Navbar = ({
                     </DropdownMenuItem>
                   )}
 
-                  {/* Onboarding Link (hide for admin users) */}
-                  {currentUser?.role !== 'admin' && (
-                    <DropdownMenuItem
-                      onClick={() => { window.location.href = '/onboarding'; }}
-                      className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
-                      style={{ color: 'var(--color-text)' }}
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Onboarding</span>
-                    </DropdownMenuItem>
-                  )}
-
                   <DropdownMenuSeparator 
                     style={{ backgroundColor: 'var(--color-cardBorder)' }} 
                   />
@@ -310,20 +298,6 @@ const Navbar = ({
                         >
                           <Settings className="mr-2 h-4 w-4" />
                           Dashboard
-                        </Button>
-                      )}
-                      {currentUser?.role !== 'admin' && (
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-end text-right"
-                          onClick={() => {
-                            setIsMobileMenuOpen(false)
-                            setIsMobileUserOpen(false)
-                            window.location.href = '/onboarding'
-                          }}
-                        >
-                          <User className="mr-2 h-4 w-4" />
-                          Onboarding
                         </Button>
                       )}
                       <Button
