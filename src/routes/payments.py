@@ -23,8 +23,6 @@ def create_checkout_session():
         return jsonify({'error': 'Stripe SDK not installed'}), 500
 
     stripe_secret = os.environ.get('STRIPE_SECRET_KEY')
-    if not stripe_secret:
-        return jsonify({'error': 'Stripe secret key not configured'}), 500
 
     data = request.get_json() or {}
     intake_type = data.get('intake_type')
@@ -32,8 +30,18 @@ def create_checkout_session():
         return jsonify({'error': 'Invalid intake type'}), 400
 
     price_id = os.environ.get('STRIPE_TENANT_PRICE_ID') if intake_type == 'tenant' else os.environ.get('STRIPE_ATTORNEY_PRICE_ID')
-    if not price_id:
-        return jsonify({'error': 'Stripe price ID not configured'}), 500
+    missing = []
+    if not stripe_secret:
+        missing.append('STRIPE_SECRET_KEY')
+    if intake_type == 'tenant' and not price_id:
+        missing.append('STRIPE_TENANT_PRICE_ID')
+    if intake_type == 'attorney' and not price_id:
+        missing.append('STRIPE_ATTORNEY_PRICE_ID')
+    if missing:
+        return jsonify({
+            'error': 'Stripe configuration missing',
+            'missing': missing
+        }), 400
 
     stripe.api_key = stripe_secret
 

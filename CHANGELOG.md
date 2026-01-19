@@ -7,6 +7,7 @@
 - 2026-01-19: Added required-field validation and clearer errors for tenant and attorney intake submissions (WO-20260119-002).
 - 2026-01-19: Switched tenant and attorney intake validation to per-step checks (WO-20260119-002).
 - 2026-01-19: Aligned tenant intake submission payload with backend field names (WO-20260119-002).
+- 2026-01-19: Added explicit Stripe config error reporting for checkout session creation (WO-20260119-002).
 - 2026-01-13: Updated COMPLETE_SYSTEM_DOCUMENTATION.md to reflect current architecture, repo layout, and control-plane alignment (WO-20260113-003).
 - 2026-01-13: Updated GROUPS_SYSTEM_DOCUMENTATION.md to reflect current groups endpoints and permissions (WO-20260113-004).
 - 2026-01-13: Updated DEPLOYMENT.md to align paths, services, and configuration with current repo (WO-20260113-005).
