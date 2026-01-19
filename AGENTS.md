@@ -64,6 +64,9 @@ Agents may modify ONLY:
 - `workorders/**`
 - `AGENTS.md` (Only with strict permission)
 - `CHANGELOG.md`
+- `README.md`
+- `COMPLETE_SYSTEM_DOCUMENTATION.md`
+- `GROUPS_SYSTEM_DOCUMENTATION.md`
 - `.env.example`
 
 ---
@@ -78,8 +81,6 @@ Agents MUST NOT touch:
 - `**/*id_rsa*`
 - `**/__pycache__/**`
 - `**/*.pyc`
-- SQLite databases and generated data:
-  - `src/database/*.db`
 - Build output unless explicitly requested:
   - `frontend/dist/**` (if generated)
 - Lockfile unless dependency changes require it:

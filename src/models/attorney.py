@@ -251,6 +251,21 @@ class Attorney:
         if limit:
             query = query.limit(limit)
         return [attorney.to_dict() for attorney in query.all()]
+
+    def get_attorney_stats(self):
+        """Get summary statistics for attorney applications"""
+        total_attorneys = AttorneyApplication.query.count()
+        statuses = ['pending_review', 'under_review', 'approved', 'rejected', 'suspended']
+        status_breakdown = {}
+        for status in statuses:
+            status_breakdown[status] = AttorneyApplication.query.filter_by(status=status).count()
+        active_profiles = AttorneyApplication.query.filter_by(profile_active=True).count()
+
+        return {
+            'total_attorneys': total_attorneys,
+            'status_breakdown': status_breakdown,
+            'active_profiles': active_profiles
+        }
     
     def update_attorney_status(self, application_id, status, reviewer_notes=None):
         """Update attorney application status"""
@@ -281,4 +296,3 @@ class Attorney:
         attorney.updated_at = datetime.utcnow()
         db.session.commit()
         return {'success': True, 'data': attorney.to_dict()}
-

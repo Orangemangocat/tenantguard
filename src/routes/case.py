@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from src.models.case import Case, db
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 
@@ -214,7 +214,7 @@ def get_case_stats():
             status_counts[status] = count
         
         # Recent cases (last 30 days)
-        thirty_days_ago = datetime.utcnow().replace(day=datetime.utcnow().day - 30)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         recent_cases = Case.query.filter(Case.created_at >= thirty_days_ago).count()
         
         return jsonify({
