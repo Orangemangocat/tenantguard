@@ -178,13 +178,25 @@ const CaseIntakeForm = ({ onClose, onSuccess }) => {
       }
       setIsSubmitting(true)
       
+      const payload = {
+        ...formData,
+        streetAddress: formData.address,
+        rentalAddress: formData.propertyAddress,
+        hasDisability: formData.isDisabled,
+        hasChildren: formData.hasChildren,
+        hasHousingAssistance: formData.hasGovernmentAssistance,
+        issueType: formData.disputeType?.[0] || '',
+        issueDescription: formData.caseSummary,
+        issueStartDate: formData.problemStartDate
+      }
+
       // Submit data to backend API
       const response = await fetch('/api/cases', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       })
       
       const result = await response.json()
