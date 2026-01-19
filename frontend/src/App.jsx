@@ -575,9 +575,9 @@ function App() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-gray-600">
-                    <li>Node.js</li>
-                    <li>Express</li>
-                    <li>MongoDB</li>
+                    <li>Node.JS</li>
+                    <li>Next.JS</li>
+                    <li>PostgreSQL</li>
                   </ul>
                 </CardContent>
               </Card>
@@ -587,8 +587,8 @@ function App() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-gray-600">
-                    <li>AWS Cloud</li>
-                    <li>Docker</li>
+                    <li>Google Cloud</li>
+                    <li>Integrated AI</li>
                     <li>CI/CD Pipeline</li>
                   </ul>
                 </CardContent>
