@@ -60,5 +60,5 @@ jobs:
         working-directory: frontend
         run: |
           npx vercel --token $VERCEL_TOKEN --confirm
-          npx vercel alias set $(npx vercel --token $VERCEL_TOKEN) |
+          npx vercel --token $VERCEL_TOKEN alias set $(npx vercel --token $VERCEL_TOKEN) |
             pr-${{ github.event.pull_request.number }}.tenantguard.vercel.app
