@@ -1,0 +1,37 @@
+{
+  "id": "WO-20260120-002",
+  "title": "Add Terms of Service and Privacy Policy pages",
+  "scope": [
+    "Create Terms of Service and Privacy Policy content in docs",
+    "Add frontend pages for /terms and /privacy",
+    "Link legal pages from the site footer"
+  ],
+  "allowed_paths": [
+    "frontend/**",
+    "docs/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Terms of Service is available at /terms in the frontend",
+    "Privacy Policy is available at /privacy in the frontend",
+    "docs/terms-of-service.md and docs/privacy-policy.md exist with matching content",
+    "Footer links include Terms of Service and Privacy Policy"
+  ],
+  "risk_notes": [
+    "Legal content may need follow-up edits once mailing address or policies are finalized"
+  ],
+  "rollback_plan": [
+    "Revert the new legal page components and footer links",
+    "Remove the docs pages if needed"
+  ]
+}

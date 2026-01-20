@@ -1,14 +1,24 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from src.models.case import Case, db
 from datetime import datetime, timedelta
 import json
 import os
+from uuid import uuid4
+from werkzeug.utils import secure_filename
 
 from src.services import ai_processor
 from src.models.case_analysis import CaseAnalysis
 from src.routes.auth import admin_required
 
 case_bp = Blueprint('case', __name__)
+
+def _is_allowed_case_document(filename):
+    if not filename or '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in {
+        'pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx', 'txt', 'rtf', 'heic'
+    }
 
 @case_bp.route('/cases', methods=['POST'])
 def create_case():
@@ -231,6 +241,82 @@ def get_case_stats():
             'error': 'Failed to retrieve case statistics',
             'details': str(e)
         }), 500
+
+
+@case_bp.route('/cases/<case_number>/documents', methods=['POST'])
+def upload_case_documents(case_number):
+    """Upload and attach case documents to an intake record."""
+    try:
+        case = Case.query.filter_by(case_number=case_number).first()
+        if not case:
+            return jsonify({'error': 'Case not found'}), 404
+
+        if 'documents' not in request.files:
+            return jsonify({'error': 'No documents provided'}), 400
+
+        files = request.files.getlist('documents')
+        if not files:
+            return jsonify({'error': 'No documents provided'}), 400
+
+        upload_dir = os.path.join(current_app.static_folder, 'uploads', 'cases', case.case_number)
+        os.makedirs(upload_dir, exist_ok=True)
+
+        existing_docs = json.loads(case.documents_uploaded) if case.documents_uploaded else []
+        saved_docs = []
+
+        for file in files:
+            if not file or not _is_allowed_case_document(file.filename):
+                continue
+            safe_name = secure_filename(file.filename)
+            unique_name = f"{uuid4().hex}_{safe_name}"
+            file_path = os.path.join(upload_dir, unique_name)
+            file.save(file_path)
+            public_url = f"/uploads/cases/{case.case_number}/{unique_name}"
+            doc_entry = {
+                'filename': safe_name,
+                'stored_name': unique_name,
+                'url': public_url,
+                'uploaded_at': datetime.utcnow().isoformat()
+            }
+            existing_docs.append(doc_entry)
+            saved_docs.append(doc_entry)
+
+        case.documents_uploaded = json.dumps(existing_docs)
+        case.updated_at = datetime.utcnow()
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'saved': saved_docs,
+            'documents': existing_docs,
+            'count': len(existing_docs)
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to upload documents', 'details': str(e)}), 500
+
+
+@case_bp.route('/cases/<case_number>/status', methods=['GET'])
+def get_case_status(case_number):
+    """Return a lightweight status summary for a case intake."""
+    try:
+        case = Case.query.filter_by(case_number=case_number).first()
+        if not case:
+            return jsonify({'error': 'Case not found'}), 404
+
+        from src.models.case_analysis import CaseAnalysis
+        latest_analysis = CaseAnalysis.query.filter_by(case_id=case.id).order_by(CaseAnalysis.created_at.desc()).first()
+        documents = json.loads(case.documents_uploaded) if case.documents_uploaded else []
+
+        return jsonify({
+            'case_number': case.case_number,
+            'case_status': case.status,
+            'documents_count': len(documents),
+            'analysis_status': 'complete' if latest_analysis else 'pending',
+            'last_analysis_at': latest_analysis.created_at.isoformat() if latest_analysis else None
+        }), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch case status', 'details': str(e)}), 500
 
 @case_bp.route('/cases/search', methods=['GET'])
 def search_cases():

@@ -1,7 +1,16 @@
 # Changelog
 
+- 2026-01-20: Set legal page effective dates and centered footer copy on Terms/Privacy pages (WO-20260120-002).
+- 2026-01-20: Added Terms of Service and Privacy Policy pages for frontend and docs (WO-20260120-002).
+- 2026-01-20: Added Search Console sitemap visibility endpoint and dashboard SEO visibility card, plus sitemap ping on blog publish (WO-20260120-001).
 - 2026-01-19: Reimagined the admin overview with operational cards, queue snapshot, and intake status panels, plus added attorney intake admin tab and stats helper (WO-20260119-001).
 - 2026-01-19: Fixed case stats window calculation to avoid invalid dates in admin overview metrics (WO-20260119-001).
+- 2026-01-19: Replaced onboarding/chat intake with form-based intake, document upload, case status, and Stripe payment portal flow (WO-20260119-002).
+- 2026-01-19: Required authentication before accessing tenant or attorney intake forms (WO-20260119-002).
+- 2026-01-19: Added required-field validation and clearer errors for tenant and attorney intake submissions (WO-20260119-002).
+- 2026-01-19: Switched tenant and attorney intake validation to per-step checks (WO-20260119-002).
+- 2026-01-19: Aligned tenant intake submission payload with backend field names (WO-20260119-002).
+- 2026-01-19: Added explicit Stripe config error reporting for checkout session creation (WO-20260119-002).
 - 2026-01-13: Updated COMPLETE_SYSTEM_DOCUMENTATION.md to reflect current architecture, repo layout, and control-plane alignment (WO-20260113-003).
 - 2026-01-13: Updated GROUPS_SYSTEM_DOCUMENTATION.md to reflect current groups endpoints and permissions (WO-20260113-004).
 - 2026-01-13: Updated DEPLOYMENT.md to align paths, services, and configuration with current repo (WO-20260113-005).

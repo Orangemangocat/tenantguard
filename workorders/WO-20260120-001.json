@@ -1,0 +1,41 @@
+{
+  "id": "WO-20260120-001",
+  "title": "Admin SEO visibility stats and sitemap pinging",
+  "scope": [
+    "Add backend SEO monitoring service for Google Search Console sitemap stats",
+    "Expose an admin endpoint that returns indexing/coverage summary for the dashboard",
+    "Ping Google sitemap endpoint on blog publish and surface ping status",
+    "Show SEO visibility stats in the admin overview UI"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "workorders/**",
+    "CHANGELOG.md",
+    ".env.example"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Admin dashboard overview displays Google indexing visibility stats when Search Console is configured",
+    "Backend exposes an authenticated admin endpoint for SEO visibility data",
+    "Blog publish flow pings Google sitemap without blocking publish on ping failure",
+    "New SEO-related environment variables are documented in .env.example"
+  ],
+  "risk_notes": [
+    "Search Console credentials or site URL misconfiguration will return unconfigured/error status",
+    "Sitemap ping relies on external network availability"
+  ],
+  "rollback_plan": [
+    "Revert the new SEO service and admin routes",
+    "Remove the SEO UI card and stats section from the dashboard overview"
+  ]
+}
