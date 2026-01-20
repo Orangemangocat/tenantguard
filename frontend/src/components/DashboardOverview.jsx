@@ -48,7 +48,8 @@ export default function DashboardOverview({ user, onNavigate }) {
           { key: 'cases', label: 'Case stats', url: `${API_BASE_URL}/api/cases/stats` },
           { key: 'attorneys', label: 'Attorney stats', url: `${API_BASE_URL}/api/attorneys/stats` },
           { key: 'groups', label: 'Group stats', url: `${API_BASE_URL}/api/groups` },
-          { key: 'queue', label: 'Worker queue', url: `${API_BASE_URL}/api/admin/queue` }
+          { key: 'queue', label: 'Worker queue', url: `${API_BASE_URL}/api/admin/queue` },
+          { key: 'seo', label: 'SEO visibility', url: `${API_BASE_URL}/api/admin/seo/overview` }
         ];
 
         const results = await Promise.allSettled(tasks.map((task) => fetchJson(task.url)));
@@ -138,6 +139,7 @@ export default function DashboardOverview({ user, onNavigate }) {
   const caseStats = stats.cases?.stats || {};
   const attorneyStats = stats.attorneys?.stats || {};
   const groupStats = stats.groups || {};
+  const seoStats = stats.seo || {};
   const queueJobs = (stats.queue?.jobs || []).slice().sort((a, b) => {
     const aTime = new Date(a.enqueued_at || 0).getTime();
     const bTime = new Date(b.enqueued_at || 0).getTime();
@@ -146,6 +148,15 @@ export default function DashboardOverview({ user, onNavigate }) {
 
   const blogTotal = (blogStats.total_published_posts || 0) + (blogStats.draft_posts || 0);
   const pendingApprovals = approvalStats.pending_count ?? adminStats.pendingBlogPosts ?? 0;
+  const seoSummary = seoStats.summary || {};
+  const seoPrimary = seoStats.primary_sitemap || {};
+  const indexedCount = seoPrimary.indexed ?? seoSummary.indexed_total ?? 0;
+  const submittedCount = seoPrimary.submitted ?? seoSummary.submitted_total ?? 0;
+  const seoStatus = seoStats.status || 'unavailable';
+  const seoMeta =
+    seoStatus === 'ok'
+      ? `Submitted: ${submittedCount}`
+      : 'Connect Search Console to enable stats';
 
   const cards = [
     {
@@ -173,6 +184,15 @@ export default function DashboardOverview({ user, onNavigate }) {
       description: 'Published and draft posts',
       meta: `Pending approvals: ${pendingApprovals}`,
       accent: 'border-l-emerald-700',
+      tab: 'blogManagement'
+    },
+    {
+      key: 'seo',
+      title: 'Google Indexing',
+      value: seoStatus === 'ok' ? indexedCount : '—',
+      description: 'Indexed pages',
+      meta: seoMeta,
+      accent: 'border-l-indigo-700',
       tab: 'blogManagement'
     },
     {
@@ -314,7 +334,7 @@ export default function DashboardOverview({ user, onNavigate }) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Tenant Intake Status</CardTitle>
@@ -384,6 +404,36 @@ export default function DashboardOverview({ user, onNavigate }) {
                 </span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>SEO Visibility</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {seoStatus === 'ok' ? (
+              <div className="space-y-2 text-sm text-gray-700">
+                <div className="flex items-center justify-between">
+                  <span>Indexed</span>
+                  <span className="font-semibold text-gray-900">{indexedCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Submitted</span>
+                  <span className="font-semibold text-gray-900">{submittedCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Last crawl</span>
+                  <span className="font-semibold text-gray-900">
+                    {seoPrimary.last_downloaded || seoSummary.last_downloaded || 'Unknown'}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-600">
+                Search Console not configured. Provide credentials to see indexing stats.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -15,6 +15,12 @@ from src.models.auth_user import AuthUser
 from src.models.blog import BlogPost
 from src.models.case import Case
 from src.services.blog_content import normalize_blog_content
+from src.services.seo_monitoring import (
+    fetch_search_console_sitemaps,
+    get_sitemap_url,
+    is_ping_enabled,
+    ping_google_sitemap,
+)
 
 admin_panel_bp = Blueprint('admin_panel', __name__, url_prefix='/api/admin')
 from src.routes.auth import admin_required
@@ -94,6 +100,24 @@ def get_dashboard_stats(current_user):
         })
     except Exception as e:
         print(f"[ADMIN_ERROR] Stats error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@admin_panel_bp.route('/seo/overview', methods=['GET'])
+@admin_required
+def get_seo_overview(current_user):
+    """Return Google Search Console sitemap visibility stats."""
+    try:
+        seo_payload = fetch_search_console_sitemaps()
+        return jsonify({
+            **seo_payload,
+            'sitemap_ping': {
+                'enabled': is_ping_enabled(),
+                'sitemap_url': get_sitemap_url()
+            }
+        })
+    except Exception as e:
+        print(f"[ADMIN_ERROR] SEO overview error: {e}")
         return jsonify({'error': str(e)}), 500
 
 # User Management
@@ -388,8 +412,12 @@ def publish_blog_post(current_user, post_id):
         post.published_at = datetime.utcnow()
         post.updated_at = datetime.utcnow()
         db.session.commit()
-        
-        return jsonify({'success': True})
+
+        ping_result = None
+        if is_ping_enabled():
+            ping_result = ping_google_sitemap(get_sitemap_url())
+
+        return jsonify({'success': True, 'sitemap_ping': ping_result})
     except Exception as e:
         db.session.rollback()
         print(f"[ADMIN_ERROR] Publish blog post error: {e}")

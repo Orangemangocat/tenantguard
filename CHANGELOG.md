@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-01-20: Added Search Console sitemap visibility endpoint and dashboard SEO visibility card, plus sitemap ping on blog publish (WO-20260120-001).
 - 2026-01-19: Reimagined the admin overview with operational cards, queue snapshot, and intake status panels, plus added attorney intake admin tab and stats helper (WO-20260119-001).
 - 2026-01-19: Fixed case stats window calculation to avoid invalid dates in admin overview metrics (WO-20260119-001).
 - 2026-01-19: Replaced onboarding/chat intake with form-based intake, document upload, case status, and Stripe payment portal flow (WO-20260119-002).
