@@ -1,0 +1,43 @@
+{
+  "id": "WO-20260120-003",
+  "title": "SEO indexing readiness polish",
+  "scope": [
+    "Make sitemap/robots base URLs configurable via PUBLIC_SITE_URL",
+    "Add canonical and social meta tags to the SPA entry HTML",
+    "Align Next.js blog metadata and canonicals with the public site URL",
+    "Document public site URL env vars for frontend and blog builds"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "frontend-next/**",
+    "workorders/**",
+    "CHANGELOG.md",
+    ".env.example"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Sitemap and robots.txt use the configured public site URL when provided",
+    "SPA entry HTML includes canonical and SEO meta tags with a configurable base URL",
+    "Next.js blog pages emit canonical URLs derived from NEXT_PUBLIC_SITE_URL",
+    "New site URL environment variables are documented in .env.example"
+  ],
+  "risk_notes": [
+    "Misconfigured site URL will produce incorrect canonicals or sitemap links",
+    "SEO tags are only as accurate as their configured base URL"
+  ],
+  "rollback_plan": [
+    "Revert sitemap/robots changes to hardcoded URLs",
+    "Remove canonical/meta tags from frontend and Next blog templates",
+    "Delete the added public site URL environment variables"
+  ]
+}
