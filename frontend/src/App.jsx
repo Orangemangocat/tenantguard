@@ -18,6 +18,8 @@ import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Navbar from './components/Navbar.jsx'
 import AuthProvider from './components/AuthProvider.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
+import TermsOfService from './components/TermsOfService.jsx'
+import PrivacyPolicy from './components/PrivacyPolicy.jsx'
 
 import './App.css'
 import './theme.css'
@@ -107,6 +109,22 @@ function App() {
 
   // If user navigates directly to /admin-panel, render the admin view
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/'
+
+  if (pathname === '/terms') {
+    return (
+      <ThemeProvider>
+        <TermsOfService />
+      </ThemeProvider>
+    )
+  }
+
+  if (pathname === '/privacy') {
+    return (
+      <ThemeProvider>
+        <PrivacyPolicy />
+      </ThemeProvider>
+    )
+  }
 
   const handleLogout = () => {
     setCurrentUser(null)
@@ -621,6 +639,8 @@ function App() {
                   <li><button onClick={() => scrollToSection('features')} className="hover:text-white">Features</button></li>
                   <li><button onClick={() => scrollToSection('how-it-works')} className="hover:text-white">How It Works</button></li>
                   <li><button onClick={() => setShowContactPage(true)} className="hover:text-white">Contact</button></li>
+                  <li><a href="/terms" className="hover:text-white">Terms of Service</a></li>
+                  <li><a href="/privacy" className="hover:text-white">Privacy Policy</a></li>
                 </ul>
               </div>
               <div>
