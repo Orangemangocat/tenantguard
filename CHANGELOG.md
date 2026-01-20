@@ -1,5 +1,6 @@
 # Changelog
 
+- 2026-01-20: Added configurable public site URLs for sitemap/robots and frontend canonical metadata, plus aligned Next blog metadata with canonicals (WO-20260120-003).
 - 2026-01-20: Set legal page effective dates and centered footer copy on Terms/Privacy pages (WO-20260120-002).
 - 2026-01-20: Added Terms of Service and Privacy Policy pages for frontend and docs (WO-20260120-002).
 - 2026-01-20: Added Search Console sitemap visibility endpoint and dashboard SEO visibility card, plus sitemap ping on blog publish (WO-20260120-001).

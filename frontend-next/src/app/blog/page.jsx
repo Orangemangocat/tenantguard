@@ -6,6 +6,15 @@ export const revalidate = 300;
 export const metadata = {
   title: "TenantGuard Blog",
   description: "TenantGuard blog articles and updates.",
+  alternates: {
+    canonical: "/blog",
+  },
+  openGraph: {
+    title: "TenantGuard Blog",
+    description: "TenantGuard blog articles and updates.",
+    url: "/blog",
+    type: "website",
+  },
 };
 
 export default async function BlogIndexPage() {
