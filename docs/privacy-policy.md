@@ -1,6 +1,6 @@
 # TenantGuard Privacy Policy
 
-Effective Date: [Month Day, Year]
+Effective Date: January 20, 2026
 
 This Privacy Policy explains how TenantGuard collects, uses, and shares information about
 you when you use our websites, applications, and services (collectively, the "Service").

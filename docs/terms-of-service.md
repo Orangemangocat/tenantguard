@@ -1,6 +1,6 @@
 # TenantGuard Terms of Service
 
-Effective Date: [Month Day, Year]
+Effective Date: January 20, 2026
 
 These Terms of Service (the "Terms") govern your access to and use of TenantGuard websites,
 applications, and services (collectively, the "Service"). By accessing or using the Service,

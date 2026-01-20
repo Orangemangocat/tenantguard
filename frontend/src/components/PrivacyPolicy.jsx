@@ -26,7 +26,7 @@ const PrivacyPolicy = () => {
       <main className="max-w-3xl mx-auto px-4 py-10 space-y-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">Privacy Policy</h1>
-          <p className="text-sm text-gray-500">Effective Date: [Month Day, Year]</p>
+          <p className="text-sm text-gray-500">Effective Date: January 20, 2026</p>
         </div>
 
         <section className="space-y-3">
@@ -132,7 +132,7 @@ const PrivacyPolicy = () => {
       </main>
 
       <footer className="border-t bg-white" style={{ borderColor: 'var(--color-navBorder)' }}>
-        <div className="max-w-5xl mx-auto px-4 py-6 text-sm text-gray-500 flex flex-wrap gap-4">
+        <div className="max-w-5xl mx-auto px-4 py-6 text-sm text-gray-500 flex flex-wrap justify-center text-center gap-4">
           <span>© 2025 TenantGuard. All rights reserved.</span>
           <a href="/terms" className="text-red-800 hover:underline">
             Terms of Service
