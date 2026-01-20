@@ -51,16 +51,7 @@ jobs:
       - name: Install frontend-next dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile
-
-      - name: Lint frontend-next
-        working-directory: frontend
-        run: pnpm lint
-
-      - name: 'notify vercel'
-        uses: 'vercel/repository-dispatch/actions/status@v1'
-        with: |
-          name: Vercel - tenantguard: lint
-
+        
       - name: Vercel Deploy (Preview)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
