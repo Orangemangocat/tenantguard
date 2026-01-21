@@ -1,5 +1,12 @@
 # Changelog
 
+- 2026-01-21: Documented OCR dependencies for intake document analysis (WO-20260121-002).
+- 2026-01-21: Added OCR-backed text extraction for PDFs and images using pytesseract/pdf2image (WO-20260121-002).
+- 2026-01-21: Added PDF text extraction with OCR-required detection for intake document analysis (WO-20260121-002).
+- 2026-01-21: Queued intake document analysis and persisted notebook/analysis artifacts to GCS (WO-20260121-002).
+- 2026-01-21: Stored intake uploads exclusively in the GCS intake bucket when configured (WO-20260121-001).
+- 2026-01-21: Added workorder WO-20260121-002 to scope intake document LLM analysis (WO-20260121-002).
+- 2026-01-21: Uploaded intake documents and case notebook snapshots to the configured GCS intake bucket (WO-20260121-001).
 - 2026-01-20: Added configurable public site URLs for sitemap/robots and frontend canonical metadata, plus aligned Next blog metadata with canonicals (WO-20260120-003).
 - 2026-01-20: Set legal page effective dates and centered footer copy on Terms/Privacy pages (WO-20260120-002).
 - 2026-01-20: Added Terms of Service and Privacy Policy pages for frontend and docs (WO-20260120-002).

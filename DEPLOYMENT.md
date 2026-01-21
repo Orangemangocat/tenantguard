@@ -37,6 +37,9 @@ sudo apt install git -y
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 npm install -g pnpm
+
+# Install OCR dependencies (for intake document analysis)
+sudo apt install -y tesseract-ocr poppler-utils
 ```
 
 ### Create Application Directory

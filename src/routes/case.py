@@ -7,6 +7,7 @@ from uuid import uuid4
 from werkzeug.utils import secure_filename
 
 from src.services import ai_processor
+from src.services.gcs_storage import upload_file, upload_json
 from src.models.case_analysis import CaseAnalysis
 from src.routes.auth import admin_required
 
@@ -18,6 +19,42 @@ def _is_allowed_case_document(filename):
     ext = filename.rsplit('.', 1)[1].lower()
     return ext in {
         'pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx', 'txt', 'rtf', 'heic'
+    }
+
+
+def _get_intake_bucket():
+    return os.environ.get('GCS_INTAKE_BUCKET') or os.environ.get('GCS_BUCKET')
+
+
+def _get_intake_prefix():
+    return os.environ.get('GCS_INTAKE_PREFIX', 'intake')
+
+
+def _build_case_notebook(case, documents):
+    evidence_entries = []
+    for doc in documents:
+        evidence_entries.append({
+            'evidence_id': doc.get('evidence_id'),
+            'type': 'document',
+            'source': 'tenant',
+            'received_date': doc.get('uploaded_at'),
+            'file_hash': doc.get('sha256'),
+            'filename': doc.get('filename'),
+            'stored_name': doc.get('stored_name'),
+            'url': doc.get('url'),
+            'gcs_uri': doc.get('gcs_uri'),
+            'notes': 'Uploaded intake document'
+        })
+
+    return {
+        'case_id': case.case_number,
+        'facts': [],
+        'timeline': [],
+        'key_terms': [],
+        'disputed_points': [],
+        'evidence_map': evidence_entries,
+        'assumptions': [],
+        'last_updated': datetime.utcnow().isoformat()
     }
 
 @case_bp.route('/cases', methods=['POST'])
@@ -258,39 +295,121 @@ def upload_case_documents(case_number):
         if not files:
             return jsonify({'error': 'No documents provided'}), 400
 
-        upload_dir = os.path.join(current_app.static_folder, 'uploads', 'cases', case.case_number)
-        os.makedirs(upload_dir, exist_ok=True)
-
         existing_docs = json.loads(case.documents_uploaded) if case.documents_uploaded else []
         saved_docs = []
+        gcs_bucket = _get_intake_bucket()
+        gcs_prefix = _get_intake_prefix()
+        gcs_errors = []
+        upload_dir = None
+        if not gcs_bucket:
+            upload_dir = os.path.join(current_app.static_folder, 'uploads', 'cases', case.case_number)
+            os.makedirs(upload_dir, exist_ok=True)
+
+        normalized_docs = []
+        for doc in existing_docs:
+            if 'evidence_id' not in doc:
+                doc['evidence_id'] = uuid4().hex
+            normalized_docs.append(doc)
 
         for file in files:
             if not file or not _is_allowed_case_document(file.filename):
                 continue
             safe_name = secure_filename(file.filename)
             unique_name = f"{uuid4().hex}_{safe_name}"
-            file_path = os.path.join(upload_dir, unique_name)
-            file.save(file_path)
-            public_url = f"/uploads/cases/{case.case_number}/{unique_name}"
+            gcs_uri = None
+            public_url = None
+            if gcs_bucket:
+                object_name = f"{gcs_prefix}/cases/{case.case_number}/documents/{unique_name}"
+                metadata = {
+                    'case_number': case.case_number,
+                    'filename': safe_name
+                }
+                try:
+                    file.stream.seek(0)
+                    upload_result = upload_file(
+                        gcs_bucket,
+                        object_name,
+                        file.stream,
+                        content_type=file.mimetype or 'application/octet-stream',
+                        metadata=metadata
+                    )
+                    gcs_uri = upload_result.get('gcs_uri')
+                    file.stream.seek(0)
+                except Exception as upload_error:
+                    gcs_errors.append(str(upload_error))
+                    file.stream.seek(0)
+            else:
+                file_path = os.path.join(upload_dir, unique_name)
+                file.save(file_path)
+                public_url = f"/uploads/cases/{case.case_number}/{unique_name}"
+
+            if gcs_bucket and gcs_errors:
+                continue
             doc_entry = {
+                'evidence_id': uuid4().hex,
                 'filename': safe_name,
                 'stored_name': unique_name,
-                'url': public_url,
+                'url': gcs_uri or public_url,
+                'gcs_uri': gcs_uri,
+                'storage': 'gcs' if gcs_bucket else 'local',
                 'uploaded_at': datetime.utcnow().isoformat()
             }
-            existing_docs.append(doc_entry)
+            normalized_docs.append(doc_entry)
             saved_docs.append(doc_entry)
 
-        case.documents_uploaded = json.dumps(existing_docs)
+        if gcs_bucket and gcs_errors:
+            return jsonify({
+                'error': 'Failed to upload documents to GCS',
+                'details': gcs_errors
+            }), 502
+
+        case.documents_uploaded = json.dumps(normalized_docs)
         case.updated_at = datetime.utcnow()
         db.session.commit()
 
-        return jsonify({
+        analysis_queued = False
+        analysis_error = None
+        if gcs_bucket:
+            try:
+                from redis import Redis
+                from rq import Queue
+                from src.tasks.llm_tasks import process_case_documents
+
+                redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+                redis_conn = Redis.from_url(redis_url)
+                q = Queue('default', connection=redis_conn)
+                q.enqueue(process_case_documents, case.id)
+                analysis_queued = True
+            except Exception as enqueue_error:
+                analysis_error = str(enqueue_error)
+
+        notebook_errors = []
+        if gcs_bucket:
+            notebook = _build_case_notebook(case, normalized_docs)
+            notebook_object = f"{gcs_prefix}/cases/{case.case_number}/case_notebook.json"
+            try:
+                upload_json(gcs_bucket, notebook_object, notebook, metadata={'case_number': case.case_number})
+            except Exception as notebook_error:
+                notebook_errors.append(str(notebook_error))
+
+        response_payload = {
             'success': True,
             'saved': saved_docs,
-            'documents': existing_docs,
-            'count': len(existing_docs)
-        }), 201
+            'documents': normalized_docs,
+            'count': len(normalized_docs)
+        }
+
+        if gcs_bucket:
+            response_payload['gcs'] = {
+                'bucket': gcs_bucket,
+                'prefix': gcs_prefix,
+                'upload_errors': gcs_errors,
+                'notebook_errors': notebook_errors,
+                'analysis_queued': analysis_queued,
+                'analysis_error': analysis_error
+            }
+
+        return jsonify(response_payload), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Failed to upload documents', 'details': str(e)}), 500
@@ -480,3 +599,29 @@ def process_case(case_number):
             'error': 'Failed to process case',
             'details': str(e)
         }), 500
+
+
+@case_bp.route('/cases/<case_number>/documents/process', methods=['POST'])
+def process_case_documents(case_number):
+    """Queue intake document analysis for a case."""
+    try:
+        case = Case.query.filter_by(case_number=case_number).first()
+        if not case:
+            return jsonify({'error': 'Case not found'}), 404
+
+        from redis import Redis
+        from rq import Queue
+        from src.tasks.llm_tasks import process_case_documents as task_process_documents
+
+        redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+        redis_conn = Redis.from_url(redis_url)
+        q = Queue('default', connection=redis_conn)
+        job = q.enqueue(task_process_documents, case.id)
+
+        return jsonify({
+            'success': True,
+            'queued': True,
+            'job_id': job.get_id()
+        }), 202
+    except Exception as e:
+        return jsonify({'error': 'Failed to queue document analysis', 'details': str(e)}), 500

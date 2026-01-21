@@ -140,6 +140,9 @@ See `src/routes/` for the full API surface.
 - Python 3.11+
 - Node.js 18+
 - pnpm or npm
+- OCR dependencies for intake document analysis:
+  - Tesseract OCR (`tesseract-ocr`)
+  - Poppler utilities (`poppler-utils`)
 
 ### Backend Setup
 ```bash
@@ -173,6 +176,7 @@ See `DEPLOYMENT.md` for detailed deployment instructions including:
 - SSL certificate setup
 - Environment variables
 - Database initialization
+- OCR dependencies for PDF/image text extraction
 
 ## Key Features Implementation
 
