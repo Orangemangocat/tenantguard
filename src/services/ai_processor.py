@@ -75,3 +75,41 @@ def analyze_case(case: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     return analysis
+
+
+def analyze_document_text(text: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a lightweight analysis for a document using heuristics."""
+    lowered = text.lower() if text else ''
+    keywords = {
+        'notice': ('notice', 'pay or quit', 'cure or quit'),
+        'court': ('court', 'summons', 'hearing', 'writ'),
+        'rent': ('rent', 'late fee', 'balance due'),
+        'repairs': ('repair', 'mold', 'leak', 'pest', 'habitability')
+    }
+    hits = {}
+    for label, terms in keywords.items():
+        hits[label] = any(term in lowered for term in terms)
+
+    summary_parts = []
+    if hits.get('notice'):
+        summary_parts.append('Possible notice language detected.')
+    if hits.get('court'):
+        summary_parts.append('Possible court-related language detected.')
+    if hits.get('rent'):
+        summary_parts.append('Possible rent or balance language detected.')
+    if hits.get('repairs'):
+        summary_parts.append('Possible habitability or repair language detected.')
+
+    if not summary_parts:
+        summary_parts.append('No common eviction or rent keywords detected.')
+
+    return {
+        'summary': ' '.join(summary_parts),
+        'keyword_hits': hits,
+        'confidence': 'low',
+        'notes': {
+            'heuristic': True,
+            'provider': os.environ.get('AI_PROVIDER', 'heuristic'),
+            'metadata': metadata
+        }
+    }

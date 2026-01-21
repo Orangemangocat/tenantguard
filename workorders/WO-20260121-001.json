@@ -1,0 +1,39 @@
+{
+  "id": "WO-20260121-001",
+  "title": "Fix intake document upload JSON parse error",
+  "scope": [
+    "Identify the frontend upload request and response parsing behavior",
+    "Align backend upload response to valid JSON and handle non-JSON errors safely",
+    "Confirm upload works for common file types in the intake flow"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "scripts/**",
+    "docs/**",
+    ".github/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Tenant intake document upload completes without JSON parse errors",
+    "Upload errors are surfaced with a clear message even if the server returns non-JSON",
+    "No changes to blocked paths"
+  ],
+  "risk_notes": [
+    "Changes to upload parsing could mask server-side validation errors",
+    "Mismatch between frontend expectations and backend response could regress uploads"
+  ],
+  "rollback_plan": [
+    "Revert changes to the upload handler and response parsing"
+  ]
+}
