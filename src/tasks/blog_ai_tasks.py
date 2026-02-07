@@ -48,12 +48,14 @@ def _build_prompt(topic, category):
 
 The blog post should:
 1. Have an engaging title
-2. Include a compelling excerpt (150-200 characters)
+2. Include a compelling excerpt (150-200 characters) that doubles as an SEO meta description
 3. Be well-structured with clear sections
 4. Be informative and professional
-5. Include relevant keywords for SEO
+5. Include relevant keywords for SEO (tenant, landlord, eviction, lease, housing, legal, TenantGuard)
 6. Be approximately 800-1200 words
 7. End with a call-to-action
+8. Use H2/H3 headings for scannability
+9. Avoid legal guarantees and do not present legal advice as definitive outcomes
 
 Category: {category}
 
@@ -92,6 +94,55 @@ def _create_slug(title):
     slug = '-'.join(slug.split())
     return slug.strip('-')
 
+def _strip_markup(value):
+    if not value:
+        return ""
+    text = value
+    try:
+        import re
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = re.sub(r"[`*_>#-]", " ", text)
+        text = re.sub(r"\s+", " ", text).strip()
+    except Exception:
+        text = str(value)
+    return text
+
+
+def _count_headings(markdown_text):
+    if not markdown_text:
+        return 0
+    count = 0
+    for line in str(markdown_text).splitlines():
+        if line.strip().startswith("#"):
+            count += 1
+    if "<h" in str(markdown_text):
+        count += str(markdown_text).lower().count("<h")
+    return count
+
+
+def _quality_checks(content):
+    """Medium quality checks for AI content."""
+    stripped = _strip_markup(content)
+    words = len(stripped.split()) if stripped else 0
+    headings = _count_headings(content)
+
+    keywords = {"tenant", "landlord", "eviction", "lease", "housing", "legal", "tenantguard"}
+    keyword_hits = 0
+    lower = stripped.lower() if stripped else ""
+    for kw in keywords:
+        if kw in lower:
+            keyword_hits += 1
+
+    failures = []
+    if words < 700:
+        failures.append(f"word_count_too_low({words})")
+    if headings < 3:
+        failures.append(f"insufficient_headings({headings})")
+    if keyword_hits < 2:
+        failures.append("insufficient_business_relevance")
+
+    return failures
+
 
 def generate_blog_post(payload, submit_for_approval=False, topic_id=None):
     with app.app_context():
@@ -126,6 +177,13 @@ def generate_blog_post(payload, submit_for_approval=False, topic_id=None):
         content = response_data.get('content')
         if not content:
             return {'error': 'LLM response missing content'}
+
+        quality_failures = _quality_checks(content)
+        if quality_failures:
+            if topic_record:
+                topic_record.status = 'pending'
+                db.session.commit()
+            return {'error': f"Quality check failed: {', '.join(quality_failures)}"}
 
         normalized_content = normalize_blog_content(content)
         title = response_data.get('title') or topic

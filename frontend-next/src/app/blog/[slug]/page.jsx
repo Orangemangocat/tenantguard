@@ -4,6 +4,110 @@ import Link from "next/link";
 
 export const revalidate = 300;
 
+const HTML_TAG_RE = /<\/?[a-z][^>]*>/i;
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function renderInlineMarkdown(value) {
+  let output = escapeHtml(value);
+  output = output.replace(/`([^`]+)`/g, "<code>$1</code>");
+  output = output.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  output = output.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, "$1<em>$2</em>");
+  output = output.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+  );
+  return output;
+}
+
+function renderMarkdown(value) {
+  const sections = String(value).split("```");
+  const rendered = sections.map((section, index) => {
+    if (index % 2 === 1) {
+      const trimmed = section.replace(/^[^\n]*\n/, "");
+      return `<pre><code>${escapeHtml(trimmed)}</code></pre>`;
+    }
+
+    const lines = section.split("\n");
+    const output = [];
+    let inUnorderedList = false;
+    let inOrderedList = false;
+
+    const closeLists = () => {
+      if (inUnorderedList) {
+        output.push("</ul>");
+        inUnorderedList = false;
+      }
+      if (inOrderedList) {
+        output.push("</ol>");
+        inOrderedList = false;
+      }
+    };
+
+    lines.forEach((line) => {
+      const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+      const unorderedMatch = line.match(/^\s*[-*]\s+(.*)$/);
+      const orderedMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+
+      if (headingMatch) {
+        closeLists();
+        const level = headingMatch[1].length;
+        output.push(`<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`);
+        return;
+      }
+
+      if (unorderedMatch) {
+        if (!inUnorderedList) {
+          closeLists();
+          output.push("<ul>");
+          inUnorderedList = true;
+        }
+        output.push(`<li>${renderInlineMarkdown(unorderedMatch[1])}</li>`);
+        return;
+      }
+
+      if (orderedMatch) {
+        if (!inOrderedList) {
+          closeLists();
+          output.push("<ol>");
+          inOrderedList = true;
+        }
+        output.push(`<li>${renderInlineMarkdown(orderedMatch[1])}</li>`);
+        return;
+      }
+
+      if (!line.trim()) {
+        closeLists();
+        return;
+      }
+
+      closeLists();
+      output.push(`<p>${renderInlineMarkdown(line)}</p>`);
+    });
+
+    closeLists();
+    return output.join("\n");
+  });
+
+  return rendered.join("\n");
+}
+
+function formatPostContent(content) {
+  if (!content) {
+    return "";
+  }
+  const value = String(content);
+  if (HTML_TAG_RE.test(value)) {
+    return value;
+  }
+  return renderMarkdown(value);
+}
+
 export async function generateStaticParams() {
   // Prebuild whatever is available at build time.
   try {
@@ -59,9 +163,7 @@ export default async function BlogPostPage({ params }) {
 
   if (!post) return notFound();
 
-  // Your API returns `content` (likely stored as rich text/HTML or markdown).
-  // If it's HTML, render it as HTML. If it's markdown, convert it server-side later.
-  const content = post.content || "";
+  const content = formatPostContent(post.content || "");
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
@@ -85,7 +187,7 @@ export default async function BlogPostPage({ params }) {
         <hr className="my-8 opacity-30" />
 
         <article
-          className="prose prose-invert max-w-none"
+          className="prose max-w-none dark:prose-invert"
           dangerouslySetInnerHTML={{ __html: content }}
         />
       </div>

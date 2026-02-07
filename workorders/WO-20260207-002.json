@@ -1,0 +1,35 @@
+{
+  "id": "WO-20260207-002",
+  "title": "Fix AI automated blog major-update endpoint runtime error",
+  "scope": [
+    "Fix backend runtime failure in the AI automated major-update queue endpoint",
+    "Ensure environment-variable access in blog admin automation code uses a defined module import",
+    "Record the change in CHANGELOG.md"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Calling the major-update endpoint no longer fails with name 'os' is not defined",
+    "AI major-update jobs can proceed to topic creation and queue enqueue logic when dependencies are available",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "If database tables or Redis are unavailable, the endpoint may still fail later in execution for environment-specific reasons"
+  ],
+  "rollback_plan": [
+    "Revert the src/routes/blog_admin.py import change and remove this workorder/changelog entry"
+  ]
+}

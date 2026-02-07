@@ -126,6 +126,12 @@ def create_post(current_user):
         
         db.session.add(post)
         db.session.commit()
+
+        if post.status == 'published':
+            try:
+                post.publish(source='blog_api_create')
+            except Exception as exc:
+                print(f"[seo_ping] Blog publish ping failed: {exc}")
         
         return jsonify(post.to_dict()), 201
         
@@ -181,6 +187,12 @@ def update_post(current_user, post_id):
         post.updated_at = datetime.utcnow()
         
         db.session.commit()
+
+        if post.status == 'published':
+            try:
+                post.publish(source='blog_api_update')
+            except Exception as exc:
+                print(f"[seo_ping] Blog publish ping failed: {exc}")
         
         post_data = post.to_dict()
         post_data['content'] = normalize_blog_content(post.content)

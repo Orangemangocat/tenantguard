@@ -16,6 +16,89 @@ from src.models.user import db
 from src.models.blog import BlogPost
 from src.models.blog_topic import BlogTopic, BlogSchedule
 
+BUSINESS_FOCUS = (
+    "TenantGuard helps tenants facing eviction and landlord-tenant disputes, "
+    "with a focus on Tennessee and procedural leverage, evidence organization, "
+    "and legal-tech workflows."
+)
+
+
+def _build_topic_prompt():
+    return f"""Generate 1-3 daily blog topic ideas for TenantGuard.
+
+Context:
+{BUSINESS_FOCUS}
+
+Requirements:
+- Topics must be directly relevant to tenant protection, eviction defense, housing justice, or legal-tech workflows.
+- Prefer practical, timely angles (e.g., notices, timelines, evidence, procedures).
+- Use categories: technical or market-research.
+- Return ONLY valid JSON.
+
+JSON format:
+{{
+  "topics": [
+    {{
+      "title": "Short topic title",
+      "category": "technical",
+      "description": "1-2 sentence summary",
+      "research_notes": "Optional bullets or notes",
+      "research_links": ["https://..."]
+    }}
+  ]
+}}
+"""
+
+
+def _has_topic_today():
+    today = datetime.utcnow().date()
+    return BlogTopic.query.filter(
+        BlogTopic.created_at >= datetime(today.year, today.month, today.day),
+        BlogTopic.created_by == 'auto-scheduler'
+    ).count() > 0
+
+
+def ensure_daily_topic():
+    """Create daily topics if none have been generated today."""
+    if _has_topic_today():
+        return
+
+    from src.services.blog_ai import call_openai_chat, parse_llm_json
+
+    prompt = _build_topic_prompt()
+    response_text = call_openai_chat(prompt)
+    response_data, parse_error = parse_llm_json(response_text)
+    if parse_error:
+        print(f"[topic-generator] Parse error: {parse_error}")
+        return
+
+    topics = response_data.get('topics') or []
+    if not isinstance(topics, list) or not topics:
+        print("[topic-generator] No topics returned.")
+        return
+
+    for topic_data in topics[:3]:
+        title = topic_data.get('title')
+        category = topic_data.get('category', 'technical')
+        if not title:
+            continue
+        if category not in {'technical', 'market-research'}:
+            category = 'technical'
+
+        topic = BlogTopic(
+            title=title,
+            description=topic_data.get('description', ''),
+            category=category,
+            research_links=json.dumps(topic_data.get('research_links', []) or []),
+            research_notes=topic_data.get('research_notes', ''),
+            priority='normal',
+            status='pending',
+            created_by='auto-scheduler'
+        )
+        db.session.add(topic)
+
+    db.session.commit()
+
 def check_and_generate_post():
     """Check if a new post should be generated and create it for approval"""
     
@@ -26,6 +109,8 @@ def check_and_generate_post():
         if not schedule or not schedule.auto_posting_enabled:
             print("Auto-posting is disabled. Exiting.")
             return
+
+        ensure_daily_topic()
         
         # Get the most recent published post
         latest_post = BlogPost.query.filter_by(status='published').order_by(BlogPost.published_at.desc()).first()

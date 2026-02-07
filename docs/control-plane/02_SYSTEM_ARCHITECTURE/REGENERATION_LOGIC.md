@@ -1,7 +1,7 @@
 # Regeneration Logic
 
 ## Rule
-Any upstream change triggers downstream regeneration.
+Any upstream change triggers downstream regeneration and versioning
 
 Upstream changes include:
 - new evidence uploaded

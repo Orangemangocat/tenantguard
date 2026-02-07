@@ -19,7 +19,6 @@ from src.services.seo_monitoring import (
     fetch_search_console_sitemaps,
     get_sitemap_url,
     is_ping_enabled,
-    ping_google_sitemap,
 )
 
 admin_panel_bp = Blueprint('admin_panel', __name__, url_prefix='/api/admin')
@@ -408,14 +407,9 @@ def publish_blog_post(current_user, post_id):
         if not post:
             return jsonify({'error': 'Blog post not found'}), 404
         
-        post.status = 'published'
-        post.published_at = datetime.utcnow()
+        ping_result = post.publish(source='admin_panel_publish')
         post.updated_at = datetime.utcnow()
         db.session.commit()
-
-        ping_result = None
-        if is_ping_enabled():
-            ping_result = ping_google_sitemap(get_sitemap_url())
 
         return jsonify({'success': True, 'sitemap_ping': ping_result})
     except Exception as e:
@@ -441,6 +435,28 @@ def unpublish_blog_post(current_user, post_id):
     except Exception as e:
         db.session.rollback()
         print(f"[ADMIN_ERROR] Unpublish blog post error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@admin_panel_bp.route('/seo/pings', methods=['GET'])
+@admin_required
+def get_seo_pings(current_user):
+    """Return recent Search Console ping logs."""
+    try:
+        from src.models.seo_ping import SeoPingLog
+        limit = request.args.get('limit', 50)
+        try:
+            limit = max(1, min(200, int(limit)))
+        except (TypeError, ValueError):
+            limit = 50
+
+        logs = SeoPingLog.query.order_by(SeoPingLog.created_at.desc()).limit(limit).all()
+        return jsonify({
+            'count': len(logs),
+            'logs': [log.to_dict() for log in logs]
+        }), 200
+    except Exception as e:
+        print(f"[ADMIN_ERROR] SEO pings error: {e}")
         return jsonify({'error': str(e)}), 500
 
 @admin_panel_bp.route('/blog-posts/featured-image', methods=['POST'])

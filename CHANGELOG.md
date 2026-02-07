@@ -1,5 +1,15 @@
 # Changelog
 
+- 2026-02-07: Added workorder `WO-20260207-005` for SEO ping logging and compliance improvements.
+- 2026-02-07: Logged Search Console sitemap pings on publish and added SEO/compliance prompt guidance for AI blog drafts (WO-20260207-005).
+- 2026-02-07: Added workorder `WO-20260207-004` for daily topic generation and medium quality checks.
+- 2026-02-07: Automated daily TenantGuard topic creation and medium quality checks for AI blog drafts (WO-20260207-004).
+- 2026-02-07: Added workorder `WO-20260207-003` to fix attorney list/search API failures.
+- 2026-02-07: Fixed attorney list/search API endpoints by adding offset handling and search filtering to the attorney model (WO-20260207-003).
+- 2026-02-07: Added workorder `WO-20260207-002` for AI automated blog major-update runtime fix.
+- 2026-02-07: Fixed `name 'os' is not defined` in the AI major-update queue endpoint by importing `os` in blog admin routes (WO-20260207-002).
+- 2026-02-07: Added workorder `WO-20260207-001` for frontend-next blog body rendering fixes.
+- 2026-02-07: Added markdown fallback rendering and readable typography classes for frontend-next blog post bodies (WO-20260207-001).
 - 2026-01-21: Documented OCR dependencies for intake document analysis (WO-20260121-002).
 - 2026-01-21: Added OCR-backed text extraction for PDFs and images using pytesseract/pdf2image (WO-20260121-002).
 - 2026-01-21: Added PDF text extraction with OCR-required detection for intake document analysis (WO-20260121-002).
