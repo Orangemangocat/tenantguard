@@ -1,5 +1,7 @@
 # Changelog
 
+- 2026-02-07: Added workorder `WO-20260207-001` for frontend-next blog body rendering fixes.
+- 2026-02-07: Added markdown fallback rendering and readable typography classes for frontend-next blog post bodies (WO-20260207-001).
 - 2026-01-21: Documented OCR dependencies for intake document analysis (WO-20260121-002).
 - 2026-01-21: Added OCR-backed text extraction for PDFs and images using pytesseract/pdf2image (WO-20260121-002).
 - 2026-01-21: Added PDF text extraction with OCR-required detection for intake document analysis (WO-20260121-002).
