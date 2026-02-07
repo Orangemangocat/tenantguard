@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 PYTHON := $(/usr/bin/env python)
-P:wq
-NPM := pnpm
+NPM := npm
+PNPM := pnpm
 FRONTEND_DIR := frontend
 FRONTEND_BLOG_DIR := frontend-next
 VENV_DIR := venv
