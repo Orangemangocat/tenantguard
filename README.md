@@ -73,7 +73,7 @@ tenantguard/
 - **PostgreSQL**: Primary database configuration
 - **SQLite**: Fallback for local/dev environments
 - **Flask-CORS**: Cross-origin resource sharing
-- **Python 3.11**: Modern Python runtime
+- **Python 3.12**: Modern Python runtime
 
 ### Infrastructure
 - **Static File Serving**: Integrated frontend/backend
@@ -137,7 +137,7 @@ See `src/routes/` for the full API surface.
 ## Quick Start
 
 ### Prerequisites
-- Python 3.11+
+- Python 3.12+
 - Node.js 18+
 - pnpm or npm
 - OCR dependencies for intake document analysis:
@@ -167,6 +167,20 @@ pnpm run build
 # Copy build output into Flask static folder if serving via Flask
 rsync -a --delete dist/ ../src/static/
 ```
+
+## Conversational AI Workflow (No IDE)
+
+You can drive repo changes from any chat AI that can return unified diffs.
+
+```bash
+venv/bin/python scripts/new_workorder.py --title "Short task title"
+venv/bin/python scripts/build_ai_packet.py --task "Describe requested change" --workorder WO-YYYYMMDD-### --output /tmp/tenantguard-ai-packet.md
+venv/bin/python scripts/extract_ai_patch.py --response /tmp/ai-response.md --output /tmp/tenantguard-ai.patch
+venv/bin/python scripts/apply_patch.py --patch /tmp/tenantguard-ai.patch --check
+venv/bin/python scripts/apply_patch.py --patch /tmp/tenantguard-ai.patch
+```
+
+Full workflow: `docs/conversational-ai-workflow.md`
 
 ## Deployment
 
