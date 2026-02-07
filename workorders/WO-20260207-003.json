@@ -1,0 +1,35 @@
+{
+  "id": "WO-20260207-003",
+  "title": "Fix public attorney directory API list/search endpoints",
+  "scope": [
+    "Align attorney list query signature with route parameters to prevent 500s",
+    "Implement attorney search filtering to stop 500s on search requests",
+    "Record the change in CHANGELOG.md"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "GET /api/attorneys returns a success payload instead of HTTP 500 when offset is supplied",
+    "GET /api/attorneys/search returns a success payload instead of HTTP 500",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "Search filtering uses lightweight text matching against JSON blobs and may be imprecise"
+  ],
+  "rollback_plan": [
+    "Revert the attorney model search/list changes and remove this workorder/changelog entry"
+  ]
+}

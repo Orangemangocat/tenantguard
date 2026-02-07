@@ -1,0 +1,39 @@
+{
+  "id": "WO-20260207-005",
+  "title": "SEO ping logging and compliance improvements for blog publishing",
+  "scope": [
+    "Log all sitemap pings and Search Console snapshot hints when posts are published",
+    "Expose a read-only admin endpoint for SEO ping logs",
+    "Strengthen AI blog prompt SEO and compliance guidance",
+    "Ensure publish flows trigger Search Console pings consistently"
+  ],
+  "allowed_paths": [
+    "alembic/**",
+    "src/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Publishing a blog post records a Search Console ping log entry",
+    "Ping logs capture sitemap URL, status, and Search Console summary or errors",
+    "Admin API exposes recent ping logs for monitoring",
+    "AI-generated blog posts include SEO-friendly structure and compliance guidance",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "Search Console snapshots require credentials; logs will mark them unconfigured when missing"
+  ],
+  "rollback_plan": [
+    "Drop the seo_ping_logs table and revert SEO ping logging changes"
+  ]
+}

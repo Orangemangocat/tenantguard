@@ -52,6 +52,66 @@ def ping_google_sitemap(sitemap_url: str) -> dict:
         }
 
 
+def _summarize_console_payload(payload: dict) -> dict:
+    if not payload:
+        return {}
+    return {
+        'status': payload.get('status'),
+        'fetched_at': payload.get('fetched_at'),
+        'summary': payload.get('summary'),
+        'primary_sitemap': payload.get('primary_sitemap'),
+        'error': payload.get('error'),
+        'missing': payload.get('missing')
+    }
+
+
+def record_ping_event(post=None, ping_result=None, search_console_payload=None, source=None):
+    try:
+        from src.models.seo_ping import SeoPingLog
+        from src.models.user import db
+        log = SeoPingLog(
+            post_id=getattr(post, 'id', None) if post else None,
+            post_slug=getattr(post, 'slug', None) if post else None,
+            post_title=getattr(post, 'title', None) if post else None,
+            sitemap_url=(ping_result or {}).get('sitemap_url'),
+            ping_url=(ping_result or {}).get('ping_url'),
+            status_code=(ping_result or {}).get('status_code'),
+            ok=(ping_result or {}).get('ok', False),
+            error=(ping_result or {}).get('error'),
+            source=source,
+            search_console_status=(search_console_payload or {}).get('status'),
+            search_console_summary=json.dumps(_summarize_console_payload(search_console_payload or {}))
+        )
+        db.session.add(log)
+        db.session.commit()
+    except Exception as exc:
+        print(f"[seo_ping_log] Failed to record ping: {exc}")
+
+
+def ping_and_record_publish(post=None, source=None):
+    sitemap_url = get_sitemap_url()
+    if is_ping_enabled():
+        ping_result = ping_google_sitemap(sitemap_url)
+    else:
+        ping_result = {
+            'ok': False,
+            'status_code': None,
+            'ping_url': None,
+            'error': 'ping_disabled',
+            'timestamp': _utc_now_iso()
+        }
+    ping_result['sitemap_url'] = sitemap_url
+
+    search_console_payload = fetch_search_console_sitemaps()
+    record_ping_event(
+        post=post,
+        ping_result=ping_result,
+        search_console_payload=search_console_payload,
+        source=source
+    )
+    return ping_result
+
+
 def _load_search_console_credentials():
     if service_account is None:
         return None, ['google-auth']
