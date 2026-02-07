@@ -243,14 +243,78 @@ class Attorney:
         attorney = AttorneyApplication.query.filter_by(email=email).first()
         return attorney.to_dict() if attorney else None
     
-    def get_all_attorneys(self, status=None, limit=None):
+    def get_all_attorneys(self, status=None, limit=None, offset=None):
         """Get all attorneys with optional filtering"""
         query = AttorneyApplication.query
         if status:
             query = query.filter_by(status=status)
+        if offset:
+            query = query.offset(offset)
         if limit:
             query = query.limit(limit)
         return [attorney.to_dict() for attorney in query.all()]
+
+    def _parse_numeric_value(self, value):
+        if value is None:
+            return None
+        try:
+            cleaned = ''.join(ch for ch in str(value) if ch.isdigit() or ch == '.')
+            return float(cleaned) if cleaned else None
+        except Exception:
+            return None
+
+    def _normalize_filter_values(self, value):
+        if value is None:
+            return []
+        if isinstance(value, (list, tuple)):
+            return [str(v).strip() for v in value if str(v).strip()]
+        return [v.strip() for v in str(value).split(',') if v.strip()]
+
+    def search_attorneys(self, criteria):
+        """Search attorneys using lightweight filters against stored JSON/text fields."""
+        query = AttorneyApplication.query
+
+        service_areas = self._normalize_filter_values(criteria.get('service_areas'))
+        for area in service_areas:
+            query = query.filter(AttorneyApplication.service_areas.ilike(f'%{area}%'))
+
+        practice_areas = self._normalize_filter_values(criteria.get('practice_areas'))
+        for area in practice_areas:
+            query = query.filter(AttorneyApplication.practice_areas.ilike(f'%{area}%'))
+
+        case_types = self._normalize_filter_values(criteria.get('case_types'))
+        for case_type in case_types:
+            query = query.filter(AttorneyApplication.case_types.ilike(f'%{case_type}%'))
+
+        results = [attorney.to_dict() for attorney in query.all()]
+
+        max_hourly_rate = criteria.get('max_hourly_rate')
+        if max_hourly_rate is not None:
+            try:
+                max_value = float(max_hourly_rate)
+                results = [
+                    attorney for attorney in results
+                    if (self._parse_numeric_value(attorney.get('hourly_rate')) or 0) <= max_value
+                ]
+            except Exception:
+                pass
+
+        return results
+
+    def get_attorney_stats(self):
+        """Get summary statistics for attorney applications"""
+        total_attorneys = AttorneyApplication.query.count()
+        statuses = ['pending_review', 'under_review', 'approved', 'rejected', 'suspended']
+        status_breakdown = {}
+        for status in statuses:
+            status_breakdown[status] = AttorneyApplication.query.filter_by(status=status).count()
+        active_profiles = AttorneyApplication.query.filter_by(profile_active=True).count()
+
+        return {
+            'total_attorneys': total_attorneys,
+            'status_breakdown': status_breakdown,
+            'active_profiles': active_profiles
+        }
     
     def update_attorney_status(self, application_id, status, reviewer_notes=None):
         """Update attorney application status"""
@@ -281,4 +345,3 @@ class Attorney:
         attorney.updated_at = datetime.utcnow()
         db.session.commit()
         return {'success': True, 'data': attorney.to_dict()}
-

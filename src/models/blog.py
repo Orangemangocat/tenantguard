@@ -22,6 +22,7 @@ class BlogPost(db.Model):
     status = db.Column(db.String(20), default='draft')
     
     featured_image = db.Column(db.String(500))
+    media_url = db.Column(db.String(500))
     tags = db.Column(db.String(200))  # Comma-separated tags
     
     # Approval workflow fields
@@ -60,7 +61,7 @@ class BlogPost(db.Model):
             self.approval_notes = notes
         
         if publish_immediately:
-            self.publish()
+            self.publish(source='approval_queue')
         
         db.session.commit()
     
@@ -72,7 +73,7 @@ class BlogPost(db.Model):
         self.rejection_reason = reason
         db.session.commit()
     
-    def publish(self):
+    def publish(self, source=None):
         """Publish approved post"""
         if self.status not in ['approved', 'published']:
             raise ValueError("Only approved posts can be published")
@@ -81,6 +82,13 @@ class BlogPost(db.Model):
         if not self.published_at:
             self.published_at = datetime.utcnow()
         db.session.commit()
+
+        try:
+            from src.services.seo_monitoring import ping_and_record_publish
+            return ping_and_record_publish(self, source=source or 'blog_post_publish')
+        except Exception as exc:
+            print(f"[seo_ping] Publish ping failed: {exc}")
+            return None
     
     def get_schema_markup(self):
         """Generate Schema.org Article markup for SEO"""
@@ -130,6 +138,7 @@ class BlogPost(db.Model):
             'author': self.author,
             'status': self.status,
             'featured_image': self.featured_image,
+            'media_url': self.media_url,
             'tags': self.tags.split(',') if self.tags else [],
             'generated_by': self.generated_by,
             'generation_source': self.generation_source,

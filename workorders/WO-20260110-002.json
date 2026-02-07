@@ -1,0 +1,33 @@
+{
+  "id": "WO-20260110-002",
+  "title": "Remove Tennessee from front-page hero copy",
+  "scope": [
+    "Update the front-page hero section to remove Tennessee-specific wording."
+  ],
+  "allowed_paths": [
+    "frontend/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Front-page hero badge no longer displays the word \"Tennessee\".",
+    "Front-page hero paragraph no longer mentions \"Tennessee\"."
+  ],
+  "risk_notes": [
+    "Minor copy change could affect regional positioning expectations."
+  ],
+  "rollback_plan": [
+    "Revert the front-page hero copy in frontend/src/App.jsx.",
+    "Remove this workorder and its changelog entry if needed."
+  ]
+}

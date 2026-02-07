@@ -1,0 +1,37 @@
+{
+  "id": "WO-20260113-006",
+  "title": "Review and update README.md",
+  "scope": [
+    "Review README.md against current repo structure and runtime configuration",
+    "Update README.md to reflect current features, endpoints, and build/deploy notes",
+    "Record changes in CHANGELOG.md once workorder is completed"
+  ],
+  "allowed_paths": [
+    "README.md",
+    "CHANGELOG.md",
+    "docs/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "README.md reflects current repo layout, system components, and build steps",
+    "API endpoint list matches backend routes",
+    "Outdated marketing claims and paths are removed or corrected",
+    "CHANGELOG.md is updated when the documentation update is complete"
+  ],
+  "risk_notes": [
+    "Outdated README guidance can mislead developers and operators"
+  ],
+  "rollback_plan": [
+    "Revert the documentation changes and restore the previous version"
+  ]
+}

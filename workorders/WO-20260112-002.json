@@ -1,0 +1,36 @@
+{
+  "id": "WO-20260112-002",
+  "title": "Preserve AI markdown formatting when editing blog posts",
+  "scope": [
+    "Normalize markdown blog content to HTML for admin editing and AI-generated posts",
+    "Ensure markdown content is converted before saving updates",
+    "Record the update in the changelog"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Markdown blog content is converted to HTML before admin edits are saved",
+    "Admin blog post endpoints return HTML for markdown content",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "Markdown conversion could subtly change formatting for edge cases"
+  ],
+  "rollback_plan": [
+    "Revert markdown normalization helpers and return raw content"
+  ]
+}

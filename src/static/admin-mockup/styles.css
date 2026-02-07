@@ -36,39 +36,6 @@
     box-sizing: border-box;
 }
 
-/* Global SVG sizing to prevent oversized icons */
-svg {
-    display: inline-block;
-    vertical-align: middle;
-}
-
-/* Logo icon specific sizing */
-.logo svg,
-svg.logo-icon {
-    width: 32px !important;
-    height: 32px !important;
-    flex-shrink: 0;
-}
-
-/* Notification bell SVG */
-.notification-bell svg {
-    width: 20px !important;
-    height: 20px !important;
-}
-
-/* Card header icons */
-.card-icon,
-.card-title svg {
-    width: 22px !important;
-    height: 22px !important;
-}
-
-/* Button icons */
-.btn svg {
-    width: 16px !important;
-    height: 16px !important;
-}
-
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-light);

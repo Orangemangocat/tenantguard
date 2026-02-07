@@ -1,3 +1,6 @@
+# vscode
+.vscode/
+
 # Python
 **/__pycache__/
 **/*.pyc
@@ -11,6 +14,7 @@ src/database/
 src/database/**
 
 # Frontend build output
+src/static
 frontend/dist/
 frontend-next/dist/
 

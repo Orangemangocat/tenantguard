@@ -1,5 +1,6 @@
 import os
 import sys
+import secrets
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -13,6 +14,7 @@ from src.routes.case import case_bp
 from src.routes.attorney import attorney_bp
 from src.routes.contact import contact_bp
 from src.routes.blog import blog_bp
+from src.routes.blog_ai import blog_ai_bp
 from src.routes.sitemap import sitemap_bp
 from src.routes.blog_admin import blog_admin_bp
 from src.routes.admin_panel import admin_panel_bp
@@ -20,9 +22,34 @@ from src.routes.auth import auth_bp
 from src.routes.blog_approval import blog_approval_bp
 from src.routes.groups import groups_bp
 from src.routes.admin_queue import admin_queue_bp
+from src.routes.payments import payments_bp
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+secret_key = os.getenv('FLASK_SECRET_KEY') or os.getenv('SECRET_KEY')
+if not secret_key:
+    secret_key = secrets.token_urlsafe(32)
+    print('[SECURITY] FLASK_SECRET_KEY not set; using an ephemeral key for this process.')
+app.config['SECRET_KEY'] = secret_key
+
+def _get_max_content_length_bytes() -> int:
+    raw_bytes = os.getenv('MAX_CONTENT_LENGTH')
+    if raw_bytes:
+        try:
+            bytes_limit = int(raw_bytes)
+        except ValueError:
+            print('[CONFIG] Invalid MAX_CONTENT_LENGTH; falling back to MAX_CONTENT_LENGTH_MB.')
+        else:
+            if bytes_limit > 0:
+                return bytes_limit
+            print('[CONFIG] MAX_CONTENT_LENGTH must be positive; falling back to MAX_CONTENT_LENGTH_MB.')
+    try:
+        upload_limit_mb = int(os.getenv('MAX_CONTENT_LENGTH_MB', '50'))
+    except ValueError:
+        print('[CONFIG] Invalid MAX_CONTENT_LENGTH_MB; falling back to 50MB.')
+        upload_limit_mb = 50
+    return upload_limit_mb * 1024 * 1024
+
+app.config['MAX_CONTENT_LENGTH'] = _get_max_content_length_bytes()
 
 # Enable CORS for all routes
 CORS(app, origins=['*'])
@@ -32,6 +59,7 @@ app.register_blueprint(case_bp, url_prefix='/api')
 app.register_blueprint(attorney_bp)
 app.register_blueprint(contact_bp)
 app.register_blueprint(blog_bp)
+app.register_blueprint(blog_ai_bp)
 app.register_blueprint(sitemap_bp)
 app.register_blueprint(blog_admin_bp)
 app.register_blueprint(admin_panel_bp)
@@ -39,6 +67,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(blog_approval_bp)
 app.register_blueprint(groups_bp)
 app.register_blueprint(admin_queue_bp, url_prefix='/api')
+app.register_blueprint(payments_bp)
 
 # Database configuration - now supports both SQLite and PostgreSQL
 app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()

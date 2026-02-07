@@ -5,10 +5,23 @@ Generates dynamic XML sitemap including all blog posts
 
 from flask import Blueprint, Response, current_app
 from datetime import datetime
+import os
 from src.models.blog import BlogPost
 import xml.etree.ElementTree as ET
+from urllib.parse import urlparse
 
 sitemap_bp = Blueprint('sitemap', __name__)
+
+def _get_public_site_url() -> str:
+    site_url = os.environ.get('PUBLIC_SITE_URL')
+    if site_url:
+        return site_url.rstrip('/')
+    sitemap_url = os.environ.get('PUBLIC_SITEMAP_URL')
+    if sitemap_url:
+        parsed = urlparse(sitemap_url)
+        if parsed.scheme and parsed.netloc:
+            return f"{parsed.scheme}://{parsed.netloc}"
+    return 'https://www.tenantguard.net'
 
 @sitemap_bp.route('/sitemap.xml')
 def sitemap():
@@ -21,7 +34,7 @@ def sitemap():
     urlset.set('xmlns:xhtml', 'http://www.w3.org/1999/xhtml')
     urlset.set('xmlns:image', 'http://www.google.com/schemas/sitemap-image/1.1')
     
-    base_url = 'https://www.tenantguard.net'
+    base_url = _get_public_site_url()
     
     # Add static pages
     static_pages = [
@@ -69,11 +82,13 @@ def sitemap():
 @sitemap_bp.route('/robots.txt')
 def robots():
     """Generate robots.txt file"""
-    robots_txt = """User-agent: *
+    base_url = _get_public_site_url()
+    sitemap_url = os.environ.get('PUBLIC_SITEMAP_URL') or f"{base_url}/sitemap.xml"
+    robots_txt = f"""User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://www.tenantguard.net/sitemap.xml
+Sitemap: {sitemap_url}
 """
     return Response(robots_txt, mimetype='text/plain')

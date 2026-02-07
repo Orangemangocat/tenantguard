@@ -1,0 +1,42 @@
+{
+  "id": "WO-20260121-002",
+  "title": "Scope LLM document analysis for intake uploads (existing AI pipeline)",
+  "scope": [
+    "Define document analysis flow using the existing ai_processor pipeline",
+    "Extract text/metadata from uploaded intake documents and create evidence map entries",
+    "Queue background processing after uploads to generate notebook updates",
+    "Persist case notebook and analysis outputs to the intake GCS bucket under the case folder"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "scripts/**",
+    "docs/**",
+    ".github/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Uploaded intake documents are processed via the existing ai_processor pipeline",
+    "Case notebook updates include evidence map entries and analysis results",
+    "Notebook and analysis artifacts are stored in the intake GCS bucket under the case folder",
+    "Processing failures return structured errors without breaking uploads"
+  ],
+  "risk_notes": [
+    "Document extraction may fail for certain formats and require fallback handling",
+    "Queued analysis could introduce delays and partial notebook state",
+    "Large uploads may exceed worker memory if streamed improperly"
+  ],
+  "rollback_plan": [
+    "Disable or bypass the document analysis queue and revert notebook updates"
+  ]
+}

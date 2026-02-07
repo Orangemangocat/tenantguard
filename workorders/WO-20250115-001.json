@@ -1,0 +1,53 @@
+{
+  "id": "WO-20250115-001",
+  "title": "Remove hardcoded secrets and require env-based configuration",
+  "scope": [
+    "Eliminate committed secrets from backend configuration defaults",
+    "Read Flask and JWT secrets from environment variables with safe dev fallbacks",
+    "Guard PostgreSQL connection setup when required env vars are missing",
+    "Document required environment variables for secret/config rotation",
+    "Remove references to requirements_auth.txt from verification workflows"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "scripts/**",
+    "docs/**",
+    ".github/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "No hardcoded secrets remain in backend config defaults",
+    "Flask SECRET_KEY and JWT secret are sourced from environment variables",
+    "When required Postgres env vars are missing, the app falls back to SQLite with a warning",
+    "Verification docs/scripts no longer reference requirements_auth.txt"
+  ],
+  "env_vars": [
+    "FLASK_SECRET_KEY",
+    "SECRET_KEY",
+    "JWT_SECRET_KEY",
+    "DB_TYPE",
+    "POSTGRES_HOST",
+    "POSTGRES_PORT",
+    "POSTGRES_DB",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD"
+  ],
+  "risk_notes": [
+    "JWT tokens will be invalid after restart when using ephemeral fallback secrets",
+    "PostgreSQL connections will not be attempted without required env vars"
+  ],
+  "rollback_plan": [
+    "Revert changes in src/main.py, src/models/auth_user.py, and src/config/database.py"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "WO-20260112-006",
+  "title": "Add blog media attachment field with embed preview",
+  "scope": [
+    "Add a media attachment field to blog posts with optional upload control",
+    "Store the media URL alongside blog posts",
+    "Render an audio/video embed above the blog body based on the media filename"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Admin blog editor includes an optional media upload control",
+    "Blog posts persist a media attachment URL",
+    "Public blog view embeds an audio or video player above the post body when a media URL is present",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "New media uploads increase storage usage and could expose unsupported file types if validation is too loose",
+    "Embedding media without size constraints may impact page load times"
+  ],
+  "rollback_plan": [
+    "Remove the media attachment field and uploader, and stop rendering the media embed"
+  ]
+}

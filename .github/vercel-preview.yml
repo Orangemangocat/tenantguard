@@ -1,0 +1,63 @@
+---
+name: Vercel Preview Deploy
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  preview:
+    name: Preview Deploy
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CI_DB_URL: ${{ secrets.CI_DB_URL }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Prepare backend
+        env:
+          PYTHONUNBUFFERED: 1
+          REDIS_URL: "redis://localhost:6379/0"
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          # Add any backend build steps here if necessary
+          # sanity-check backend
+          python -m pip install -r requirements.txt
+          python -m compileall src
+          python -c "import importlib; importlib.import_module('src.main')"
+
+      - name: Install pnpm
+        run: sudo npm install -g pnpm
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm build
+
+      - name: Install frontend-next dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+        
+      - name: Vercel Deploy (Preview)
+        working-directory: frontend
+        run: |
+          npx vercel --confirm
+          npx vercel alias set $(npx vercel --token $VERCEL_TOKEN) |
+            pr-${{ github.event.pull_request.number }}.tenantguard.vercel.app

@@ -1,0 +1,37 @@
+{
+  "id": "WO-20260119-001",
+  "title": "Admin dashboard overview reimagined",
+  "scope": [
+    "Redesign admin overview to surface core model counts and queue status",
+    "Add linked overview cards for users, groups, blog posts, tenant intakes, attorney intakes, and worker queue",
+    "Include a compact status strip for approvals/intakes/queue depth"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Admin overview shows counts for users, groups, blog posts, tenant intakes, attorney intakes, and queue depth",
+    "Each overview card links to its respective admin configuration view/tab",
+    "Overview includes a brief worker queue snapshot with latest job status",
+    "Non-admin roles see only data they are permitted to access"
+  ],
+  "risk_notes": [
+    "New stats calls may surface backend errors if endpoints are missing or auth-scoped",
+    "UI may feel crowded without thoughtful layout and hierarchy"
+  ],
+  "rollback_plan": [
+    "Revert the overview component changes to restore the previous dashboard layout"
+  ]
+}

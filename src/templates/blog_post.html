@@ -145,6 +145,15 @@
             margin-bottom: 30px;
             font-style: italic;
         }
+
+        .post-media {
+            margin: 20px 0 30px;
+        }
+
+        .post-media audio,
+        .post-media video {
+            width: 100%;
+        }
         
         .post-content {
             font-size: 16px;
@@ -290,6 +299,16 @@
             
             {% if post.excerpt %}
             <p class="post-excerpt">{{ post.excerpt }}</p>
+            {% endif %}
+
+            {% if post.media_url and post.media_type %}
+            <div class="post-media">
+                {% if post.media_type == 'audio' %}
+                <audio controls src="{{ post.media_url }}"></audio>
+                {% elif post.media_type == 'video' %}
+                <video controls src="{{ post.media_url }}"></video>
+                {% endif %}
+            </div>
             {% endif %}
             
             <div class="post-content">

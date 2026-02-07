@@ -1,0 +1,43 @@
+{
+  "id": "WO-20260119-002",
+  "title": "Rebuild intake flow with document upload, status, and Stripe payment portal",
+  "scope": [
+    "Replace onboarding/chat intake routes with form-based tenant and attorney intake",
+    "Add tenant document upload and case status views",
+    "Queue case analysis after document upload",
+    "Add Stripe Checkout payment portal endpoints and UI",
+    "Update navigation to remove onboarding links"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "workorders/**",
+    ".env.example",
+    "CHANGELOG.md",
+    "requirements.txt"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Tenant intake form routes to document upload, then case status, then payment portal",
+    "Attorney intake form routes directly to payment portal",
+    "Case document uploads are persisted on the case record and stored on disk",
+    "Case status endpoint reports documents and analysis readiness",
+    "Stripe Checkout session creation endpoint returns a redirect URL",
+    "Onboarding/chat routes are removed from navigation and primary CTA flow"
+  ],
+  "risk_notes": [
+    "Stripe credentials and price IDs must be configured before checkout will work",
+    "Large document uploads may hit size limits if MAX_CONTENT_LENGTH is too low"
+  ],
+  "rollback_plan": [
+    "Revert intake routing changes and remove new payment/document routes"
+  ]
+}

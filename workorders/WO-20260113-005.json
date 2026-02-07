@@ -1,0 +1,38 @@
+{
+  "id": "WO-20260113-005",
+  "title": "Review and update DEPLOYMENT.md",
+  "scope": [
+    "Review DEPLOYMENT.md against current repo layout and configuration",
+    "Update deployment paths, service names, and environment configuration guidance",
+    "Document frontend build/output placement with Flask static serving",
+    "Record changes in CHANGELOG.md once workorder is completed"
+  ],
+  "allowed_paths": [
+    "DEPLOYMENT.md",
+    "CHANGELOG.md",
+    "docs/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "DEPLOYMENT.md matches current repo structure and runtime configuration",
+    "Environment variables and database guidance align with src/config/database.py",
+    "Frontend build output and static serving guidance is accurate",
+    "CHANGELOG.md is updated when the documentation update is complete"
+  ],
+  "risk_notes": [
+    "Outdated deployment steps could misconfigure production services"
+  ],
+  "rollback_plan": [
+    "Revert the documentation changes and restore the previous version"
+  ]
+}

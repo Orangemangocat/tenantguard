@@ -1,0 +1,39 @@
+{
+  "id": "WO-20260113-007",
+  "title": "Expand admin user management with group and permission controls",
+  "scope": [
+    "Review current admin user management UI and related API usage",
+    "Add group membership and role management controls for users",
+    "Add permission-related visibility/controls aligned with group roles",
+    "Update CHANGELOG.md once workorder is completed"
+  ],
+  "allowed_paths": [
+    "frontend/**",
+    "src/**",
+    "CHANGELOG.md",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Admin user management page exposes group membership list per user",
+    "Admins can add/remove users from groups and update group roles",
+    "UI reflects permission constraints from group roles and backend rules",
+    "No blocked paths are modified",
+    "CHANGELOG.md includes an entry for this workorder"
+  ],
+  "risk_notes": [
+    "Misaligned UI with backend permissions could expose unauthorized actions"
+  ],
+  "rollback_plan": [
+    "Revert the UI and API wiring changes to restore previous behavior"
+  ]
+}

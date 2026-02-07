@@ -8,6 +8,20 @@ from src.models.user import db
 import jwt
 import os
 import hashlib
+import secrets
+
+_JWT_SECRET = None
+
+def _get_jwt_secret():
+    global _JWT_SECRET
+    if _JWT_SECRET:
+        return _JWT_SECRET
+    secret = os.getenv('JWT_SECRET_KEY')
+    if not secret:
+        secret = secrets.token_urlsafe(32)
+        print('[SECURITY] JWT_SECRET_KEY not set; using an ephemeral key for this process.')
+    _JWT_SECRET = secret
+    return _JWT_SECRET
 
 class AuthUser(db.Model):
     __tablename__ = 'auth_users'
@@ -54,7 +68,7 @@ class AuthUser(db.Model):
             'iat': datetime.utcnow()
         }
         
-        secret_key = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+        secret_key = _get_jwt_secret()
         return jwt.encode(payload, secret_key, algorithm='HS256')
     
     def generate_refresh_token(self, expires_in=2592000):
@@ -67,14 +81,14 @@ class AuthUser(db.Model):
             'type': 'refresh'
         }
         
-        secret_key = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+        secret_key = _get_jwt_secret()
         return jwt.encode(payload, secret_key, algorithm='HS256')
     
     @staticmethod
     def verify_jwt_token(token):
         """Verify and decode JWT token"""
         try:
-            secret_key = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+            secret_key = _get_jwt_secret()
             payload = jwt.decode(token, secret_key, algorithms=['HS256'])
             
             # Verify token version matches current user's version

@@ -1,0 +1,33 @@
+{
+  "id": "WO-20260110-003",
+  "title": "Investigate IntakeChat scrollbar behavior",
+  "scope": [
+    "Investigate and fix IntakeChat scrollbar quirks in Chrome and Firefox on Windows."
+  ],
+  "allowed_paths": [
+    "frontend/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Scrollbar behavior in IntakeChat is stable and predictable when messages are appended.",
+    "No double-scroll or jitter is observed in Chrome or Firefox on Windows."
+  ],
+  "risk_notes": [
+    "Adjusting scroll containers could affect page layout and message visibility."
+  ],
+  "rollback_plan": [
+    "Revert IntakeChat layout/scroll changes in frontend/src/components/IntakeChat.jsx.",
+    "Remove this workorder and its changelog entry if needed."
+  ]
+}

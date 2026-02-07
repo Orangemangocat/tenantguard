@@ -3,20 +3,23 @@ import { Button } from '@/components/ui/button.jsx'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowRight, Users, Clock, FileText, CheckCircle, Gavel, Shield, TrendingUp, Menu, X } from 'lucide-react'
-import CaseIntakeForm from './components/CaseIntakeForm.jsx'
-import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
 import ContactPage from './components/ContactPage.jsx'
 import BlogList from './components/BlogList.jsx'
 import BlogPost from './components/BlogPost.jsx'
-import BlogAdmin from './components/BlogAdmin.jsx'
 import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
-import Onboarding from './components/Onboarding.jsx'
+import CaseIntakeForm from './components/CaseIntakeForm.jsx'
+import AttorneyIntakeForm from './components/AttorneyIntakeForm.jsx'
+import TenantDocumentUpload from './components/TenantDocumentUpload.jsx'
+import CaseStatus from './components/CaseStatus.jsx'
+import PaymentPortal from './components/PaymentPortal.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Navbar from './components/Navbar.jsx'
 import AuthProvider from './components/AuthProvider.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
+import TermsOfService from './components/TermsOfService.jsx'
+import PrivacyPolicy from './components/PrivacyPolicy.jsx'
 
 import './App.css'
 import './theme.css'
@@ -29,20 +32,15 @@ import workflowDiagramImage from './assets/workflow_diagram.png'
 
 function App() {
   const [activeTab, setActiveTab] = useState('tenant')
-  const [showIntakeForm, setShowIntakeForm] = useState(false)
-  const [showAttorneyForm, setShowAttorneyForm] = useState(false)
   const [showContactPage, setShowContactPage] = useState(false)
   const [_currentPage, setCurrentPage] = useState('home')
   const [showBlog, setShowBlog] = useState(false)
-  const [showBlogAdmin, setShowBlogAdmin] = useState(false)
   const [selectedBlogPost, setSelectedBlogPost] = useState(null)
   const [showLogin, setShowLogin] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
-  const [userOnboarded, setUserOnboarded] = useState(false)
   const [pendingStartRole, setPendingStartRole] = useState(null)
-  const API_BASE = import.meta.env.VITE_API_BASE_URL
 
   // Handle OAuth callback - extract tokens from URL
   useEffect(() => {
@@ -102,31 +100,6 @@ function App() {
     }
   }, [currentUser])
 
-  // Once currentUser is known, fetch their full user record to determine onboarding state
-  useEffect(() => {
-    const fetchStatus = async () => {
-      if (!currentUser || !currentUser.id) return
-      try {
-        const res = await fetch(`${API_BASE}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        })
-        if (!res.ok) return
-        const data = await res.json().catch(() => ({}))
-        const userRec = data.user || data
-
-        // Heuristics: look for common flags indicating onboarding/profile completion
-        const onboarded = !!(userRec.onboarded || userRec.profile_complete || userRec.has_tenant_profile || userRec.has_attorney_profile || userRec.full_name)
-        setUserOnboarded(onboarded)
-      } catch (e) {
-        console.debug('Could not fetch user onboarding status', e)
-      }
-    }
-
-    fetchStatus()
-  }, [currentUser, API_BASE])
-
   // Handle /blog URL routing early so hooks remain in consistent order
   useEffect(() => {
     if (typeof window !== 'undefined' && (window.location.pathname === '/blog' || window.location.pathname.startsWith('/blog/'))) {
@@ -134,8 +107,24 @@ function App() {
     }
   }, [])
 
-  // If user navigates directly to /admin-panel or /onboarding, render those views
+  // If user navigates directly to /admin-panel, render the admin view
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/'
+
+  if (pathname === '/terms') {
+    return (
+      <ThemeProvider>
+        <TermsOfService />
+      </ThemeProvider>
+    )
+  }
+
+  if (pathname === '/privacy') {
+    return (
+      <ThemeProvider>
+        <PrivacyPolicy />
+      </ThemeProvider>
+    )
+  }
 
   const handleLogout = () => {
     setCurrentUser(null)
@@ -147,33 +136,32 @@ function App() {
     }
   }
 
-  // When user clicks Tenants/Attorneys actions, ensure they're authenticated
-  // If not authenticated -> show login. If authenticated -> forward to onboarding
-  const handleRequireOnboarding = (role) => {
+  const handleStartIntake = (role) => {
     if (!currentUser) {
       setPendingStartRole(role || null)
       setShowLogin(true)
       return
     }
-
-    // Forward authenticated users to onboarding first with explicit start role.
-    if (typeof window !== 'undefined') {
-      const start = role ? `?start=${encodeURIComponent(role)}` : ''
-      window.location.href = `/onboarding${start}`
-    }
+    if (typeof window === 'undefined') return
+    const path = role === 'attorney' ? '/attorney-intake' : '/tenant-intake'
+    window.location.href = path
   }
 
   // Full-page intake routes
   if (pathname === '/tenant-intake') {
     return (
       <ThemeProvider>
-        <ProtectedRoute>
-          <div className="min-h-screen bg-gray-50">
-            <div className="max-w-4xl mx-auto py-12 px-4">
-              <CaseIntakeForm />
-            </div>
-          </div>
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute>
+            <CaseIntakeForm
+              onSuccess={({ caseNumber }) => {
+                if (caseNumber && typeof window !== 'undefined') {
+                  window.location.href = `/tenant-documents?case=${encodeURIComponent(caseNumber)}`
+                }
+              }}
+            />
+          </ProtectedRoute>
+        </AuthProvider>
       </ThemeProvider>
     )
   }
@@ -181,13 +169,41 @@ function App() {
   if (pathname === '/attorney-intake') {
     return (
       <ThemeProvider>
-        <ProtectedRoute>
-          <div className="min-h-screen bg-gray-50">
-            <div className="max-w-4xl mx-auto py-12 px-4">
-              <AttorneyIntakeForm />
-            </div>
-          </div>
-        </ProtectedRoute>
+        <AuthProvider>
+          <ProtectedRoute>
+            <AttorneyIntakeForm
+              onSuccess={({ applicationId }) => {
+                if (applicationId && typeof window !== 'undefined') {
+                  window.location.href = `/payment?type=attorney&application_id=${encodeURIComponent(applicationId)}`
+                }
+              }}
+            />
+          </ProtectedRoute>
+        </AuthProvider>
+      </ThemeProvider>
+    )
+  }
+
+  if (pathname === '/tenant-documents') {
+    return (
+      <ThemeProvider>
+        <TenantDocumentUpload />
+      </ThemeProvider>
+    )
+  }
+
+  if (pathname === '/case-status') {
+    return (
+      <ThemeProvider>
+        <CaseStatus />
+      </ThemeProvider>
+    )
+  }
+
+  if (pathname === '/payment') {
+    return (
+      <ThemeProvider>
+        <PaymentPortal />
       </ThemeProvider>
     )
   }
@@ -207,26 +223,6 @@ function App() {
             />
           </ProtectedRoute>
         </AuthProvider>
-      </ThemeProvider>
-    )
-  }
-
-  if (pathname === '/onboarding') {
-    // If not authenticated, show login prompt
-    if (!currentUser) {
-      return (
-        <ThemeProvider>
-          <div className="flex items-center justify-center min-h-screen bg-gray-50">
-            {(showLogin || !currentUser) && <Login onClose={() => setShowLogin(false)} pendingStartRole={pendingStartRole} setPendingStartRole={setPendingStartRole} onSuccess={(user) => { setCurrentUser(user); setShowLogin(false); }} onSwitchToRegister={() => { setShowLogin(false); setShowRegister(true); }} />}
-          </div>
-        </ThemeProvider>
-      )
-    }
-    
-    // User is authenticated, show onboarding
-    return (
-      <ThemeProvider>
-        <Onboarding user={currentUser} onFinish={() => { if (typeof window !== 'undefined') window.history.replaceState({}, document.title, '/') }} />
       </ThemeProvider>
     )
   }
@@ -269,15 +265,13 @@ function App() {
               setShowContactPage(true);
             }
           }}
-          onTenantClick={() => handleRequireOnboarding('tenant')}
-          onAttorneyClick={() => handleRequireOnboarding('attorney')}
         />
 
         {/* Hero Section */}
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <Badge variant="outline" style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primaryLight)' }} className="mb-6">
-              Tennessee
+              Tenant-first
             </Badge>
             <h1 className="text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>
               Transforming Tenant
@@ -285,14 +279,14 @@ function App() {
             </h1>
             <p className="text-xl mb-8 max-w-3xl mx-auto" style={{ color: 'var(--color-textSecondary)' }}>
               Technology-enabled self-service platform connecting tenants with qualified attorneys
-              for streamlined landlord-tenant dispute resolution in Tennessee.
+              for streamlined landlord-tenant dispute resolution.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
                 style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
                 className="hover:opacity-90"
-                onClick={() => handleRequireOnboarding('tenant')}
+                onClick={() => handleStartIntake('tenant')}
               >
                 Start Your Case <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -301,10 +295,21 @@ function App() {
                 variant="outline"
                 style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', backgroundColor: 'transparent' }}
                 className="hover:opacity-80"
-                onClick={() => handleRequireOnboarding('attorney')}
+                onClick={() => handleStartIntake('attorney')}
               >
                 Attorney Portal
               </Button>
+            </div>
+            <div className="mt-10 max-w-3xl mx-auto">
+              <p className="text-base sm:text-lg mb-4" style={{ color: 'var(--color-textSecondary)' }}>
+                Please listen to this audio clip and you'll hear some of the resons why we are here!
+              </p>
+              <div className="rounded-xl border border-gray-200 bg-white/70 p-4 shadow-sm">
+                <audio className="w-full" controls preload="none">
+                  <source src="/uploads/blog/ce266929685a41989eb78dc5a79e60e8.m4a" type="audio/mp4" />
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
             </div>
           </div>
         </section>
@@ -408,7 +413,7 @@ function App() {
                     <div className="flex items-start space-x-4">
                       <Clock className="h-6 w-6 text-red-800 mt-1" />
                       <div>
-                        <h3 className="text-xl font-semibold mb-2">Reduced Onboarding</h3>
+                        <h3 className="text-xl font-semibold mb-2">Streamlined Intake</h3>
                         <p className="text-gray-600">70% reduction in case setup time</p>
                       </div>
                     </div>
@@ -527,7 +532,7 @@ function App() {
                   <div className="text-4xl font-bold text-red-800 mb-2">70%</div>
                   <CardTitle className="text-lg">Time Savings</CardTitle>
                   <CardDescription>
-                    Attorney case onboarding reduced from 4.5 hours to under 1 hour
+                    Attorney case intake setup reduced from 4.5 hours to under 1 hour
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -572,9 +577,9 @@ function App() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-gray-600">
-                    <li>Node.js</li>
-                    <li>Express</li>
-                    <li>MongoDB</li>
+                    <li>Node.JS</li>
+                    <li>Next.JS</li>
+                    <li>PostgreSQL</li>
                   </ul>
                 </CardContent>
               </Card>
@@ -584,8 +589,8 @@ function App() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-gray-600">
-                    <li>AWS Cloud</li>
-                    <li>Docker</li>
+                    <li>Google Cloud</li>
+                    <li>Integrated AI</li>
                     <li>CI/CD Pipeline</li>
                   </ul>
                 </CardContent>
@@ -604,10 +609,10 @@ function App() {
               Join the platform that's revolutionizing landlord-tenant dispute resolution in Tennessee.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100" onClick={() => handleRequireOnboarding('tenant')}>
+              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100" onClick={() => handleStartIntake('tenant')}>
                 Get Started as Tenant
               </Button>
-              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100 border-2 border-white" onClick={() => handleRequireOnboarding('attorney')}>
+              <Button size="lg" variant="secondary" className="bg-white text-red-800 hover:bg-gray-100 border-2 border-white" onClick={() => handleStartIntake('attorney')}>
                 Join as Attorney
               </Button>
             </div>
@@ -634,13 +639,15 @@ function App() {
                   <li><button onClick={() => scrollToSection('features')} className="hover:text-white">Features</button></li>
                   <li><button onClick={() => scrollToSection('how-it-works')} className="hover:text-white">How It Works</button></li>
                   <li><button onClick={() => setShowContactPage(true)} className="hover:text-white">Contact</button></li>
+                  <li><a href="/terms" className="hover:text-white">Terms of Service</a></li>
+                  <li><a href="/privacy" className="hover:text-white">Privacy Policy</a></li>
                 </ul>
               </div>
               <div>
                 <h3 className="font-semibold mb-4">For Users</h3>
                 <ul className="space-y-2 text-gray-400 text-sm">
-                  <li><button onClick={() => handleRequireOnboarding('tenant')} className="hover:text-white">Tenant Portal</button></li>
-                  <li><button onClick={() => handleRequireOnboarding('attorney')} className="hover:text-white">Attorney Portal</button></li>
+                  <li><button onClick={() => handleStartIntake('tenant')} className="hover:text-white">Tenant Portal</button></li>
+                  <li><button onClick={() => handleStartIntake('attorney')} className="hover:text-white">Attorney Portal</button></li>
                 </ul>
               </div>
               <div>
@@ -658,23 +665,13 @@ function App() {
           </div>
         </footer>
 
-        {/* Case Intake Form Modal */}
-        {showIntakeForm && (
-          <CaseIntakeForm onClose={() => setShowIntakeForm(false)} />
-        )}
-
-        {/* Attorney Intake Form Modal */}
-        {showAttorneyForm && (
-          <AttorneyIntakeForm onClose={() => setShowAttorneyForm(false)} />
-        )}
-
         {/* Contact Page Modal */}
         {showContactPage && (
           <ContactPage onClose={() => setShowContactPage(false)} />
         )}
 
         {/* Blog Pages */}
-        {showBlog && !selectedBlogPost && !showBlogAdmin && (
+        {showBlog && !selectedBlogPost && (
           <div className="fixed inset-0 bg-white z-50 overflow-y-auto" style={{ backgroundColor: 'var(--color-background)' }}>
             <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b sticky top-0 z-10">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -684,9 +681,6 @@ function App() {
                     <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard Blog</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {currentUser && currentUser.role === 'admin' && (
-                      <Button variant="outline" onClick={() => setShowBlogAdmin(true)}>Admin</Button>
-                    )}
                     <Button onClick={() => setShowBlog(false)}>Close</Button>
                   </div>
                 </div>
@@ -713,23 +707,6 @@ function App() {
           </div>
         )}
 
-        {showBlogAdmin && currentUser && currentUser.role === 'admin' && (
-          <div className="fixed inset-0 bg-white z-50 overflow-y-auto" style={{ backgroundColor: 'var(--color-background)' }}>
-            <header style={{ backgroundColor: 'var(--color-navBg)', borderColor: 'var(--color-navBorder)' }} className="shadow-sm border-b sticky top-0 z-10">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center py-4">
-                  <div className="flex items-center space-x-3">
-                    <img src={logo} alt="TenantGuard" className="h-8 w-8" />
-                    <span className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>TenantGuard Blog Admin</span>
-                  </div>
-                  <Button onClick={() => setShowBlogAdmin(false)}>Close</Button>
-                </div>
-              </div>
-            </header>
-            <BlogAdmin onBack={() => setShowBlogAdmin(false)} currentUser={currentUser} />
-          </div>
-        )}
-
         {/* Login Modal */}
         {showLogin && !currentUser && (
           <Login
@@ -740,14 +717,9 @@ function App() {
               setCurrentUser(user)
               setShowLogin(false)
               if (pendingStartRole) {
-                const start = `?start=${encodeURIComponent(pendingStartRole)}`
+                const path = pendingStartRole === 'attorney' ? '/attorney-intake' : '/tenant-intake'
                 setPendingStartRole(null)
-                if (typeof window !== 'undefined') window.location.href = `/onboarding${start}`
-              } else {
-                // If user wasn't coming from a CTA, but isn't onboarded, send them to onboarding
-                if (!userOnboarded && typeof window !== 'undefined') {
-                  window.location.href = '/onboarding'
-                }
+                if (typeof window !== 'undefined') window.location.href = path
               }
             }}
             onSwitchToRegister={() => {

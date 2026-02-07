@@ -9,6 +9,7 @@ All processing follows this order:
 5. UI Publication
 
 Agents may NOT:
+
 - bypass the Case Notebook
 - prompt directly from raw documents
 - mix inference with fact without labeling

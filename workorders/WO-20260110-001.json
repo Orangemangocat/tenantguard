@@ -1,0 +1,44 @@
+{
+  "id": "WO-20260110-001",
+  "title": "Investigate AI blog generation scheduling and visibility",
+  "scope": [
+    "Identify where the blog article generation job is triggered (frontend-next, backend worker, or scripts)",
+    "Verify the meaning and source of the '5 days' setting and how it impacts queue polling",
+    "Ensure generation attempts are logged or surfaced so users can confirm a run was attempted",
+    "Fix scheduling or trigger behavior if the job is not running as configured"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "frontend-next/**",
+    "scripts/**",
+    "docs/**",
+    ".github/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "The location and behavior of the blog generation trigger is documented or verified in code",
+    "The '5 days' setting is mapped to an explicit interval or cron and confirmed in code",
+    "Generation attempts are observable (log entry or UI/admin indicator)",
+    "If a bug exists, it is fixed so the queue polling interval matches the configured setting"
+  ],
+  "risk_notes": [
+    "Changing scheduling frequency could increase load or duplicate posts",
+    "Logging changes could leak too much detail if not scoped to admin/internal views"
+  ],
+  "rollback_plan": [
+    "Revert the scheduling or logging changes",
+    "Restore the previous interval configuration"
+  ]
+}

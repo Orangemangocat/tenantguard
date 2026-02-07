@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress.jsx'
 import { Badge } from '@/components/ui/badge.jsx'
 import { ArrowLeft, ArrowRight, Upload, CheckCircle, AlertCircle, Phone, Mail, MessageSquare } from 'lucide-react'
 
-const CaseIntakeForm = ({ onClose }) => {
+const CaseIntakeForm = ({ onClose, onSuccess }) => {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     // Contact Information
@@ -88,43 +88,134 @@ const CaseIntakeForm = ({ onClose }) => {
 
   const nextStep = () => {
     if (currentStep < totalSteps) {
+      if (!validateStep(currentStep)) {
+        return
+      }
       setCurrentStep(currentStep + 1)
+      setFormError('')
     }
   }
 
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
+      setFormError('')
     }
   }
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
+
+  const stepRequirements = {
+    1: [
+      { key: 'firstName', label: 'First name' },
+      { key: 'lastName', label: 'Last name' },
+      { key: 'email', label: 'Email address' },
+      { key: 'phone', label: 'Phone number' },
+      { key: 'preferredContact', label: 'Preferred contact method' },
+      { key: 'address', label: 'Street address' },
+      { key: 'city', label: 'City' },
+      { key: 'zipCode', label: 'Zip code' }
+    ],
+    3: [
+      { key: 'propertyAddress', label: 'Rental property address' },
+      { key: 'propertyType', label: 'Property type' },
+      { key: 'monthlyRent', label: 'Monthly rent' },
+      { key: 'moveInDate', label: 'Move-in date' },
+      { key: 'leaseType', label: 'Lease type' }
+    ],
+    4: [
+      { key: 'landlordName', label: 'Landlord or property manager name' }
+    ],
+    5: [
+      { key: 'disputeType', label: 'Housing issue type', type: 'array' }
+    ],
+    6: [
+      { key: 'caseSummary', label: 'Case summary' },
+      { key: 'desiredOutcome', label: 'Desired outcome' }
+    ],
+    8: [
+      { key: 'privacyConsent', label: 'Privacy consent', type: 'boolean' }
+    ]
+  }
+
+  const validateStep = (step) => {
+    const requirements = stepRequirements[step] || []
+    const missing = []
+    requirements.forEach((field) => {
+      if (field.type === 'boolean') {
+        if (!formData[field.key]) {
+          missing.push(field.label)
+        }
+        return
+      }
+      if (field.type === 'array') {
+        const value = formData[field.key]
+        if (!Array.isArray(value) || value.length === 0) {
+          missing.push(field.label)
+        }
+        return
+      }
+      const value = formData[field.key]
+      if (!value || String(value).trim() === '') {
+        missing.push(field.label)
+      }
+    })
+
+    if (missing.length > 0) {
+      setFormError(`Please complete: ${missing.join(', ')}.`)
+      return false
+    }
+
+    setFormError('')
+    return true
+  }
 
   const handleSubmit = async () => {
     try {
+      if (!validateStep(currentStep)) {
+        return
+      }
       setIsSubmitting(true)
       
+      const payload = {
+        ...formData,
+        streetAddress: formData.address,
+        rentalAddress: formData.propertyAddress,
+        hasDisability: formData.isDisabled,
+        hasChildren: formData.hasChildren,
+        hasHousingAssistance: formData.hasGovernmentAssistance,
+        issueType: formData.disputeType?.[0] || '',
+        issueDescription: formData.caseSummary,
+        issueStartDate: formData.problemStartDate
+      }
+
       // Submit data to backend API
       const response = await fetch('/api/cases', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       })
       
       const result = await response.json()
       
       if (response.ok && result.success) {
+        const caseNumber = result.case?.case_number
+        if (onSuccess && caseNumber) {
+          onSuccess({ caseNumber, case: result.case })
+          return
+        }
         // Show success message with case number
-        alert(`Case submitted successfully! Your case number is: ${result.case.case_number}. You will receive a confirmation email shortly.`)
-        onClose()
+        alert(`Case submitted successfully! Your case number is: ${caseNumber}. You will receive a confirmation email shortly.`)
+        if (onClose) onClose()
       } else {
         throw new Error(result.error || 'Failed to submit case')
       }
     } catch (error) {
       console.error('Error submitting case:', error)
-      alert('There was an error submitting your case. Please try again or contact support.')
+      alert(error.message || 'There was an error submitting your case. Please try again or contact support.')
     } finally {
       setIsSubmitting(false)
     }
@@ -139,7 +230,7 @@ const CaseIntakeForm = ({ onClose }) => {
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Contact Information</h2>
               <p className="text-gray-600">Let's start with your basic contact details</p>
             </div>
-            
+
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">First Name *</Label>
@@ -900,6 +991,11 @@ const CaseIntakeForm = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          {formError && (
+            <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {formError}
+            </div>
+          )}
           {renderStep()}
         </div>
 

@@ -1,0 +1,35 @@
+{
+  "id": "WO-20260113-001",
+  "title": "Frontpage update",
+  "scope": [
+    "Update frontpage hero, messaging, and call-to-action in the Vite React frontend.",
+    "Ensure frontpage layout and styling are responsive across mobile and desktop."
+  ],
+  "allowed_paths": [
+    "frontend/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Frontpage hero copy, CTA, and supporting sections are updated per approved requirements.",
+    "Frontpage renders correctly on mobile and desktop breakpoints without layout regressions.",
+    "No new frontend lint or build errors are introduced."
+  ],
+  "risk_notes": [
+    "Unintended visual regressions on the landing page.",
+    "CTA routing or copy mismatches with product messaging."
+  ],
+  "rollback_plan": [
+    "Revert frontpage component and style changes to the previous working state."
+  ]
+}

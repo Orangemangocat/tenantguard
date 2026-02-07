@@ -1,0 +1,39 @@
+{
+  "id": "WO-20260111-004",
+  "title": "Add Quill media upload handlers for blog editor",
+  "scope": [
+    "Implement Quill upload handlers for images, videos, and audio in blog management.",
+    "Use the existing blog media upload endpoint and static uploads path."
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "frontend-next/**",
+    "scripts/**",
+    "docs/**",
+    ".github/**",
+    "workorders/**"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Blog editor toolbar includes media upload actions.",
+    "Uploaded images/videos/audio are inserted into the editor content.",
+    "Uploads use `/api/admin/blog-posts/media` and store files under `static/uploads/blog`."
+  ],
+  "risk_notes": [
+    "Large media files may impact page performance if embedded directly.",
+    "Browser MIME type detection varies for MP4 audio."
+  ],
+  "rollback_plan": [
+    "Revert Quill toolbar media handlers in `frontend/src/components/BlogManagement.jsx`."
+  ]
+}

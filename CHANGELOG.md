@@ -1,0 +1,73 @@
+# Changelog
+
+- 2026-02-07: Added workorder `WO-20260207-005` for SEO ping logging and compliance improvements.
+- 2026-02-07: Logged Search Console sitemap pings on publish and added SEO/compliance prompt guidance for AI blog drafts (WO-20260207-005).
+- 2026-02-07: Added workorder `WO-20260207-004` for daily topic generation and medium quality checks.
+- 2026-02-07: Automated daily TenantGuard topic creation and medium quality checks for AI blog drafts (WO-20260207-004).
+- 2026-02-07: Added workorder `WO-20260207-003` to fix attorney list/search API failures.
+- 2026-02-07: Fixed attorney list/search API endpoints by adding offset handling and search filtering to the attorney model (WO-20260207-003).
+- 2026-02-07: Added workorder `WO-20260207-002` for AI automated blog major-update runtime fix.
+- 2026-02-07: Fixed `name 'os' is not defined` in the AI major-update queue endpoint by importing `os` in blog admin routes (WO-20260207-002).
+- 2026-02-07: Added workorder `WO-20260207-001` for frontend-next blog body rendering fixes.
+- 2026-02-07: Added markdown fallback rendering and readable typography classes for frontend-next blog post bodies (WO-20260207-001).
+- 2026-01-21: Documented OCR dependencies for intake document analysis (WO-20260121-002).
+- 2026-01-21: Added OCR-backed text extraction for PDFs and images using pytesseract/pdf2image (WO-20260121-002).
+- 2026-01-21: Added PDF text extraction with OCR-required detection for intake document analysis (WO-20260121-002).
+- 2026-01-21: Queued intake document analysis and persisted notebook/analysis artifacts to GCS (WO-20260121-002).
+- 2026-01-21: Stored intake uploads exclusively in the GCS intake bucket when configured (WO-20260121-001).
+- 2026-01-21: Added workorder WO-20260121-002 to scope intake document LLM analysis (WO-20260121-002).
+- 2026-01-21: Uploaded intake documents and case notebook snapshots to the configured GCS intake bucket (WO-20260121-001).
+- 2026-01-20: Added configurable public site URLs for sitemap/robots and frontend canonical metadata, plus aligned Next blog metadata with canonicals (WO-20260120-003).
+- 2026-01-20: Set legal page effective dates and centered footer copy on Terms/Privacy pages (WO-20260120-002).
+- 2026-01-20: Added Terms of Service and Privacy Policy pages for frontend and docs (WO-20260120-002).
+- 2026-01-20: Added Search Console sitemap visibility endpoint and dashboard SEO visibility card, plus sitemap ping on blog publish (WO-20260120-001).
+- 2026-01-19: Reimagined the admin overview with operational cards, queue snapshot, and intake status panels, plus added attorney intake admin tab and stats helper (WO-20260119-001).
+- 2026-01-19: Fixed case stats window calculation to avoid invalid dates in admin overview metrics (WO-20260119-001).
+- 2026-01-19: Replaced onboarding/chat intake with form-based intake, document upload, case status, and Stripe payment portal flow (WO-20260119-002).
+- 2026-01-19: Required authentication before accessing tenant or attorney intake forms (WO-20260119-002).
+- 2026-01-19: Added required-field validation and clearer errors for tenant and attorney intake submissions (WO-20260119-002).
+- 2026-01-19: Switched tenant and attorney intake validation to per-step checks (WO-20260119-002).
+- 2026-01-19: Aligned tenant intake submission payload with backend field names (WO-20260119-002).
+- 2026-01-19: Added explicit Stripe config error reporting for checkout session creation (WO-20260119-002).
+- 2026-01-13: Updated COMPLETE_SYSTEM_DOCUMENTATION.md to reflect current architecture, repo layout, and control-plane alignment (WO-20260113-003).
+- 2026-01-13: Updated GROUPS_SYSTEM_DOCUMENTATION.md to reflect current groups endpoints and permissions (WO-20260113-004).
+- 2026-01-13: Updated DEPLOYMENT.md to align paths, services, and configuration with current repo (WO-20260113-005).
+- 2026-01-13: Updated README.md to reflect current repo layout, features, and endpoints (WO-20260113-006).
+- 2026-01-13: Added group membership controls to admin user management (WO-20260113-007).
+- 2026-01-13: Added inline group role badges to the admin user list (WO-20260113-007).
+- 2026-01-13: Added 10px right padding to mobile navbar dropdown content (WO-20260113-002).
+- 2026-01-13: Refined mobile dropdown alignment for navbar menu items (WO-20260113-002).
+- 2026-01-13: Right-aligned mobile dropdown menu items in the navbar (WO-20260113-002).
+- 2026-01-13: Added workorder `WO-20260113-002` for mobile dropdown alignment.
+- 2026-01-13: Added frontpage hero audio embed and listen prompt (WO-20260113-001).
+- 2026-01-13: Added workorder `WO-20260113-001` for the frontpage update.
+- 2026-01-12: Added byte-based MAX_CONTENT_LENGTH override support for large blog media uploads (WO-20260112-005).
+- 2026-01-12: Added blog media attachment field with audio/video embeds and admin preview (WO-20260112-006).
+- 2026-01-12: Increased Flask upload size limit for blog media uploads (WO-20260112-005).
+- 2026-01-12: Added markdown rendering fallback in the public blog post view (WO-20260112-004).
+- 2026-01-12: Normalized markdown in public blog endpoints to preserve formatting after edits (WO-20260112-003).
+- 2026-01-12: Converted AI blog markdown to HTML for admin edits and saves to preserve formatting (WO-20260112-002).
+- 2026-01-12: Normalized blog media URLs to drop the /static prefix in admin uploads and UI (WO-20260112-001).
+- 2026-01-11: Registered a Quill audio blot and improved media upload error messaging in blog management (WO-20260111-004).
+- 2026-01-11: Fixed admin blog post update/approve/publish handlers to accept admin user from the decorator (WO-20260111-001).
+- 2026-01-11: Added Quill media upload handlers for image, video, and audio embeds (WO-20260111-004).
+- 2026-01-11: Replaced TinyMCE with Quill in blog management to remove API key dependency (WO-20260111-003).
+- 2026-01-11: Ensured blog list and detail views always render a fallback image when posts lack one (WO-20260111-002).
+- 2026-01-11: Blog management update now reads editor content on submit to stabilize the Update Post flow (WO-20260111-001).
+- 2026-01-11: Expanded `scripts/update_blog_posts.py` to validate existing featured images and backfill missing files (WO-update-blog-posts-db-fix).
+- 2026-01-11: Updated `scripts/update_blog_posts.py` to generate AI featured images for posts missing images (WO-update-blog-posts-db-fix).
+- 2026-01-10: Added workorder `WO-blog-quirks` to fix blog admin image/date fields and ordering issues.
+- 2026-01-10: Added blog admin image/date inputs, stored published dates, and ordered public listings by published/created date.
+- 2026-01-10: Added featured image upload endpoint and admin UI uploader for blog posts (WO-blog-quirks).
+- 2026-01-10: Allowed relative paths in the blog featured image field (WO-blog-quirks).
+- 2026-01-10: Removed the /blog admin overlay and added a rich text editor with media uploads for blog posts (WO-blog-quirks).
+- 2026-01-10: Wired TinyMCE to read the API key from env configuration (WO-blog-quirks).
+- 2026-01-10: Added published date column to the blog management table (WO-blog-quirks).
+- 2026-01-10: Stabilized IntakeChat auto-scroll to prevent window scroll jumps (WO-20260110-003).
+- 2026-01-10: Added workorder `WO-20260110-003` to investigate IntakeChat scrollbar behavior.
+- 2026-01-10: Added workorder `WO-20260110-002` and removed Tennessee references from the front-page hero copy.
+- 2026-01-10: Fixed AI blog admin panel to load posts from the admin blog posts endpoint.
+- 2026-01-10: Added workorder `WO-20260110-001` for AI blog generation scheduling/visibility investigation.
+- 2026-01-10: Fixed blog scheduler cron target path, clarified cadence text, and surfaced job IDs in blog AI admin UI.
+- 2026-01-10: Added UI controls for blog cadence in hours and updated schedule/analytics to report hours.
+- 2026-01-10: Added a worker launch script and ensured worker entrypoint adds repo root for RQ imports.

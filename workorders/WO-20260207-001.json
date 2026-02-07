@@ -1,0 +1,37 @@
+{
+  "id": "WO-20260207-001",
+  "title": "Fix frontend-next blog post body rendering",
+  "scope": [
+    "Add markdown-to-HTML fallback rendering in the frontend-next blog detail route",
+    "Keep existing HTML blog bodies rendering unchanged",
+    "Adjust blog body typography classing so text remains readable in light and dark themes",
+    "Record the update in CHANGELOG.md"
+  ],
+  "allowed_paths": [
+    "frontend-next/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Blog detail pages in frontend-next render markdown bodies as formatted HTML when the backend returns non-HTML content",
+    "Blog detail pages in frontend-next continue to render stored HTML content without escaping it",
+    "Body text remains readable in light mode and dark mode",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "Simple markdown fallback parsing may not cover every markdown edge case such as nested lists"
+  ],
+  "rollback_plan": [
+    "Revert frontend-next blog detail renderer changes and remove this work order/changelog entry"
+  ]
+}

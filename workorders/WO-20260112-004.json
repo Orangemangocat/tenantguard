@@ -1,0 +1,35 @@
+{
+  "id": "WO-20260112-004",
+  "title": "Render markdown in public blog post view",
+  "scope": [
+    "Add a markdown-to-HTML fallback renderer for public blog posts",
+    "Ensure public blog view renders markdown when HTML is absent",
+    "Record the update in the changelog"
+  ],
+  "allowed_paths": [
+    "frontend/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Public blog post view renders markdown content with headings, lists, and links",
+    "Existing HTML content continues to render without modification",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "Simple markdown parsing may miss edge cases like nested lists"
+  ],
+  "rollback_plan": [
+    "Revert the markdown renderer and restore newline replacement"
+  ]
+}
