@@ -6,10 +6,10 @@ Agents must operate in PATCH-ONLY mode. No direct overwrites. All changes are de
 
 ## ALL AGENTS MUST READ 'docs/control-plane' IMMEDIATELY
 
-- Once you're ve read and understand the control-plane, you MUST say to the user:
+- Once you've read and understand the control-plane, you MUST say to the user:
    "I UNDERSTAND THE CONTROL-PLANE DOCUMENTATION!"
 - If you discover inconsistencies in this file that need to be updated please let the user know immediately
-   and request permission to update this file, AGENTS.md, the README.md, or any other files that docuement procedures and/or file/naming conventions that need to be updated.
+   and request permission to update this file, AGENTS.md, the README.md, or any other files that document procedures and/or file/naming conventions that need to be updated.
 
 Repo layout:
 
@@ -151,4 +151,23 @@ Do NOT touch blocked paths (env/secrets/credentials/__pycache__/*.pyc/sqlite db/
 Begin by listing the exact files you will change and follow with your plan (proposed solution).
 
 ---
-Version: v0.2
+## 7) Chat-Only Workflow (Recommended)
+
+When the user wants changes from chat (no IDE), follow this sequence:
+
+1. Create a Work Order JSON:
+   - `venv/bin/python scripts/new_workorder.py --title "Short task title"`
+2. Build the AI task packet:
+   - `venv/bin/python scripts/build_ai_packet.py --task "Describe requested change" --workorder WO-YYYYMMDD-### --output /tmp/tenantguard-ai-packet.md`
+3. Extract patch from AI response:
+   - `venv/bin/python scripts/extract_ai_patch.py --response /tmp/ai-response.md --output /tmp/tenantguard-ai.patch`
+4. Validate and apply patch:
+   - `venv/bin/python scripts/apply_patch.py --patch /tmp/tenantguard-ai.patch --check`
+   - `venv/bin/python scripts/apply_patch.py --patch /tmp/tenantguard-ai.patch`
+5. Run verification commands from Section 5.
+6. Update `CHANGELOG.md` and ensure Work Order acceptance criteria are met before PR.
+
+Reference guide: `docs/conversational-ai-workflow.md`
+
+---
+Version: v0.3

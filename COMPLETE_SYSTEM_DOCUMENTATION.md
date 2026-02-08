@@ -72,6 +72,17 @@ Key models defined in `src/models/` include:
 - AI helpers for case/blog processing in `src/services/`.
 - Optional cloud storage helpers (see `src/services/gcs_storage.py`).
 
+## Development Workflow (Patch-Only + Chat-Only)
+- All agent changes must start with a Work Order JSON in `workorders/`.
+- Patch-only output is required: no direct file replacement responses.
+- For conversational/no-IDE changes, use:
+  - `scripts/new_workorder.py`
+  - `scripts/build_ai_packet.py`
+  - `scripts/extract_ai_patch.py`
+  - `scripts/apply_patch.py`
+- The canonical runbook is `docs/conversational-ai-workflow.md`.
+- Any completed Work Order must be reflected in `CHANGELOG.md`.
+
 ## Deployment Notes
 - Build the frontend with Vite (`frontend/`) and ensure static assets are available in `src/static/` if you want Flask to serve the SPA.
 - The backend auto-creates tables on startup where possible, but Alembic migrations exist for managed environments.

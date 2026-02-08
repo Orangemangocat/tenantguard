@@ -83,7 +83,7 @@ tenantguard/
 
 ## API Endpoints
 
-### Case Management
+### Case Managementgit
 - `POST /api/cases` - Create new case
 - `GET /api/cases` - List all cases
 - `GET /api/cases/{case_number}` - Get specific case
@@ -170,7 +170,7 @@ rsync -a --delete dist/ ../src/static/
 
 ## Conversational AI Workflow (No IDE)
 
-You can drive repo changes from any chat AI that can return unified diffs.
+You can drive repo changes from any chat AI that can return unified diffs. This is the preferred path for remote or no-IDE contribution workflows.
 
 ```bash
 venv/bin/python scripts/new_workorder.py --title "Short task title"
@@ -180,7 +180,11 @@ venv/bin/python scripts/apply_patch.py --patch /tmp/tenantguard-ai.patch --check
 venv/bin/python scripts/apply_patch.py --patch /tmp/tenantguard-ai.patch
 ```
 
-Full workflow: `docs/conversational-ai-workflow.md`
+Required process details:
+- Read and follow `AGENTS.md`
+- Use a Work Order from `workorders/`
+- Follow `docs/conversational-ai-workflow.md`
+- Update `CHANGELOG.md` after work is complete
 
 ## Deployment
 

@@ -2,6 +2,14 @@
 
 This workflow lets you use any chat AI that can return unified diffs, while keeping TenantGuard's patch-only contract.
 
+## 0) Load the Repo Contract First
+
+Before requesting any code change, provide the AI with:
+- `AGENTS.md`
+- `docs/control-plane/` (or at least `docs/control-plane/00_READ_FIRST/`)
+
+The AI must explicitly confirm control-plane understanding before acting.
+
 ## 1) Create a Work Order
 
 Create a scoped JSON work order before asking an AI to modify code:
@@ -78,3 +86,9 @@ venv/bin/python -c "import importlib; importlib.import_module('src.worker')"
 ## 7) Commit and Open PR
 
 Keep commits scoped to the Work Order and include the Work Order ID in commit/PR notes.
+
+## 8) Keep Documentation in Sync
+
+If behavior or process changed, update:
+- `CHANGELOG.md`
+- `docs/control-plane/99_CHANGELOG/CHANGELOG.md` when control-plane files changed

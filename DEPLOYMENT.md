@@ -11,7 +11,7 @@ The TenantGuard platform requires a Linux server with the following specificatio
 - Ubuntu 20.04+ or similar Linux distribution
 
 **Required Software:**
-- Python 3.11 or higher
+- Python 3.12 or higher
 - Nginx web server
 - SSL certificate support
 - Git for version control
@@ -25,7 +25,7 @@ The TenantGuard platform requires a Linux server with the following specificatio
 sudo apt update && sudo apt upgrade -y
 
 # Install Python and pip
-sudo apt install python3.11 python3.11-pip python3.11-venv -y
+sudo apt install python3.12 python3.12-pip python3.12-venv -y
 
 # Install Nginx
 sudo apt install nginx -y
@@ -61,7 +61,7 @@ cd /var/www/tenantguard
 
 # Set up Python virtual environment
 cd /var/www/tenantguard
-python3.11 -m venv venv
+python3.12 -m venv venv
 source venv/bin/activate
 
 # Install Python dependencies

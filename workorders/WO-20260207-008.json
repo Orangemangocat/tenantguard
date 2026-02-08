@@ -1,12 +1,12 @@
 {
-  "id": "WO-20260207-007",
-  "title": "Align documented Python version requirements across repository docs",
+  "id": "WO-20260207-008",
+  "title": "Align deployment documentation with Python 3.12 baseline",
   "scope": [
-    "Update README Python version references to match AGENTS.md and local runtime",
-    "Record the documentation alignment in CHANGELOG.md"
+    "Update deployment prerequisites and setup commands from Python 3.11 to 3.12",
+    "Record the documentation update in CHANGELOG.md"
   ],
   "allowed_paths": [
-    "README.md",
+    "DEPLOYMENT.md",
     "CHANGELOG.md",
     "workorders/**"
   ],
@@ -21,13 +21,13 @@
     "frontend/pnpm-lock.yaml"
   ],
   "acceptance_criteria": [
-    "README.md Python version references align with AGENTS.md at Python 3.12",
+    "DEPLOYMENT.md references Python 3.12 for requirements and setup commands",
     "CHANGELOG.md includes an entry for this work order"
   ],
   "risk_notes": [
     "Documentation-only change; no runtime behavior impact"
   ],
   "rollback_plan": [
-    "Revert the README.md and CHANGELOG.md edits from this work order"
+    "Revert DEPLOYMENT.md and CHANGELOG.md edits from this work order"
   ]
 }
