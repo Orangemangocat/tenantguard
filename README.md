@@ -17,17 +17,20 @@ This is a **full-stack web application** consisting of:
 ## Features
 
 ### For Tenants
+
 - **Guided Intake**: Multi-step intake form and intake chat flow
 - **Evidence Capture**: Intake fields capture evidence and notice details
 - **Status Updates**: Case status tracking via API
 - **Mobile Responsive**: Works on all devices
 
 ### For Attorneys
+
 - **Attorney Intake**: Multi-step intake form and intake chat flow
 - **Profile Details**: Credentials, experience, service areas
 - **Case Matching**: Backend matching endpoint
 
 ### Admin and Content
+
 - **Admin Dashboards**: Intake review and admin panels
 - **Blog Management**: Admin blog editor, approvals, and publishing
 - **Groups**: Team-based group and membership management
@@ -61,6 +64,7 @@ tenantguard/
 ## Technology Stack
 
 ### Frontend
+
 - **React 18**: Modern React with hooks
 - **Tailwind CSS**: Utility-first CSS framework
 - **Shadcn/UI**: High-quality UI components
@@ -68,6 +72,7 @@ tenantguard/
 - **Vite**: Fast build tool and development server
 
 ### Backend
+
 - **Flask**: Lightweight Python web framework
 - **SQLAlchemy**: ORM and database layer
 - **PostgreSQL**: Primary database configuration
@@ -76,6 +81,7 @@ tenantguard/
 - **Python 3.12**: Modern Python runtime
 
 ### Infrastructure
+
 - **Static File Serving**: Integrated frontend/backend
 - **RESTful APIs**: Clean API design
 - **Database Migrations**: Alembic migrations
@@ -83,7 +89,8 @@ tenantguard/
 
 ## API Endpoints
 
-### Case Managementgit
+### Case Management
+
 - `POST /api/cases` - Create new case
 - `GET /api/cases` - List all cases
 - `GET /api/cases/{case_number}` - Get specific case
@@ -96,6 +103,7 @@ tenantguard/
 - `POST /api/cases/{case_number}/process` - Trigger case processing
 
 ### Attorney Management
+
 - `POST /api/attorneys` - Create attorney application
 - `GET /api/attorneys` - List all attorneys
 - `GET /api/attorneys/{application_id}` - Get specific attorney
@@ -106,6 +114,7 @@ tenantguard/
 - `POST /api/attorneys/match` - Match attorneys to cases
 
 ### Group Management
+
 - `GET /api/groups` - List groups
 - `POST /api/groups` - Create group
 - `GET /api/groups/{group_id}` - Group details
@@ -117,11 +126,13 @@ See `src/routes/` for the full API surface.
 ## Database Schema
 
 ### Cases Table
+
 - Tenant contact and property details
 - Legal issue and notice details
 - Case status tracking
 
 ### Attorneys Table
+
 - Professional credentials and experience
 - Practice areas and expertise levels
 - Case preferences and capacity
@@ -130,6 +141,7 @@ See `src/routes/` for the full API surface.
 - Service coverage areas
 
 ### Additional Models
+
 - Auth users, groups, and group memberships
 - Blog content and topics
 - Case analyses and AI artifacts
@@ -137,6 +149,7 @@ See `src/routes/` for the full API surface.
 ## Quick Start
 
 ### Prerequisites
+
 - Python 3.12+
 - Node.js 18+
 - pnpm or npm
@@ -145,6 +158,7 @@ See `src/routes/` for the full API surface.
   - Poppler utilities (`poppler-utils`)
 
 ### Backend Setup
+
 ```bash
 cd /path/to/tenantguard
 python -m venv venv
@@ -154,6 +168,7 @@ python src/main.py
 ```
 
 ### Frontend Development
+
 ```bash
 cd frontend
 pnpm install
@@ -161,6 +176,7 @@ pnpm run dev
 ```
 
 ### Production Build
+
 ```bash
 cd frontend
 pnpm run build
@@ -181,6 +197,7 @@ venv/bin/python scripts/apply_patch.py --patch /tmp/tenantguard-ai.patch
 ```
 
 Required process details:
+
 - Read and follow `AGENTS.md`
 - Use a Work Order from `workorders/`
 - Follow `docs/conversational-ai-workflow.md`
@@ -189,6 +206,7 @@ Required process details:
 ## Deployment
 
 See `DEPLOYMENT.md` for detailed deployment instructions including:
+
 - Server requirements
 - Nginx configuration
 - SSL certificate setup
@@ -199,7 +217,9 @@ See `DEPLOYMENT.md` for detailed deployment instructions including:
 ## Key Features Implementation
 
 ### Multi-Step Forms
+
 Both tenant and attorney intake forms use a sophisticated multi-step wizard with:
+
 - Progress tracking
 - Data validation
 - State persistence
@@ -207,7 +227,9 @@ Both tenant and attorney intake forms use a sophisticated multi-step wizard with
 - Professional UI/UX
 
 ### Case-Attorney Matching
+
 Intelligent matching algorithm considers:
+
 - Geographic service areas
 - Practice area expertise
 - Case type preferences
@@ -215,7 +237,9 @@ Intelligent matching algorithm considers:
 - Experience levels
 
 ### Data Management
+
 Comprehensive data handling with:
+
 - Input validation and sanitization
 - Error handling and logging
 - Search and filtering capabilities
@@ -223,6 +247,7 @@ Comprehensive data handling with:
 - Audit trails
 
 ## Security Features
+
 - Input validation and sanitization
 - CORS configuration
 - SQL injection prevention
@@ -230,6 +255,7 @@ Comprehensive data handling with:
 - Secure file upload handling
 
 ## Performance Optimizations
+
 - Static file serving
 - Database indexing
 - Efficient queries
@@ -237,7 +263,9 @@ Comprehensive data handling with:
 - Image optimization
 
 ## Browser Support
+
 Modern evergreen browsers (Chrome, Firefox, Safari, Edge)
+
 ## CI Secrets
 
 We use a dedicated CI secret name for repository CI tasks (notably running database migrations during preview/deploy workflows).
@@ -252,12 +280,13 @@ Recommended additional secrets used by CI/deploy workflows:
 
 Note: After adding `CI_DB_URL` to repository secrets, update `.github/workflows/vercel-preview.yml` (if needed) to reference `CI_DB_URL` for migration steps instead of any other DB secret name. Be sure secrets are scoped appropriately (deployment vs preview) according to your environment strategy.
 
-
 ## License
+
 Proprietary - TenantGuard Platform
 
 ## Support
-For technical support or questions about the platform, contact the development team.
+
+For technical support or questions about the platform, contact the development team
 ---
 
 **TenantGuard** - Transforming tenant legal representation in Tennessee.

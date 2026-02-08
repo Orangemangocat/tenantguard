@@ -151,6 +151,7 @@ Do NOT touch blocked paths (env/secrets/credentials/__pycache__/*.pyc/sqlite db/
 Begin by listing the exact files you will change and follow with your plan (proposed solution).
 
 ---
+
 ## 7) Chat-Only Workflow (Recommended)
 
 When the user wants changes from chat (no IDE), follow this sequence:
