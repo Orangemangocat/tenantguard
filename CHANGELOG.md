@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-02-07: Added workorder `WO-20260207-007` for Python version documentation alignment.
+- 2026-02-07: Aligned `README.md` Python version references to 3.12 to match `AGENTS.md` and local runtime (WO-20260207-007).
+- 2026-02-07: Added workorder `WO-20260207-006` for conversational AI patch workflow enablement.
+- 2026-02-07: Added `new_workorder`, `build_ai_packet`, and `extract_ai_patch` scripts plus workflow docs to support no-IDE chat-driven code changes (WO-20260207-006).
 - 2026-02-07: Added workorder `WO-20260207-005` for SEO ping logging and compliance improvements.
 - 2026-02-07: Logged Search Console sitemap pings on publish and added SEO/compliance prompt guidance for AI blog drafts (WO-20260207-005).
 - 2026-02-07: Added workorder `WO-20260207-004` for daily topic generation and medium quality checks.
