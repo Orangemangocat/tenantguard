@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-02-08: Added workorder `WO-20260208-001` for repository-wide chat-only workflow documentation alignment.
+- 2026-02-08: Updated AGENTS/README/system docs/workorder docs and control-plane workflow docs to formalize the chat-only patch workflow process (WO-20260208-001).
+- 2026-02-07: Added workorder `WO-20260207-008` for deployment documentation Python version alignment.
+- 2026-02-07: Updated `DEPLOYMENT.md` Python requirements and setup commands from 3.11 to 3.12 (WO-20260207-008).
 - 2026-02-07: Added workorder `WO-20260207-007` for Python version documentation alignment.
 - 2026-02-07: Aligned `README.md` Python version references to 3.12 to match `AGENTS.md` and local runtime (WO-20260207-007).
 - 2026-02-07: Added workorder `WO-20260207-006` for conversational AI patch workflow enablement.
