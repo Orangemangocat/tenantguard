@@ -10,6 +10,14 @@ Before requesting any code change, provide the AI with:
 
 The AI must explicitly confirm control-plane understanding before acting.
 
+## 0.5) Install Dev-Only Branch Guard Hooks
+
+Install local hooks that block commits/pushes unless current branch is `dev`:
+
+```bash
+bash scripts/install_branch_guard_hooks.sh
+```
+
 ## 1) Create a Work Order
 
 Create a scoped JSON work order before asking an AI to modify code:

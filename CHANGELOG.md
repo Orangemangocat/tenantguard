@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-02-08: Added workorder `WO-20260208-003` for dev-branch-only commit/push guardrails.
+- 2026-02-08: Added local git branch guard scripts and updated workflow docs to enforce/install dev-only commit/push hooks (WO-20260208-003).
+- 2026-02-08: Added workorder `WO-20260208-002` for a beginner-focused chat-only workflow guide.
+- 2026-02-08: Added `docs/using-chat-only-workflow.md` with step-by-step instructions for workorder creation, AI packet generation, patch extraction, validation, and verification (WO-20260208-002).
 - 2026-02-08: Added workorder `WO-20260208-001` for repository-wide chat-only workflow documentation alignment.
 - 2026-02-08: Updated AGENTS/README/system docs/workorder docs and control-plane workflow docs to formalize the chat-only patch workflow process (WO-20260208-001).
 - 2026-02-07: Added workorder `WO-20260207-008` for deployment documentation Python version alignment.
