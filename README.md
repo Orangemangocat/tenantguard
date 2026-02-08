@@ -189,6 +189,7 @@ rsync -a --delete dist/ ../src/static/
 You can drive repo changes from any chat AI that can return unified diffs. This is the preferred path for remote or no-IDE contribution workflows.
 
 ```bash
+bash scripts/install_branch_guard_hooks.sh
 venv/bin/python scripts/new_workorder.py --title "Short task title"
 venv/bin/python scripts/build_ai_packet.py --task "Describe requested change" --workorder WO-YYYYMMDD-### --output /tmp/tenantguard-ai-packet.md
 venv/bin/python scripts/extract_ai_patch.py --response /tmp/ai-response.md --output /tmp/tenantguard-ai.patch

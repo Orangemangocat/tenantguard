@@ -1,0 +1,38 @@
+{
+  "id": "WO-20260208-003",
+  "title": "Enforce dev-only commits and pushes with local git hook guard",
+  "scope": [
+    "Add a branch guard script that fails when the current branch is not dev",
+    "Add a hook installer script that wires the guard into pre-commit and pre-push hooks",
+    "Document the branch guard installation in chat-only workflow docs",
+    "Record the change in CHANGELOG.md"
+  ],
+  "allowed_paths": [
+    "scripts/**",
+    "docs/**",
+    "workorders/**",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "pre-commit and pre-push hooks can be installed from repo scripts",
+    "installed hooks block commit/push when current branch is not dev",
+    "workflow docs include branch guard installation steps",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "This is a local-repo guard and does not replace remote branch protection settings"
+  ],
+  "rollback_plan": [
+    "Remove installed hooks and revert new scripts/docs/changelog entries"
+  ]
+}
