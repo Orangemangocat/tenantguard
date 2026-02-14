@@ -1,16 +1,18 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect, url_for
 from datetime import datetime
 from urllib.parse import urlparse
 from src.models.user import db
 from src.models.blog import BlogPost
 from src.routes.auth import admin_required
 from src.services.blog_content import normalize_blog_content
+from src.routes.blog_slug_utils import generate_unique_slug, validate_slug
 import re
 
 blog_bp = Blueprint('blog', __name__)
 
+# Keep legacy create_slug for backward compatibility
 def create_slug(title):
-    """Create URL-friendly slug from title"""
+    """Create URL-friendly slug from title (legacy function)"""
     slug = title.lower()
     slug = re.sub(r'[^\w\s-]', '', slug)
     slug = re.sub(r'[-\s]+', '-', slug)
@@ -96,14 +98,8 @@ def create_post(current_user):
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
         
-        # Create slug from title
-        slug = create_slug(data['title'])
-        
-        # Check if slug already exists
-        existing_post = BlogPost.query.filter_by(slug=slug).first()
-        if existing_post:
-            # Append timestamp to make it unique
-            slug = f"{slug}-{int(datetime.utcnow().timestamp())}"
+        # Generate unique slug from title
+        slug = generate_unique_slug(data['title'])
         
         # Create new post
         content = normalize_blog_content(data['content'])
@@ -154,8 +150,8 @@ def update_post(current_user, post_id):
         # Update fields
         if 'title' in data:
             post.title = data['title']
-            # Update slug if title changed
-            post.slug = create_slug(data['title'])
+            # Update slug if title changed, ensuring uniqueness
+            post.slug = generate_unique_slug(data['title'], exclude_post_id=post.id)
         
         if 'content' in data:
             post.content = normalize_blog_content(data['content'])
@@ -321,6 +317,51 @@ def render_blog_post(slug):
         
         # Render template with SEO meta tags
         return render_template('blog_post.html', post=post_dict, schema_markup=schema_markup)
+        
+    except Exception as e:
+        return f"Error loading blog post: {str(e)}", 500
+
+
+@blog_bp.route('/api/blog/posts/id/<int:post_id>', methods=['GET'])
+def get_post_by_id_redirect(post_id):
+    """
+    Redirect old ID-based URLs to new slug-based URLs
+    Provides backward compatibility for existing links
+    Returns 301 permanent redirect for SEO preservation
+    """
+    try:
+        post = BlogPost.query.get(post_id)
+        
+        if not post:
+            return jsonify({'error': 'Post not found'}), 404
+        
+        # Return redirect URL in JSON for API clients
+        redirect_url = f"/api/blog/posts/{post.slug}"
+        return jsonify({
+            'redirect': redirect_url,
+            'slug': post.slug,
+            'message': 'This endpoint is deprecated. Please use slug-based URLs.'
+        }), 301
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@blog_bp.route('/blog/id/<int:post_id>')
+def render_blog_post_by_id_redirect(post_id):
+    """
+    Redirect old ID-based blog URLs to new slug-based URLs
+    Provides backward compatibility for existing links
+    Returns 301 permanent redirect for SEO preservation
+    """
+    try:
+        post = BlogPost.query.get(post_id)
+        
+        if not post:
+            return "Blog post not found", 404
+        
+        # Permanent redirect to slug-based URL
+        return redirect(f"/blog/{post.slug}", code=301)
         
     except Exception as e:
         return f"Error loading blog post: {str(e)}", 500

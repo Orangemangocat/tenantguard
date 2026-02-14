@@ -748,13 +748,9 @@ def create_blog_post(current_user):
     
     try:
         # Generate slug from title
-        import re
-        slug = re.sub(r'[^a-z0-9]+', '-', data['title'].lower()).strip('-')
-        
-        # Check if slug already exists
-        if BlogPost.query.filter_by(slug=slug).first():
-            # Add timestamp to make unique
-            slug = f"{slug}-{int(datetime.utcnow().timestamp())}"
+        # Generate unique slug using improved utilities
+        from src.routes.blog_slug_utils import generate_unique_slug
+        slug = generate_unique_slug(data['title'])
         
         status = data.get('status', 'draft')
         published_at = _parse_optional_datetime(data.get('published_at'))

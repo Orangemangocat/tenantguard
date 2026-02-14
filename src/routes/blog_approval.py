@@ -244,14 +244,9 @@ def create_and_submit_post(current_user):
         if not data.get('title') or not data.get('content') or not data.get('category'):
             return jsonify({'error': 'Title, content, and category are required'}), 400
         
-        # Generate slug
-        import re
-        slug = re.sub(r'[^a-z0-9]+', '-', data['title'].lower()).strip('-')
-        
-        # Check if slug exists
-        existing_post = BlogPost.query.filter_by(slug=slug).first()
-        if existing_post:
-            slug = f"{slug}-{secrets.token_hex(4)}"
+        # Generate unique slug using improved utilities
+        from src.routes.blog_slug_utils import generate_unique_slug
+        slug = generate_unique_slug(data['title'])
         
         # Create new post
         post = BlogPost(

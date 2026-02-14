@@ -89,10 +89,9 @@ Return ONLY valid JSON with this structure:
 
 
 def _create_slug(title):
-    slug = title.lower()
-    slug = ''.join(char if char.isalnum() or char in {' ', '-'} else '' for char in slug)
-    slug = '-'.join(slug.split())
-    return slug.strip('-')
+    """Legacy slug creation - use generate_unique_slug from blog_slug_utils instead"""
+    from src.routes.blog_slug_utils import create_slug
+    return create_slug(title)
 
 def _strip_markup(value):
     if not value:
@@ -190,10 +189,9 @@ def generate_blog_post(payload, submit_for_approval=False, topic_id=None):
         excerpt = response_data.get('excerpt') or (content[:200] + '...')
         tags = _normalize_tags(response_data.get('suggested_tags', []))
 
-        slug = _create_slug(title) or f"blog-post-{int(datetime.utcnow().timestamp())}"
-        existing_post = BlogPost.query.filter_by(slug=slug).first()
-        if existing_post:
-            slug = f"{slug}-{int(datetime.utcnow().timestamp())}"
+        # Generate unique slug using improved utilities
+        from src.routes.blog_slug_utils import generate_unique_slug
+        slug = generate_unique_slug(title) if title else f"blog-post-{int(datetime.utcnow().timestamp())}"
 
         post = BlogPost(
             title=title,
