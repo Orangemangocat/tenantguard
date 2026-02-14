@@ -1,0 +1,41 @@
+{
+  "id": "WO-20260214-002",
+  "title": "Blog management title links to slug pages",
+  "scope": [
+    "Make blog titles in admin blog management table clickable links",
+    "Open blog article slug URLs in a new browser tab",
+    "Record work order completion in CHANGELOG.md"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "frontend-next/**",
+    "docs/**",
+    "scripts/**",
+    ".github/**",
+    "workorders/**",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Each blog title in admin blog management links to the corresponding /blog/<slug> URL",
+    "Title links open in a new browser tab/window",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "Posts without slugs remain non-clickable until slug data is present"
+  ],
+  "rollback_plan": [
+    "Revert commits associated with this work order"
+  ]
+}

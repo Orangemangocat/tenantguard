@@ -22,6 +22,13 @@ const initialFormState = {
 
 const statusOptions = ['draft', 'pending', 'pending_approval', 'published', 'rejected'];
 const categoryOptions = ['general', 'legal', 'technical', 'market-research'];
+const statusBadgeStyles = {
+  draft: 'bg-slate-100 text-slate-700',
+  pending: 'bg-amber-100 text-amber-700',
+  pending_approval: 'bg-yellow-100 text-yellow-800',
+  published: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-700'
+};
 
 const BlockEmbed = Quill.import('blots/block/embed');
 
@@ -66,14 +73,46 @@ const toIsoStringOrNull = (value) => {
   return date.toISOString();
 };
 
-  const normalizeBlogMediaUrl = (value) => {
-    if (!value) {
-      return '';
-    }
+const normalizeBlogMediaUrl = (value) => {
+  if (!value) {
+    return '';
+  }
   if (value.startsWith('/static/')) {
     return value.replace(/^\/static/, '');
   }
   return value;
+};
+
+const resolveBlogMediaUrl = (value) => {
+  const normalized = normalizeBlogMediaUrl(value);
+  if (!normalized) {
+    return '';
+  }
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
+  const path = normalized.startsWith('/') ? normalized : `/${normalized}`;
+  return `${API_BASE_URL}${path}`;
+};
+
+const formatDateTime = (value, fallback) => {
+  if (!value) {
+    return fallback;
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return fallback;
+  }
+  return parsed.toLocaleString();
+};
+
+const getStatusBadgeClass = (status) => statusBadgeStyles[status] || 'bg-slate-100 text-slate-700';
+const formatStatusLabel = (status) => (status || 'unknown').replace(/_/g, ' ');
+const getBlogPostSlugUrl = (slug) => {
+  if (!slug) {
+    return '';
+  }
+  return `/blog/${encodeURIComponent(slug)}`;
 };
 
 const getMediaType = (value) => {
@@ -102,6 +141,7 @@ export default function BlogManagement() {
   const [success, setSuccess] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [showDialog, setShowDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState('create');
   const [selectedPost, setSelectedPost] = useState(null);
@@ -299,7 +339,13 @@ export default function BlogManagement() {
       }
 
       const data = await response.json();
-      setPosts(Array.isArray(data) ? data : []);
+      const nextPosts = Array.isArray(data) ? data : [];
+      nextPosts.sort((a, b) => {
+        const aTime = Date.parse(a.updated_at || a.published_at || a.created_at || '');
+        const bTime = Date.parse(b.updated_at || b.published_at || b.created_at || '');
+        return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+      });
+      setPosts(nextPosts);
       setError(null);
     } catch (err) {
       console.error('Error fetching blog posts:', err);
@@ -466,13 +512,26 @@ export default function BlogManagement() {
 
   const renderMediaPreview = (value) => {
     const mediaType = getMediaType(value);
+    const mediaUrl = resolveBlogMediaUrl(value);
+    if (!mediaUrl) {
+      return null;
+    }
     if (mediaType === 'audio') {
-      return <audio controls src={value} className="w-full" />;
+      return <audio controls src={mediaUrl} className="w-full" />;
     }
     if (mediaType === 'video') {
-      return <video controls src={value} className="w-full" />;
+      return <video controls src={mediaUrl} className="w-full" />;
     }
-    return null;
+    return (
+      <a
+        href={mediaUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm text-blue-700 underline"
+      >
+        Open media file
+      </a>
+    );
   };
 
   const handleDelete = async (postId, title) => {
@@ -501,12 +560,25 @@ export default function BlogManagement() {
     }
   };
 
+  const availableCategories = Array.from(
+    new Set(posts.map((post) => (post.category || '').trim()).filter(Boolean))
+  );
+
+  const totalPosts = posts.length;
+  const publishedPosts = posts.filter((post) => post.status === 'published').length;
+  const pendingPosts = posts.filter((post) => ['pending', 'pending_approval'].includes(post.status)).length;
+
   const filteredPosts = posts.filter((post) => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
     const matchesSearch =
-      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (post.author || '').toLowerCase().includes(searchTerm.toLowerCase());
+      normalizedSearch.length === 0 ||
+      (post.title || '').toLowerCase().includes(normalizedSearch) ||
+      (post.author || '').toLowerCase().includes(normalizedSearch) ||
+      (post.category || '').toLowerCase().includes(normalizedSearch) ||
+      (post.excerpt || '').toLowerCase().includes(normalizedSearch);
     const matchesStatus = statusFilter === 'all' || post.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesCategory = categoryFilter === 'all' || post.category === categoryFilter;
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   if (loading) {
@@ -538,13 +610,55 @@ export default function BlogManagement() {
           >
             <option value="all">All statuses</option>
             {statusOptions.map((status) => (
-              <option key={status} value={status}>{status}</option>
+              <option key={status} value={status}>{formatStatusLabel(status)}</option>
             ))}
           </select>
+          <select
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="all">All categories</option>
+            {categoryOptions
+              .concat(availableCategories.filter((category) => !categoryOptions.includes(category)))
+              .map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+          </select>
+          <Button variant="outline" onClick={fetchPosts}>
+            Refresh
+          </Button>
           <Button onClick={() => handleOpenDialog('create')}>
             New Blog Post
           </Button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Total Posts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold text-gray-900">{totalPosts}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Published</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold text-green-700">{publishedPosts}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Pending Review</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold text-amber-700">{pendingPosts}</p>
+          </CardContent>
+        </Card>
       </div>
 
       {error && (
@@ -575,44 +689,63 @@ export default function BlogManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPosts.map((post) => (
-                  <tr key={post.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{post.title}</div>
-                      <div className="text-xs text-gray-500 truncate max-w-sm">{post.excerpt}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{post.author || 'Unknown'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-50 text-blue-700">
-                        {post.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{post.category}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {post.published_at ? new Date(post.published_at).toLocaleString() : 'Unpublished'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {post.updated_at ? new Date(post.updated_at).toLocaleString() : 'Never'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenDialog('edit', post)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                        onClick={() => handleDelete(post.id, post.title)}
-                      >
-                        Delete
-                      </Button>
+                {filteredPosts.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
+                      No blog posts match the current filters.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredPosts.map((post) => (
+                    <tr key={post.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {post.slug ? (
+                          <a
+                            href={getBlogPostSlugUrl(post.slug)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium text-blue-700 hover:text-blue-800 hover:underline"
+                          >
+                            {post.title || 'Untitled'}
+                          </a>
+                        ) : (
+                          <div className="text-sm font-medium text-gray-900">{post.title || 'Untitled'}</div>
+                        )}
+                        <div className="text-xs text-gray-500 truncate max-w-sm">{post.excerpt || 'No excerpt'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{post.author || 'Unknown'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(post.status)}`}>
+                          {formatStatusLabel(post.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{post.category || 'general'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDateTime(post.published_at, 'Unpublished')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDateTime(post.updated_at, 'Never')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenDialog('edit', post)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDelete(post.id, post.title)}
+                        >
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -698,9 +831,16 @@ export default function BlogManagement() {
                     <p className="text-sm text-red-600">{imageUploadError}</p>
                   )}
                   {formData.featured_image && (
-                    <p className="text-xs text-gray-500">
-                      Current image: {formData.featured_image}
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500">
+                        Current image: {formData.featured_image}
+                      </p>
+                      <img
+                        src={resolveBlogMediaUrl(formData.featured_image)}
+                        alt="Featured preview"
+                        className="w-full max-h-48 object-cover rounded-md border border-gray-200"
+                      />
+                    </div>
                   )}
                 </div>
                 <div className="space-y-2">

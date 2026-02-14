@@ -1,0 +1,43 @@
+{
+  "id": "WO-20260214-001",
+  "title": "Blog management page updates",
+  "scope": [
+    "Improve blog admin list filtering and post status visibility",
+    "Harden media/date rendering for relative URLs and invalid timestamps",
+    "Add empty-state and refresh UX improvements in blog management",
+    "Update CHANGELOG.md with completed work order entry"
+  ],
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "frontend-next/**",
+    "docs/**",
+    "scripts/**",
+    ".github/**",
+    "workorders/**",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "src/database/*.db",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Blog management list supports search plus status/category filtering with clear empty-state messaging",
+    "Blog status chips and summary cards show meaningful editorial state at a glance",
+    "Relative media paths and invalid date values render safely in list and editor preview surfaces",
+    "CHANGELOG.md includes an entry for this work order"
+  ],
+  "risk_notes": [
+    "Media preview URLs assume uploaded files are served by the API base host"
+  ],
+  "rollback_plan": [
+    "Revert commits associated with this work order"
+  ]
+}

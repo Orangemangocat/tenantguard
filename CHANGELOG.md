@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-02-14: Added workorder `WO-20260214-002` for blog management title links to slug pages.
+- 2026-02-14: Updated admin blog management so post titles link to `/blog/<slug>` and open in a new tab/window (WO-20260214-002).
+- 2026-02-14: Added workorder `WO-20260214-001` for blog management page updates.
+- 2026-02-14: Updated admin blog management with category/status filters, status summary cards, safer date/media rendering, and empty-state messaging (WO-20260214-001).
 - 2026-02-08: Added workorder `WO-20260208-003` for dev-branch-only commit/push guardrails.
 - 2026-02-08: Added local git branch guard scripts and updated workflow docs to enforce/install dev-only commit/push hooks (WO-20260208-003).
 - 2026-02-08: Added workorder `WO-20260208-002` for a beginner-focused chat-only workflow guide.
