@@ -1,6 +1,6 @@
 # ACTIVE VERSION
 
-- The active version is: 0.0
+- The active version is: 0.3
 
 ## AGENT INSTRUCTIONS
 
