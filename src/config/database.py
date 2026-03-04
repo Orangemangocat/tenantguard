@@ -8,6 +8,9 @@ from urllib.parse import quote_plus
 # Database type: 'sqlite' or 'postgresql'
 DB_TYPE = os.getenv('DB_TYPE', 'postgresql')
 
+# Allow overriding SSL mode (local docker should set POSTGRES_SSLMODE=disable)
+POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE", "verify-ca")
+
 # PostgreSQL Configuration
 POSTGRES_CONFIG = {
     'host': os.getenv('POSTGRES_HOST', 'localhost'),
@@ -18,13 +21,18 @@ POSTGRES_CONFIG = {
 }
 
 # SSL Certificate paths (relative to project root)
-SSL_CERTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'ssl_certs')
+SSL_CERTS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+    'ssl_certs'
+)
+
 SSL_CONFIG = {
-    'sslmode': 'verify-ca',
+    'sslmode': POSTGRES_SSLMODE,
     'sslrootcert': os.path.join(SSL_CERTS_DIR, 'server-ca.pem'),
     'sslcert': os.path.join(SSL_CERTS_DIR, 'client-cert.pem'),
     'sslkey': os.path.join(SSL_CERTS_DIR, 'client-key.pem'),
 }
+
 
 def get_database_uri():
     """
@@ -35,19 +43,24 @@ def get_database_uri():
         try:
             import psycopg2  # noqa: F401
         except Exception:
-            # Fallback to sqlite if psycopg2 is not installed
-            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'tenantguard.db')
+            db_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)),
+                'database',
+                'tenantguard.db'
+            )
             return f"sqlite:///{db_path}"
 
         required_keys = ('host', 'port', 'database', 'user', 'password')
         missing_keys = [key for key in required_keys if not POSTGRES_CONFIG.get(key)]
         if missing_keys:
             print(f"[DB_CONFIG] Missing Postgres env vars: {', '.join(missing_keys)}; falling back to SQLite")
-            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'tenantguard.db')
+            db_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)),
+                'database',
+                'tenantguard.db'
+            )
             return f"sqlite:///{db_path}"
 
-        # Build PostgreSQL connection string WITHOUT SSL params in URI
-        # SSL params will be passed via connect_args in SQLAlchemy
         safe_password = quote_plus(POSTGRES_CONFIG['password'])
         uri = (
             f"postgresql://{POSTGRES_CONFIG['user']}:{safe_password}"
@@ -55,35 +68,51 @@ def get_database_uri():
             f"/{POSTGRES_CONFIG['database']}"
         )
         return uri
-    else:
-        # SQLite fallback
-        db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database', 'tenantguard.db')
-        return f"sqlite:///{db_path}"
+
+    # SQLite fallback
+    db_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        'database',
+        'tenantguard.db'
+    )
+    return f"sqlite:///{db_path}"
+
 
 def get_sqlalchemy_engine_options():
     """
     Get SQLAlchemy engine options including SSL configuration for PostgreSQL
     """
     if DB_TYPE == 'postgresql':
-        # If psycopg2 is not available, SQLAlchemy will use SQLite, so only
-        # return SSL connect_args when psycopg2 exists.
         try:
             import psycopg2  # noqa: F401
+
+            sslmode = os.getenv("POSTGRES_SSLMODE", "verify-ca")
+
+            # Local docker: no SSL, no cert files
+            if sslmode == "disable":
+                return {
+                    'pool_pre_ping': True,
+                    'pool_recycle': 3600,
+                }
+
+            # Production SSL
             return {
                 'pool_pre_ping': True,
                 'pool_recycle': 3600,
                 'connect_args': SSL_CONFIG
             }
+
         except Exception:
             return {
                 'pool_pre_ping': True,
                 'pool_recycle': 3600,
             }
-    else:
-        return {
-            'pool_pre_ping': True,
-            'pool_recycle': 3600,
-        }
+
+    return {
+        'pool_pre_ping': True,
+        'pool_recycle': 3600,
+    }
+
 
 def get_psycopg2_connection_params():
     """

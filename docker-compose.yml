@@ -1,0 +1,61 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tenantguard
+      POSTGRES_USER: tenantguard
+      POSTGRES_PASSWORD: tenantguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # IMPORTANT: 1 worker avoids concurrent db.create_all() collisions on startup
+    command: ["gunicorn", "-b", "0.0.0.0:5000", "src.main:app", "--workers=1", "--threads=4", "--timeout=120"]
+    ports:
+      - "5000:5000"
+    environment:
+      DB_TYPE: postgresql
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: tenantguard
+      POSTGRES_USER: tenantguard
+      POSTGRES_PASSWORD: tenantguard
+      POSTGRES_SSLMODE: disable
+      REDIS_URL: redis://redis:6379/0
+      FLASK_SECRET_KEY: dev-secret-change-me
+      LOG_LEVEL: INFO
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "src.worker"]
+    environment:
+      DB_TYPE: postgresql
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: tenantguard
+      POSTGRES_USER: tenantguard
+      POSTGRES_PASSWORD: tenantguard
+      POSTGRES_SSLMODE: disable
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: INFO
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  pgdata:

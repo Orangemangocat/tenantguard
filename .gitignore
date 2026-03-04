@@ -236,3 +236,20 @@ ssl_certs/
 # Database files
 *.db
 *.db-journal
+
+# Database dumps
+*.sql
+*.sql.gz
+*.dump
+
+# Local snapshots
+local_snapshot.sql
+
+# Secrets
+src/config/*.txt
+src/config/*.md
+
+# Node
+node_modules/
+frontend/package-lock.json
+package-lock.json
