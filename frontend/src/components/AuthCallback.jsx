@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { authEndpoint } from '../lib/apiBase.js';
 
 /**
  * OAuth Callback Handler
@@ -32,7 +33,7 @@ function AuthCallback({ onComplete }) {
       }
 
       // Fetch user info
-      fetch('/auth/me', {
+      fetch(authEndpoint('/auth/me'), {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }

@@ -8,3 +8,6 @@ const defaultBaseUrl =
 export const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || defaultBaseUrl
 ).replace(/\/+$/, "");
+
+export const authEndpoint = (path) =>
+  `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authEndpoint } from '../lib/apiBase.js';
 
 /**
  * Register Component with OAuth Integration
@@ -21,7 +22,7 @@ export default function Register({ onSuccess, onSwitchToLogin, onClose }) {
       setError(null);
       
       // Get OAuth authorization URL from backend
-      const response = await fetch(`/auth/${provider}/login`);
+      const response = await fetch(authEndpoint(`/auth/${provider}/login`));
       const data = await response.json();
       
       if (!response.ok) {
@@ -63,7 +64,7 @@ export default function Register({ onSuccess, onSwitchToLogin, onClose }) {
     setError(null);
 
     try {
-      const response = await fetch('/auth/register', {
+      const response = await fetch(authEndpoint('/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

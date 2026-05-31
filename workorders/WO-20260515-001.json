@@ -1,0 +1,38 @@
+{
+  "id": "WO-20260515-001",
+  "title": "Wire local dev auth hosts and preserve OpenAI startup fix",
+  "summary": "Allow local Vite and Flask auth flows to run on separate origins by centralizing frontend auth API calls, redirecting OAuth callbacks to an explicit frontend base URL when configured, and preserving the OpenAI blog model startup fix.",
+  "allowed_paths": [
+    "src/**",
+    "frontend/**",
+    "workorders/**",
+    "CHANGELOG.md",
+    ".env.example",
+    "docker-compose.yml"
+  ],
+  "blocked_paths": [
+    "**/.env*",
+    "**/secrets/**",
+    "**/*.pem",
+    "**/*id_rsa*",
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "frontend/dist/**",
+    "frontend/pnpm-lock.yaml"
+  ],
+  "acceptance_criteria": [
+    "Backend OAuth success redirects use FRONTEND_BASE_URL instead of request.host_url.",
+    "Backend OAuth success redirects fall back to the current Flask origin when FRONTEND_BASE_URL is unset.",
+    "OAuth callback redirect query parameters are assembled consistently for Google and GitHub.",
+    "Login, registration, auth provider bootstrapping, token refresh, logout, and callback user lookup call auth endpoints through the shared frontend API base helper.",
+    "docker-compose.yml passes OAuth client, redirect, frontend base, and admin allowlist env vars into the local Flask web service.",
+    "OpenAI blog generation uses configurable OPENAI_BLOG_MODEL with a supported fallback model.",
+    ".env.example documents local FRONTEND_BASE_URL and VITE_API_BASE_URL values needed when Vite and Flask run on separate origins.",
+    "CHANGELOG.md records the completed work order."
+  ],
+  "verification": [
+    "venv/bin/python -m compileall src",
+    "cd frontend && pnpm lint",
+    "cd frontend && pnpm build"
+  ]
+}

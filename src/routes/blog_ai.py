@@ -27,7 +27,13 @@ def normalize_links(links):
 @blog_ai_bp.route('/api/blog/ai-generate', methods=['POST'])
 @admin_required
 def ai_generate_post(current_user):
-    """Queue a blog post generation job (admin only)."""
+    """
+    Queue a blog post generation job (admin only).
+
+    Options:
+      - submit_for_approval (bool, default True): put into approval queue after generation
+      - publish_immediately (bool, default False): publish immediately after generation (skips approval)
+    """
     try:
         data = request.json or {}
 
@@ -35,23 +41,26 @@ def ai_generate_post(current_user):
         if not topic:
             return jsonify({'error': 'Topic is required'}), 400
 
-        llm_provider = data.get('llm_provider', 'openai')
+        llm_provider = (data.get('llm_provider') or 'openai').lower()
         category = data.get('category', 'technical')
-        author = data.get('author', 'Manus AI')
+        author = data.get('author', 'TenantGuard AI')
         links = normalize_links(data.get('links', []))
         text_snippets = data.get('text_snippets', '')
         additional_context = data.get('additional_context', '')
         provider_index = data.get('provider_index')
 
+        submit_for_approval = bool(data.get('submit_for_approval', True))
+        publish_immediately = bool(data.get('publish_immediately', False))
+
+        # If publish_immediately=True, we implicitly do NOT require approval.
+        if publish_immediately:
+            submit_for_approval = False
+
         if category not in ALLOWED_CATEGORIES:
-            return jsonify({
-                'error': f"Invalid category. Allowed: {sorted(ALLOWED_CATEGORIES)}"
-            }), 400
+            return jsonify({'error': f"Invalid category. Allowed: {sorted(ALLOWED_CATEGORIES)}"}), 400
 
         if llm_provider not in SUPPORTED_PROVIDERS:
-            return jsonify({
-                'error': f"Unsupported provider. Allowed: {sorted(SUPPORTED_PROVIDERS)}"
-            }), 400
+            return jsonify({'error': f"Unsupported provider. Allowed: {sorted(SUPPORTED_PROVIDERS)}"}), 400
 
         from redis import Redis
         from rq import Queue
@@ -71,9 +80,12 @@ def ai_generate_post(current_user):
             'llm_provider': llm_provider,
             'provider_index': provider_index,
             'generation_source': 'ai_assisted',
+            'requested_by_user_id': getattr(current_user, "id", None),
+            'submit_for_approval': submit_for_approval,
+            'publish_immediately': publish_immediately,
         }
 
-        job = q.enqueue(generate_blog_post, payload, submit_for_approval=False)
+        job = q.enqueue(generate_blog_post, payload)
         return jsonify({
             'success': True,
             'queued': True,
@@ -99,7 +111,7 @@ def ai_revise_post(current_user, post_id):
         if not post:
             return jsonify({'error': 'Post not found'}), 404
 
-        llm_provider = post.generated_by or 'openai'
+        llm_provider = (post.generated_by or 'openai').lower()
         if llm_provider not in SUPPORTED_PROVIDERS:
             return jsonify({'error': 'Unsupported provider for revision'}), 400
 
@@ -114,6 +126,7 @@ def ai_revise_post(current_user, post_id):
         payload = {
             'revision_request': revision_request,
             'llm_provider': llm_provider,
+            'requested_by_user_id': getattr(current_user, "id", None),
         }
 
         job = q.enqueue(revise_blog_post, post.id, payload)

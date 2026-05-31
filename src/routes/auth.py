@@ -13,6 +13,7 @@ import secrets
 import os
 import hashlib
 import logging
+from urllib.parse import urlencode
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -37,6 +38,12 @@ GITHUB_USERINFO_URL = 'https://api.github.com/user'
 # Fallback to dynamic generation if not set
 GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', None)
 GITHUB_REDIRECT_URI = os.getenv('GITHUB_REDIRECT_URI', None)
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', None)
+ADMIN_OAUTH_EMAILS = {
+    email.strip().lower()
+    for email in os.getenv('ADMIN_OAUTH_EMAILS', '').split(',')
+    if email.strip()
+}
 
 def get_redirect_uri(provider='google'):
     """
@@ -56,6 +63,48 @@ def get_redirect_uri(provider='google'):
         # Fallback to dynamic generation
         base_url = request.host_url.replace('http://', 'https://').rstrip('/')
         return f"{base_url}/auth/{provider}/callback"
+
+
+def get_frontend_base_url():
+    """Return the configured frontend origin for browser redirects."""
+    if FRONTEND_BASE_URL:
+        return FRONTEND_BASE_URL.rstrip('/')
+    return request.host_url.rstrip('/')
+
+
+def build_frontend_auth_callback_url(access_token, refresh_token, start_role=None):
+    """Build the frontend OAuth callback URL with encoded token params."""
+    query_params = {
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'token_type': 'Bearer',
+        'expires_in': 3600
+    }
+
+    if start_role:
+        query_params['start'] = start_role
+
+    return f"{get_frontend_base_url()}/auth/callback?{urlencode(query_params)}"
+
+
+def should_grant_admin_role(email):
+    """Return True when the OAuth email is allowlisted for admin access."""
+    return bool(email) and email.strip().lower() in ADMIN_OAUTH_EMAILS
+
+
+def sync_oauth_admin_role(user, email):
+    """
+    Promote allowlisted OAuth users to admin.
+
+    This keeps first-time and returning OAuth logins in sync with the current
+    admin allowlist without downgrading existing admins when the allowlist changes.
+    """
+    if should_grant_admin_role(email) and user.role != 'admin':
+        user.role = 'admin'
+        user.is_verified = True
+        logger.info("Promoted OAuth user %s to admin via ADMIN_OAUTH_EMAILS", email)
+        return True
+    return False
 
 # ============================================================================
 # AUTHENTICATION DECORATORS
@@ -336,7 +385,7 @@ def google_callback():
                 oauth_provider='google',
                 oauth_id=userinfo['id'],
                 oauth_access_token=access_token,
-                role='viewer',  # Default role
+                role='admin' if should_grant_admin_role(userinfo['email']) else 'viewer',
                 is_verified=True,
                 last_login=datetime.utcnow()
             )
@@ -348,8 +397,9 @@ def google_callback():
             # Update existing user
             user.oauth_access_token = access_token
             user.last_login = datetime.utcnow()
+            sync_oauth_admin_role(user, user.email)
             db.session.commit()
-            
+
             logger.info(f"Updated existing user: {user.email} (ID: {user.id})")
         
         # Generate JWT tokens
@@ -357,18 +407,11 @@ def google_callback():
         refresh_token = user.generate_refresh_token()
         
         # Redirect to frontend with tokens
-        frontend_url = request.host_url.rstrip('/')
-        redirect_url = (
-            f"{frontend_url}/auth/callback?"
-            f"access_token={jwt_token}&"
-            f"refresh_token={refresh_token}&"
-            f"token_type=Bearer&"
-            f"expires_in=3600"
+        redirect_url = build_frontend_auth_callback_url(
+            jwt_token,
+            refresh_token,
+            oauth_state.start_role
         )
-
-        # Preserve intended start role for frontend onboarding flow
-        if oauth_state.start_role:
-            redirect_url = f"{redirect_url}&start={oauth_state.start_role}"
         
         logger.info(f"OAuth successful for user {user.email}, redirecting to frontend")
         
@@ -389,33 +432,44 @@ def google_callback():
 @auth_bp.route('/auth/github/login', methods=['GET'])
 def github_login():
     """Initiate GitHub OAuth flow"""
-    
-    state = secrets.token_urlsafe(32)
-    
-    start_role = request.args.get('start')
+    try:
+        if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
+            logger.error("GitHub OAuth credentials not configured")
+            return jsonify({
+                'error': 'OAuth not configured',
+                'detail': 'GitHub OAuth credentials are missing. Please contact support.'
+            }), 500
 
-    oauth_state = OAuthState(
-        state=state,
-        provider='github',
-        start_role=start_role,
-        expires_at=datetime.utcnow() + timedelta(minutes=10)
-    )
-    db.session.add(oauth_state)
-    db.session.commit()
-    
-    # Use HTTPS for production
-    base_url = request.host_url.replace('http://', 'https://').rstrip('/')
-    redirect_uri = base_url + '/auth/github/callback'
-    
-    auth_url = (
-        f"{GITHUB_AUTH_URL}?"
-        f"client_id={GITHUB_CLIENT_ID}&"
-        f"redirect_uri={redirect_uri}&"
-        f"scope=user:email&"
-        f"state={state}"
-    )
-    
-    return jsonify({'auth_url': auth_url}), 200
+        state = secrets.token_urlsafe(32)
+        redirect_uri = get_redirect_uri('github')
+        start_role = request.args.get('start')
+
+        oauth_state = OAuthState(
+            state=state,
+            provider='github',
+            redirect_uri=redirect_uri,
+            start_role=start_role,
+            expires_at=datetime.utcnow() + timedelta(minutes=10)
+        )
+        db.session.add(oauth_state)
+        db.session.commit()
+
+        auth_url = (
+            f"{GITHUB_AUTH_URL}?"
+            f"client_id={GITHUB_CLIENT_ID}&"
+            f"redirect_uri={redirect_uri}&"
+            f"scope=user:email&"
+            f"state={state}"
+        )
+
+        logger.info(f"GitHub OAuth initiated with redirect_uri: {redirect_uri}")
+        return jsonify({'auth_url': auth_url}), 200
+    except Exception as e:
+        logger.error(f"Error initiating GitHub OAuth: {str(e)}", exc_info=True)
+        return jsonify({
+            'error': 'OAuth initialization failed',
+            'detail': str(e) if os.getenv('DEBUG') else 'An error occurred'
+        }), 500
 
 
 @auth_bp.route('/auth/github/callback', methods=['GET'])
@@ -434,9 +488,7 @@ def github_callback():
     
     oauth_state.mark_used()
     
-    # Use HTTPS for production
-    base_url = request.host_url.replace('http://', 'https://').rstrip('/')
-    redirect_uri = base_url + '/auth/github/callback'
+    redirect_uri = oauth_state.redirect_uri or get_redirect_uri('github')
     
     token_data = {
         'code': code,
@@ -495,7 +547,7 @@ def github_callback():
             oauth_provider='github',
             oauth_id=str(userinfo['id']),
             oauth_access_token=access_token,
-            role='viewer',
+            role='admin' if should_grant_admin_role(email) else 'viewer',
             is_verified=True,
             last_login=datetime.utcnow()
         )
@@ -504,16 +556,18 @@ def github_callback():
     else:
         user.oauth_access_token = access_token
         user.last_login = datetime.utcnow()
+        sync_oauth_admin_role(user, user.email)
         db.session.commit()
     
     jwt_token = user.generate_jwt_token()
     refresh_token = user.generate_refresh_token()
     
     # Redirect to frontend with tokens
-    frontend_url = request.host_url.rstrip('/')
-    redirect_url = f"{frontend_url}/auth/callback?access_token={jwt_token}&refresh_token={refresh_token}&token_type=Bearer&expires_in=3600"
-    if oauth_state.start_role:
-        redirect_url = f"{redirect_url}&start={oauth_state.start_role}"
+    redirect_url = build_frontend_auth_callback_url(
+        jwt_token,
+        refresh_token,
+        oauth_state.start_role
+    )
     
     return redirect(redirect_url)
 

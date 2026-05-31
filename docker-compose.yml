@@ -19,8 +19,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # IMPORTANT: 1 worker avoids concurrent db.create_all() collisions on startup
-    command: ["gunicorn", "-b", "0.0.0.0:5000", "src.main:app", "--workers=1", "--threads=4", "--timeout=120"]
+    command: [ "gunicorn", "-b", "0.0.0.0:5000", "src.main:app", "--workers=1", "--threads=4", "--timeout=120" ]
     ports:
       - "5000:5000"
     environment:
@@ -34,6 +33,17 @@ services:
       REDIS_URL: redis://redis:6379/0
       FLASK_SECRET_KEY: dev-secret-change-me
       LOG_LEVEL: INFO
+      PUBLIC_SITE_URL: http://localhost:5000
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:5000/auth/google/callback}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-http://localhost:5000/auth/github/callback}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-}
+      ADMIN_OAUTH_EMAILS: ${ADMIN_OAUTH_EMAILS:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BLOG_MODEL: ${OPENAI_BLOG_MODEL}
     depends_on:
       - db
       - redis
@@ -42,7 +52,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["python", "-m", "src.worker"]
+    command: [ "python", "-m", "src.worker" ]
     environment:
       DB_TYPE: postgresql
       POSTGRES_HOST: db
@@ -53,6 +63,8 @@ services:
       POSTGRES_SSLMODE: disable
       REDIS_URL: redis://redis:6379/0
       LOG_LEVEL: INFO
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BLOG_MODEL: ${OPENAI_BLOG_MODEL}
     depends_on:
       - db
       - redis

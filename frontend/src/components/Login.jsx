@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authEndpoint } from '../lib/apiBase.js';
 
 /**
  * Login Component with OAuth Integration
@@ -23,7 +24,7 @@ export default function Login({ onSuccess, onSwitchToRegister, onClose, pendingS
       if (pendingStartRole) {
         authUrlEndpoint += `?start=${encodeURIComponent(pendingStartRole)}`
       }
-      const response = await fetch(authUrlEndpoint);
+      const response = await fetch(authEndpoint(authUrlEndpoint));
       const data = await response.json();
       
       if (!response.ok) {
@@ -51,7 +52,7 @@ export default function Login({ onSuccess, onSwitchToRegister, onClose, pendingS
     setError(null);
 
     try {
-      const response = await fetch('/auth/login', {
+      const response = await fetch(authEndpoint('/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

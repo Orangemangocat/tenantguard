@@ -1,259 +1,366 @@
+"""
+RQ tasks for AI blog generation + revision.
+
+This is designed to be robust:
+- Uses OpenAI if available (OPENAI_API_KEY required)
+- Creates BlogPost rows with proper workflow status:
+    - draft
+    - pending_approval (recommended)
+    - published (if publish_immediately True)
+- Uses BlogPost model methods: submit_for_approval(), publish()
+"""
+
 import json
+import os
+import re
+import unicodedata
 from datetime import datetime
 
+from flask import has_app_context
+
 from src.main import app
+from src.models.user import db
 from src.models.blog import BlogPost
 from src.models.blog_topic import BlogTopic
-from src.models.user import db
-from src.services.blog_ai import call_openai_chat, parse_llm_json
 from src.services.blog_content import normalize_blog_content
 
 
-ALLOWED_CATEGORIES = {'technical', 'market-research'}
+def _slugify(title: str, max_len: int = 90) -> str:
+    if not title:
+        return "post"
+    value = unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode("ascii")
+    value = value.lower().strip().replace("_", " ")
+    value = re.sub(r"[^a-z0-9\s-]", "", value)
+    value = re.sub(r"[\s-]+", "-", value).strip("-")
+    if len(value) > max_len:
+        value = value[:max_len].rstrip("-")
+    return value or "post"
 
 
-def _normalize_tags(tags):
-    if not tags:
-        return []
-    if isinstance(tags, list):
-        return [tag.strip() for tag in tags if isinstance(tag, str) and tag.strip()]
-    if isinstance(tags, str):
-        return [tag.strip() for tag in tags.split(',') if tag.strip()]
-    return []
+def _ensure_unique_slug(base_slug: str) -> str:
+    slug = base_slug
+    counter = 2
+    while BlogPost.query.filter_by(slug=slug).first():
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+    return slug
 
 
-def _normalize_links(links):
-    if not links:
-        return []
-    if isinstance(links, list):
-        return [link for link in links if link]
-    if isinstance(links, str):
-        return [link.strip() for link in links.splitlines() if link.strip()]
-    return []
-
-
-def _build_context(links, text_snippets, additional_context):
-    context_parts = []
-    if links:
-        context_parts.append("Reference links:\n" + "\n".join(f"- {link}" for link in links))
-    if text_snippets:
-        context_parts.append(f"Research notes:\n{text_snippets}")
-    if additional_context:
-        context_parts.append(f"Additional instructions:\n{additional_context}")
-    return "\n\n".join(context_parts) if context_parts else None
-
-
-def _build_prompt(topic, category):
-    return f"""Write a professional blog post for TenantGuard about: {topic}
-
-The blog post should:
-1. Have an engaging title
-2. Include a compelling excerpt (150-200 characters) that doubles as an SEO meta description
-3. Be well-structured with clear sections
-4. Be informative and professional
-5. Include relevant keywords for SEO (tenant, landlord, eviction, lease, housing, legal, TenantGuard)
-6. Be approximately 800-1200 words
-7. End with a call-to-action
-8. Use H2/H3 headings for scannability
-9. Avoid legal guarantees and do not present legal advice as definitive outcomes
-
-Category: {category}
-
-Return ONLY valid JSON with this structure:
-{{
-  "title": "Blog Post Title",
-  "excerpt": "Brief excerpt",
-  "content": "Full blog post content in markdown format",
-  "suggested_tags": ["tag1", "tag2", "tag3"]
-}}
-"""
-
-
-def _build_revision_prompt(revision_request, title, content):
-    return f"""Revise the following blog post according to these instructions:
-
-REVISION REQUEST: {revision_request}
-
-CURRENT TITLE: {title}
-
-CURRENT CONTENT:
-{content}
-
-Return ONLY valid JSON with this structure:
-{{
-  "title": "Revised title (if changed)",
-  "excerpt": "Revised excerpt (optional)",
-  "content": "Revised content in markdown format"
-}}
-"""
-
-
-def _create_slug(title):
-    slug = title.lower()
-    slug = ''.join(char if char.isalnum() or char in {' ', '-'} else '' for char in slug)
-    slug = '-'.join(slug.split())
-    return slug.strip('-')
-
-def _strip_markup(value):
-    if not value:
-        return ""
-    text = value
+def _require_openai():
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not set. Set it in your environment for AI blog generation.")
     try:
-        import re
-        text = re.sub(r"<[^>]+>", " ", text)
-        text = re.sub(r"[`*_>#-]", " ", text)
-        text = re.sub(r"\s+", " ", text).strip()
+        from openai import OpenAI  # type: ignore
+    except Exception as exc:
+        raise RuntimeError(
+            "openai Python package is not installed. Add `openai` to requirements.txt and rebuild."
+        ) from exc
+    return OpenAI(api_key=api_key)
+
+
+def _run_with_app_context(callback):
+    if has_app_context():
+        return callback()
+    with app.app_context():
+        return callback()
+
+
+def _parse_model_json(raw: str) -> dict:
+    raw = (raw or "").strip()
+    if raw.startswith("```"):
+        raw = re.sub(r"^```(?:json)?\s*", "", raw)
+        raw = re.sub(r"\s*```$", "", raw).strip()
+    try:
+        return json.loads(raw)
     except Exception:
-        text = str(value)
-    return text
+        match = re.search(r"\{.*\}", raw, flags=re.DOTALL)
+        if match:
+            return json.loads(match.group(0))
+        raise
 
 
-def _count_headings(markdown_text):
-    if not markdown_text:
-        return 0
-    count = 0
-    for line in str(markdown_text).splitlines():
-        if line.strip().startswith("#"):
-            count += 1
-    if "<h" in str(markdown_text):
-        count += str(markdown_text).lower().count("<h")
-    return count
+def _topic_links(topic_record: BlogTopic) -> list:
+    if not topic_record.research_links:
+        return []
+    try:
+        links = json.loads(topic_record.research_links)
+    except Exception:
+        return []
+    return links if isinstance(links, list) else []
 
 
-def _quality_checks(content):
-    """Medium quality checks for AI content."""
-    stripped = _strip_markup(content)
-    words = len(stripped.split()) if stripped else 0
-    headings = _count_headings(content)
+def _build_generation_prompt(payload: dict) -> str:
+    topic = payload.get("topic", "").strip()
+    category = payload.get("category", "technical")
+    links = payload.get("links", []) or []
+    text_snippets = (payload.get("text_snippets") or "").strip()
+    additional_context = (payload.get("additional_context") or "").strip()
 
-    keywords = {"tenant", "landlord", "eviction", "lease", "housing", "legal", "tenantguard"}
-    keyword_hits = 0
-    lower = stripped.lower() if stripped else ""
-    for kw in keywords:
-        if kw in lower:
-            keyword_hits += 1
+    link_block = "\n".join(f"- {l}" for l in links) if links else "(none)"
+    snippets_block = text_snippets if text_snippets else "(none)"
+    context_block = additional_context if additional_context else "(none)"
 
-    failures = []
-    if words < 700:
-        failures.append(f"word_count_too_low({words})")
-    if headings < 3:
-        failures.append(f"insufficient_headings({headings})")
-    if keyword_hits < 2:
-        failures.append("insufficient_business_relevance")
+    # IMPORTANT: keep TenantGuard legal constraints / tone (no guarantees).
+    return f"""
+You are writing a TenantGuard blog post for laypeople in Tennessee dealing with landlord–tenant issues.
+This is legal education, not legal advice. Use careful language:
+- "One possible argument is..."
+- "This may support..."
+- "Tennessee courts often consider..."
+Avoid guarantees and absolutes.
 
-    return failures
+TOPIC:
+{topic}
 
+CATEGORY:
+{category}
 
-def generate_blog_post(payload, submit_for_approval=False, topic_id=None):
-    with app.app_context():
-        topic_record = None
-        if topic_id:
-            topic_record = BlogTopic.query.get(topic_id)
-            if not topic_record:
-                return {'error': 'Topic not found', 'topic_id': topic_id}
+SOURCES/LINKS (if helpful, you may cite or paraphrase):
+{link_block}
 
-        topic = payload.get('topic') or (topic_record.title if topic_record else None)
-        category = payload.get('category') or (topic_record.category if topic_record else 'technical')
-        author = payload.get('author', 'Manus AI')
-        links = _normalize_links(payload.get('links') or [])
-        text_snippets = payload.get('text_snippets', '')
-        additional_context = payload.get('additional_context', '')
-        provider_index = payload.get('provider_index')
-        generation_source = payload.get('generation_source', 'ai_assisted')
+TEXT SNIPPETS (may include product notes / admin notes / draft material):
+{snippets_block}
 
-        if not topic:
-            return {'error': 'Topic is required'}
-        if category not in ALLOWED_CATEGORIES:
-            return {'error': f'Invalid category: {category}'}
+ADDITIONAL CONTEXT:
+{context_block}
 
-        context = _build_context(links, text_snippets, additional_context)
-        prompt = _build_prompt(topic, category)
+OUTPUT FORMAT (STRICT JSON):
+Return JSON with keys:
+- title: string
+- excerpt: string (<= 160 chars is ideal; <= 220 max)
+- tags: array of short strings (5-12 tags)
+- content_html: string (valid HTML with headings, paragraphs, lists; include H2/H3 sections)
+- suggested_slug: string (optional; if you include, it must be derived from title)
 
-        response_text = call_openai_chat(prompt, context=context, provider_index=provider_index)
-        response_data, parse_error = parse_llm_json(response_text)
-        if parse_error:
-            return {'error': parse_error}
-
-        content = response_data.get('content')
-        if not content:
-            return {'error': 'LLM response missing content'}
-
-        quality_failures = _quality_checks(content)
-        if quality_failures:
-            if topic_record:
-                topic_record.status = 'pending'
-                db.session.commit()
-            return {'error': f"Quality check failed: {', '.join(quality_failures)}"}
-
-        normalized_content = normalize_blog_content(content)
-        title = response_data.get('title') or topic
-        excerpt = response_data.get('excerpt') or (content[:200] + '...')
-        tags = _normalize_tags(response_data.get('suggested_tags', []))
-
-        slug = _create_slug(title) or f"blog-post-{int(datetime.utcnow().timestamp())}"
-        existing_post = BlogPost.query.filter_by(slug=slug).first()
-        if existing_post:
-            slug = f"{slug}-{int(datetime.utcnow().timestamp())}"
-
-        post = BlogPost(
-            title=title,
-            slug=slug,
-            content=normalized_content,
-            excerpt=excerpt,
-            category=category,
-            author=author,
-            status='pending_approval' if submit_for_approval else 'draft',
-            tags=','.join(tags),
-            generated_by='openai',
-            generation_source=generation_source,
-        )
-
-        if submit_for_approval:
-            post.submitted_for_approval_at = datetime.utcnow()
-
-        db.session.add(post)
-        db.session.flush()
-
-        if topic_record:
-            topic_record.blog_post_id = post.id
-            topic_record.status = 'completed'
-            topic_record.completed_at = datetime.utcnow()
-
-        db.session.commit()
-
-        return {'success': True, 'post_id': post.id}
+CONTENT REQUIREMENTS:
+- 900–1400 words
+- Use scannable structure: H2 sections, bullets
+- Include a "What to do next" section with 5–10 action steps
+- Be accurate and cautious; no promises
+- Be Tennessee-aware (general sessions / detainer warrant terminology is okay)
+""".strip()
 
 
-def revise_blog_post(post_id, payload):
-    with app.app_context():
-        post = BlogPost.query.get(post_id)
-        if not post:
-            return {'error': 'Post not found', 'post_id': post_id}
+def _build_revision_prompt(post: BlogPost, revision_request: str) -> str:
+    return f"""
+You are revising an existing TenantGuard blog post.
 
-        revision_request = payload.get('revision_request')
-        if not revision_request:
-            return {'error': 'Revision request is required'}
+RULES:
+- Keep it legally cautious (no guarantees).
+- Preserve the general structure unless revision request says otherwise.
+- Return JSON with keys: title, excerpt, tags, content_html
 
-        provider_index = payload.get('provider_index')
+REVISION REQUEST:
+{revision_request}
 
-        prompt = _build_revision_prompt(revision_request, post.title, post.content)
-        response_text = call_openai_chat(prompt, provider_index=provider_index)
-        response_data, parse_error = parse_llm_json(response_text)
-        if parse_error:
-            return {'error': parse_error}
+CURRENT POST TITLE:
+{post.title}
 
-        if response_data.get('title'):
-            post.title = response_data['title']
+CURRENT EXCERPT:
+{post.excerpt or ""}
 
-        if response_data.get('content'):
-            post.content = normalize_blog_content(response_data['content'])
-        else:
-            return {'error': 'LLM response missing content'}
+CURRENT TAGS (comma-separated):
+{post.tags or ""}
 
-        if response_data.get('excerpt'):
-            post.excerpt = response_data['excerpt']
+CURRENT CONTENT (HTML):
+{post.content}
+""".strip()
 
-        post.updated_at = datetime.utcnow()
-        db.session.commit()
 
-        return {'success': True, 'post_id': post.id}
+def generate_blog_post(payload: dict, submit_for_approval=None, topic_id=None):
+    """
+    RQ task: generate a new blog post.
+
+    payload fields expected:
+      topic, category, author, links, text_snippets, additional_context,
+      llm_provider=openai, generation_source,
+      requested_by_user_id,
+      submit_for_approval (bool),
+      publish_immediately (bool)
+    """
+    return _run_with_app_context(
+        lambda: _generate_blog_post(payload, submit_for_approval=submit_for_approval, topic_id=topic_id)
+    )
+
+
+def _generate_blog_post(payload: dict, submit_for_approval=None, topic_id=None):
+    payload = dict(payload or {})
+    topic_record = None
+    if topic_id:
+        topic_record = BlogTopic.query.get(topic_id)
+        if not topic_record:
+            raise ValueError(f"Blog topic {topic_id} was not found")
+        payload.setdefault("topic", topic_record.title)
+        payload.setdefault("category", topic_record.category)
+        payload.setdefault("links", _topic_links(topic_record))
+        payload.setdefault("text_snippets", topic_record.research_notes or "")
+        payload.setdefault("additional_context", topic_record.description or "")
+        payload.setdefault("generation_source", "topic_suggestion")
+
+    if submit_for_approval is not None:
+        payload["submit_for_approval"] = bool(submit_for_approval)
+
+    topic = (payload.get("topic") or "").strip()
+    if not topic:
+        raise ValueError("payload.topic is required")
+
+    author = payload.get("author") or "TenantGuard AI"
+    category = payload.get("category") or "technical"
+    llm_provider = (payload.get("llm_provider") or "openai").lower()
+
+    submit_for_approval = bool(payload.get("submit_for_approval", True))
+    publish_immediately = bool(payload.get("publish_immediately", False))
+    requested_by_user_id = payload.get("requested_by_user_id")
+
+    if publish_immediately:
+        submit_for_approval = False
+
+    if llm_provider != "openai":
+        raise ValueError(f"Unsupported provider: {llm_provider}")
+
+    client = _require_openai()
+    prompt = _build_generation_prompt(payload)
+
+    # Use responses API style via chat.completions for broad compatibility.
+    resp = client.chat.completions.create(
+        model=os.getenv("OPENAI_BLOG_MODEL", "gpt-4o-mini"),
+        messages=[
+            {"role": "system", "content": "You are a careful legal-education writer for Tennessee tenants."},
+            {"role": "user", "content": prompt},
+        ],
+        response_format={"type": "json_object"},
+        temperature=float(os.getenv("OPENAI_BLOG_TEMPERATURE", "0.6")),
+    )
+
+    raw = resp.choices[0].message.content or ""
+    try:
+        data = _parse_model_json(raw)
+    except Exception as exc:
+        raise RuntimeError(f"Model did not return valid JSON. Raw output:\n{raw}") from exc
+
+    title = (data.get("title") or topic).strip()
+    excerpt = (data.get("excerpt") or "").strip()
+    tags = data.get("tags") or []
+    content_html = data.get("content_html") or ""
+    suggested_slug = (data.get("suggested_slug") or "").strip()
+
+    if not excerpt:
+        excerpt = title[:160]
+
+    # Normalize tags into a comma string
+    if isinstance(tags, list):
+        tags_str = ",".join([str(t).strip() for t in tags if str(t).strip()])
+    else:
+        tags_str = str(tags).strip()
+
+    content_html = normalize_blog_content(content_html)
+
+    base_slug = _slugify(suggested_slug or title)
+    slug = _ensure_unique_slug(base_slug)
+
+    # Create post
+    post = BlogPost(
+        title=title,
+        slug=slug,
+        content=content_html,
+        excerpt=excerpt[:500] if excerpt else None,
+        category=category,
+        author=author,
+        status="draft",
+        tags=tags_str,
+        generated_by=llm_provider,
+        generation_source=payload.get("generation_source") or "ai_assisted",
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
+
+    # Workflow: approval/publish
+    if publish_immediately:
+        post.status = "approved"
+        post.published_at = datetime.utcnow()
+    elif submit_for_approval:
+        post.status = "pending_approval"
+        post.submitted_for_approval_at = datetime.utcnow()
+        if requested_by_user_id:
+            post.submitted_by_user_id = requested_by_user_id
+
+    db.session.add(post)
+    db.session.flush()
+
+    if topic_record:
+        topic_record.blog_post_id = post.id
+        topic_record.status = "completed"
+        topic_record.completed_at = datetime.utcnow()
+
+    db.session.commit()
+
+    if publish_immediately:
+        # publish() will ping SEO and set status to published
+        post.publish(source="ai_generate_publish_immediately")
+
+    return {"success": True, "post_id": post.id}
+
+
+def revise_blog_post(post_id: int, payload: dict):
+    """
+    RQ task: revise an existing blog post.
+
+    payload fields:
+      revision_request (required)
+      llm_provider (default openai)
+    """
+    return _run_with_app_context(lambda: _revise_blog_post(post_id, payload))
+
+
+def _revise_blog_post(post_id: int, payload: dict):
+    payload = dict(payload or {})
+    post = BlogPost.query.get(post_id)
+    if not post:
+        raise ValueError("Post not found")
+
+    revision_request = (payload.get("revision_request") or "").strip()
+    if not revision_request:
+        raise ValueError("payload.revision_request is required")
+
+    llm_provider = (payload.get("llm_provider") or post.generated_by or "openai").lower()
+    if llm_provider != "openai":
+        raise ValueError(f"Unsupported provider: {llm_provider}")
+
+    client = _require_openai()
+    prompt = _build_revision_prompt(post, revision_request)
+
+    resp = client.chat.completions.create(
+        model=os.getenv("OPENAI_BLOG_MODEL", "gpt-4o-mini"),
+        messages=[
+            {"role": "system", "content": "You revise legal-education blog posts carefully for Tennessee tenants."},
+            {"role": "user", "content": prompt},
+        ],
+        response_format={"type": "json_object"},
+        temperature=float(os.getenv("OPENAI_BLOG_TEMPERATURE", "0.4")),
+    )
+
+    raw = resp.choices[0].message.content or ""
+    try:
+        data = _parse_model_json(raw)
+    except Exception as exc:
+        raise RuntimeError(f"Model did not return valid JSON. Raw output:\n{raw}") from exc
+
+    title = (data.get("title") or post.title).strip()
+    excerpt = (data.get("excerpt") or post.excerpt or "").strip()
+    tags = data.get("tags") or []
+    content_html = data.get("content_html") or post.content or ""
+
+    if isinstance(tags, list):
+        tags_str = ",".join([str(t).strip() for t in tags if str(t).strip()])
+    else:
+        tags_str = str(tags).strip()
+
+    post.title = title
+    post.excerpt = excerpt[:500] if excerpt else post.excerpt
+    post.tags = tags_str
+    post.content = normalize_blog_content(content_html)
+    post.updated_at = datetime.utcnow()
+
+    db.session.commit()
+    return {"success": True, "post_id": post.id}

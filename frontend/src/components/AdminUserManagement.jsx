@@ -38,7 +38,7 @@ const AdminUserManagement = ({ onClose }) => {
         return;
       }
 
-      const response = await fetch('${API_BASE_URL}/auth/users', {
+      const response = await fetch(`${API_BASE_URL}/auth/users`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`
@@ -175,7 +175,7 @@ const AdminUserManagement = ({ onClose }) => {
       
       const accessToken = localStorage.getItem('access_token');
       
-      const response = await fetch('${API_BASE_URL}/auth/users', {
+      const response = await fetch(`${API_BASE_URL}/auth/users`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,

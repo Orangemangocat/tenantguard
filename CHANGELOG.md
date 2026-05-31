@@ -1,5 +1,13 @@
 # Changelog
 
+- 2026-05-15: Centralized frontend auth API calls behind the shared Vite API base and redirected OAuth callbacks to configured `FRONTEND_BASE_URL` for split-origin local/dev auth (WO-20260515-001).
+- 2026-05-15: Fixed admin user management API calls to use the configured frontend API base instead of literal placeholder URLs (WO-20260515-001).
+- 2026-05-15: Aligned SQLAlchemy engine options with the SQLite fallback path when PostgreSQL environment variables are incomplete (WO-20260515-001).
+- 2026-05-15: Ensured the ignored local SQLite database directory is created before fallback startup uses it (WO-20260515-001).
+- 2026-05-15: Added local Docker OAuth environment passthrough for Google/GitHub client settings, callback redirects, frontend base URL, and admin OAuth bootstrap allowlist (WO-20260515-001).
+- 2026-05-15: Preserved the local OpenAI blog generation startup fix by using configurable `OPENAI_BLOG_MODEL` with `gpt-4o-mini` fallback and ensuring the OpenAI package is installed (WO-20260515-001).
+- 2026-03-12: Added workorder `WO-20260312-001` for OAuth admin bootstrap in local/dev.
+- 2026-03-12: Added allowlist-based OAuth admin promotion and documented Google/GitHub OAuth env vars for local/dev setup (WO-20260312-001).
 - 2026-02-08: Added workorder `WO-20260208-003` for dev-branch-only commit/push guardrails.
 - 2026-02-08: Added local git branch guard scripts and updated workflow docs to enforce/install dev-only commit/push hooks (WO-20260208-003).
 - 2026-02-08: Added workorder `WO-20260208-002` for a beginner-focused chat-only workflow guide.

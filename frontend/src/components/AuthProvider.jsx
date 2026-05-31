@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { AuthContext } from '../contexts/AuthContext'
+import { authEndpoint } from '../lib/apiBase.js'
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
@@ -16,7 +17,7 @@ const AuthProvider = ({ children }) => {
         setAccessToken(storedAccessToken);
         setRefreshToken(storedRefreshToken);
         try {
-          const response = await fetch('/auth/me', {
+          const response = await fetch(authEndpoint('/auth/me'), {
             headers: { 'Authorization': `Bearer ${storedAccessToken}` }
           });
           if (response.ok) {
@@ -45,7 +46,7 @@ const AuthProvider = ({ children }) => {
 
   const loginWithGoogle = async () => {
     try {
-      const response = await fetch('/auth/google/login');
+      const response = await fetch(authEndpoint('/auth/google/login'));
       const data = await response.json();
       
       if (data.auth_url) {
@@ -59,7 +60,7 @@ const AuthProvider = ({ children }) => {
 
   const loginWithGitHub = async () => {
     try {
-      const response = await fetch('/auth/github/login');
+      const response = await fetch(authEndpoint('/auth/github/login'));
       const data = await response.json();
       
       if (data.auth_url) {
@@ -84,7 +85,7 @@ const AuthProvider = ({ children }) => {
 
   const refreshAccessToken = async () => {
     try {
-      const response = await fetch('/auth/refresh', {
+      const response = await fetch(authEndpoint('/auth/refresh'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -111,7 +112,7 @@ const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       if (accessToken) {
-        await fetch('/auth/logout', {
+        await fetch(authEndpoint('/auth/logout'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`

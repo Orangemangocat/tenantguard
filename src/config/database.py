@@ -34,6 +34,12 @@ SSL_CONFIG = {
 }
 
 
+def get_sqlite_database_uri():
+    db_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'database')
+    os.makedirs(db_dir, exist_ok=True)
+    return f"sqlite:///{os.path.join(db_dir, 'tenantguard.db')}"
+
+
 def get_database_uri():
     """
     Generate the appropriate database URI based on DB_TYPE
@@ -43,23 +49,13 @@ def get_database_uri():
         try:
             import psycopg2  # noqa: F401
         except Exception:
-            db_path = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)),
-                'database',
-                'tenantguard.db'
-            )
-            return f"sqlite:///{db_path}"
+            return get_sqlite_database_uri()
 
         required_keys = ('host', 'port', 'database', 'user', 'password')
         missing_keys = [key for key in required_keys if not POSTGRES_CONFIG.get(key)]
         if missing_keys:
             print(f"[DB_CONFIG] Missing Postgres env vars: {', '.join(missing_keys)}; falling back to SQLite")
-            db_path = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)),
-                'database',
-                'tenantguard.db'
-            )
-            return f"sqlite:///{db_path}"
+            return get_sqlite_database_uri()
 
         safe_password = quote_plus(POSTGRES_CONFIG['password'])
         uri = (
@@ -70,12 +66,7 @@ def get_database_uri():
         return uri
 
     # SQLite fallback
-    db_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        'database',
-        'tenantguard.db'
-    )
-    return f"sqlite:///{db_path}"
+    return get_sqlite_database_uri()
 
 
 def get_sqlalchemy_engine_options():
@@ -85,28 +76,35 @@ def get_sqlalchemy_engine_options():
     if DB_TYPE == 'postgresql':
         try:
             import psycopg2  # noqa: F401
-
-            sslmode = os.getenv("POSTGRES_SSLMODE", "verify-ca")
-
-            # Local docker: no SSL, no cert files
-            if sslmode == "disable":
-                return {
-                    'pool_pre_ping': True,
-                    'pool_recycle': 3600,
-                }
-
-            # Production SSL
-            return {
-                'pool_pre_ping': True,
-                'pool_recycle': 3600,
-                'connect_args': SSL_CONFIG
-            }
-
         except Exception:
             return {
                 'pool_pre_ping': True,
                 'pool_recycle': 3600,
             }
+
+        required_keys = ('host', 'port', 'database', 'user', 'password')
+        missing_keys = [key for key in required_keys if not POSTGRES_CONFIG.get(key)]
+        if missing_keys:
+            return {
+                'pool_pre_ping': True,
+                'pool_recycle': 3600,
+            }
+
+        sslmode = os.getenv("POSTGRES_SSLMODE", "verify-ca")
+
+        # Local docker: no SSL, no cert files
+        if sslmode == "disable":
+            return {
+                'pool_pre_ping': True,
+                'pool_recycle': 3600,
+            }
+
+        # Production SSL
+        return {
+            'pool_pre_ping': True,
+            'pool_recycle': 3600,
+            'connect_args': SSL_CONFIG
+        }
 
     return {
         'pool_pre_ping': True,
