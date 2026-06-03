@@ -1,0 +1,118 @@
+{% load i18n %}
+<div class="td-view" id="td-detail-view">
+
+  <!-- Back + Edit -->
+  <div class="td-detail-header">
+    <a href="{% url 'stafftodo:list' %}" class="td-back" data-td-nav>← Tasks</a>
+    <a href="{% url 'stafftodo:update' todo.pk %}" class="td-btn td-btn--ghost" data-td-nav>Edit</a>
+  </div>
+
+  <!-- Title + Priority badge -->
+  <div class="td-detail-title-row">
+    <span class="td-priority-dot td-priority-dot--{{ todo.priority }}" title="{{ todo.get_priority_display }}"></span>
+    <h2 class="td-detail-title">{{ todo.title }}</h2>
+  </div>
+
+  <!-- Meta grid -->
+  <div class="td-meta-grid">
+    <span class="td-meta-label">Status</span>
+    <span class="td-status-pill td-status-pill--{{ todo.status }}">{{ todo.get_status_display }}</span>
+
+    <span class="td-meta-label">Priority</span>
+    <span class="td-badge td-badge--{{ todo.priority }}">{{ todo.get_priority_display }}</span>
+
+    <span class="td-meta-label">Assignee</span>
+    <span>{% if todo.assignee %}{{ todo.assignee.get_full_name|default:todo.assignee.username }}{% else %}Unassigned{% endif %}</span>
+
+    <span class="td-meta-label">Created by</span>
+    <span>{{ todo.created_by.get_full_name|default:todo.created_by.username }}</span>
+
+    <span class="td-meta-label">Due</span>
+    <span class="{% if todo.is_overdue %}td-due--overdue{% endif %}">
+      {% if todo.due_date %}
+        {% if todo.is_overdue %}⚠ {% endif %}{{ todo.due_date|date:"N j, Y" }}
+      {% else %}—{% endif %}
+    </span>
+
+    <span class="td-meta-label">Created</span>
+    <span>{{ todo.created_at|date:"N j, Y" }}</span>
+  </div>
+
+  <!-- Tags -->
+  {% if todo.tag_list %}
+  <div class="td-tag-row">
+    {% for tag in todo.tag_list %}<span class="td-tag">{{ tag }}</span>{% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Description -->
+  {% if todo.description %}
+  <div class="td-detail-section">
+    <div class="td-section-label">Description</div>
+    <div class="td-description">{{ todo.description|linebreaksbr }}</div>
+  </div>
+  {% endif %}
+
+  <!-- Quick status change -->
+  <div class="td-detail-section td-status-actions">
+    {% for val, label in todo.STATUS_CHOICES %}
+    {% if todo.status != val %}
+    <form method="post" action="{% url 'stafftodo:status' todo.pk %}" data-td-form class="td-inline-form">
+      {% csrf_token %}
+      <input type="hidden" name="status" value="{{ val }}">
+      <button type="submit" class="td-btn td-btn--ghost td-btn--sm">→ {{ label }}</button>
+    </form>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  <!-- Comments & Activity -->
+  <div class="td-detail-section">
+    <div class="td-section-label">Notes & Activity</div>
+
+    <!-- Existing comments -->
+    {% for comment in todo.comments.all %}
+    <div class="td-comment">
+      <div class="td-comment-meta">
+        <span class="td-comment-author">{{ comment.author.get_full_name|default:comment.author.username }}</span>
+        <span class="td-comment-time">{{ comment.created_at|date:"M j, g:i A" }}</span>
+        {% if comment.author == request.user or request.user.is_superuser %}
+        <form method="post"
+              action="{% url 'stafftodo:comment_delete' todo.pk comment.pk %}"
+              data-td-form class="td-inline-form td-comment-delete-form"
+              onsubmit="return confirm('Delete this note?')">
+          {% csrf_token %}
+          <button type="submit" class="td-comment-del" title="Delete" aria-label="Delete note">✕</button>
+        </form>
+        {% endif %}
+      </div>
+      <div class="td-comment-body">{{ comment.body|linebreaksbr }}</div>
+    </div>
+    {% endfor %}
+
+    <!-- Activity log -->
+    {% with activities=todo.activity.all %}
+    {% for activity in activities %}
+    <div class="td-activity">
+      <span class="td-activity-dot"></span>
+      <span class="td-activity-text">
+        <strong>{{ activity.actor.get_full_name|default:activity.actor.username }}</strong>
+        {{ activity.verb }}
+      </span>
+      <span class="td-activity-time">{{ activity.created_at|date:"M j, g:i A" }}</span>
+    </div>
+    {% endfor %}
+    {% endwith %}
+  </div>
+
+  <!-- Add comment -->
+  <div class="td-comment-form-wrap">
+    <div class="td-section-label">Add a note</div>
+    <form method="post" action="{% url 'stafftodo:comment_create' todo.pk %}" data-td-form>
+      {% csrf_token %}
+      {{ comment_form.body }}
+      <button type="submit" class="td-btn td-btn--primary td-btn--sm" style="margin-top:8px">Post note</button>
+    </form>
+  </div>
+
+</div>

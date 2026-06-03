@@ -1,0 +1,32 @@
+{% extends "admin/base.html" %}
+{% load static i18n %}
+
+{% block branding %}
+<h1 id="site-name">
+  <a href="{% url 'admin:index' %}">{% trans site_header|default:_('Django administration') %}</a>
+</h1>
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  {% if request.user.is_authenticated and request.user.is_staff %}
+  <link rel="stylesheet" href="{% static 'stafftodo/stafftodo.css' %}">
+  {% endif %}
+{% endblock %}
+
+{% block footer %}
+  {{ block.super }}
+  {% if request.user.is_authenticated and request.user.is_staff %}
+  {# Floating launcher + slide-out panel for authenticated staff #}
+  <button id="todo-launcher" title="Dev Tasks" aria-label="Open dev tasks panel">💩</button>
+  <div id="todo-overlay" aria-hidden="true"></div>
+  <aside id="todo-panel" aria-label="Dev Tasks" aria-hidden="true">
+    <div class="td-panel-header">
+      <h2 class="td-panel-title">💩 Dev Tasks</h2>
+      <button class="td-panel-close" aria-label="Close panel">✕</button>
+    </div>
+    <div id="todo-panel-body"></div>
+  </aside>
+  <script src="{% static 'stafftodo/stafftodo.js' %}"></script>
+  {% endif %}
+{% endblock %}

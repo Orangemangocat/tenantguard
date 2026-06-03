@@ -1,293 +1,226 @@
-# TenantGuard - Complete Source Code
+# TenantGuard
 
-## Overview
+A legal-tech platform for tenant protection and eviction defense, focused on Tennessee tenants. Pairs a Django REST API backend with a Next.js frontend, JWT-based auth (with Google/GitHub OAuth), an AI-powered blog generation pipeline, and a legal assistant chat system.
 
-TenantGuard is a full-stack landlord-tenant legal support platform focused on Tennessee (Davidson County by default). It provides tenant and attorney intake, admin tooling, content management, and background processing. Authoritative AI behavior constraints live in `docs/control-plane/`.
-
-## Architecture
-
-This is a **full-stack web application** consisting of:
-
-- **Frontend**: Vite + React application with modern UI components
-- **Backend**: Flask API server with SQLAlchemy models
-- **Database**: PostgreSQL configuration with SQLite fallback for local/dev
-- **Background**: RQ workers and scheduled jobs for blog/AI tasks
-- **Deployment**: Static file serving via Flask + optional Nginx reverse proxy
-
-## Features
-
-### For Tenants
-
-- **Guided Intake**: Multi-step intake form and intake chat flow
-- **Evidence Capture**: Intake fields capture evidence and notice details
-- **Status Updates**: Case status tracking via API
-- **Mobile Responsive**: Works on all devices
-
-### For Attorneys
-
-- **Attorney Intake**: Multi-step intake form and intake chat flow
-- **Profile Details**: Credentials, experience, service areas
-- **Case Matching**: Backend matching endpoint
-
-### Admin and Content
-
-- **Admin Dashboards**: Intake review and admin panels
-- **Blog Management**: Admin blog editor, approvals, and publishing
-- **Groups**: Team-based group and membership management
-
-## Directory Structure
+## Repository Structure
 
 ```
-tenantguard/
-├── src/                          # Flask backend
-│   ├── main.py                   # Flask application
-│   ├── worker.py                 # RQ worker entrypoint
-│   ├── config/                   # Database configuration
-│   ├── models/                   # SQLAlchemy models
-│   ├── routes/                   # API endpoints
-│   ├── services/                 # AI + storage helpers
-│   ├── tasks/                    # Background task definitions
-│   ├── scheduler/                # Scheduled job runners
-│   ├── templates/                # Server-rendered templates (blog)
-│   └── static/                   # Built frontend files (if deployed)
-├── frontend/                     # Vite + React frontend source
-├── frontend-next/                # Static blog generation frontend
-├── docs/                         # Documentation
-├── workorders/                   # Work orders and templates
-├── scripts/                      # Utility scripts
-├── alembic/                      # Database migrations
-├── requirements.txt              # Python dependencies
-├── README.md                     # This file
-└── DEPLOYMENT.md                 # Deployment instructions
+backend/          Django REST API (Python)
+frontend/         Next.js + TypeScript + Tailwind UI
+nginx/            Reverse proxy config
+docs/             Agent directives, governance, project vision
+knowledge-repo/   Knowledge base read by AI blog agents
+.github/
+  workflows/
+    deploy.yml    CI/CD pipeline (build → staging → production)
 ```
 
-## Technology Stack
+---
 
-### Frontend
-
-- **React 18**: Modern React with hooks
-- **Tailwind CSS**: Utility-first CSS framework
-- **Shadcn/UI**: High-quality UI components
-- **Lucide Icons**: Beautiful icon library
-- **Vite**: Fast build tool and development server
+## Local Development
 
 ### Backend
 
-- **Flask**: Lightweight Python web framework
-- **SQLAlchemy**: ORM and database layer
-- **PostgreSQL**: Primary database configuration
-- **SQLite**: Fallback for local/dev environments
-- **Flask-CORS**: Cross-origin resource sharing
-- **Python 3.12**: Modern Python runtime
-
-### Infrastructure
-
-- **Static File Serving**: Integrated frontend/backend
-- **RESTful APIs**: Clean API design
-- **Database Migrations**: Alembic migrations
-- **Production Ready**: Optimized for deployment
-
-## API Endpoints
-
-### Case Management
-
-- `POST /api/cases` - Create new case
-- `GET /api/cases` - List all cases
-- `GET /api/cases/{case_number}` - Get specific case
-- `PUT /api/cases/{case_number}` - Update case
-- `PUT /api/cases/{case_number}/status` - Update case status
-- `GET /api/cases/search` - Search cases
-- `GET /api/cases/stats` - Case statistics
-- `GET /api/cases/{case_number}/analyses` - Get case analyses
-- `POST /api/cases/{case_number}/intake-conversations` - Log intake chat
-- `POST /api/cases/{case_number}/process` - Trigger case processing
-
-### Attorney Management
-
-- `POST /api/attorneys` - Create attorney application
-- `GET /api/attorneys` - List all attorneys
-- `GET /api/attorneys/{application_id}` - Get specific attorney
-- `PUT /api/attorneys/{application_id}/status` - Update status
-- `GET /api/attorneys/search` - Search attorneys
-- `GET /api/attorneys/stats` - Attorney statistics
-- `GET /api/attorneys/email/{email}` - Get attorney by email
-- `POST /api/attorneys/match` - Match attorneys to cases
-
-### Group Management
-
-- `GET /api/groups` - List groups
-- `POST /api/groups` - Create group
-- `GET /api/groups/{group_id}` - Group details
-- `PUT /api/groups/{group_id}` - Update group
-- `DELETE /api/groups/{group_id}` - Delete group
-
-See `src/routes/` for the full API surface.
-
-## Database Schema
-
-### Cases Table
-
-- Tenant contact and property details
-- Legal issue and notice details
-- Case status tracking
-
-### Attorneys Table
-
-- Professional credentials and experience
-- Practice areas and expertise levels
-- Case preferences and capacity
-- Budget and pricing structure
-- Lead generation preferences
-- Service coverage areas
-
-### Additional Models
-
-- Auth users, groups, and group memberships
-- Blog content and topics
-- Case analyses and AI artifacts
-
-## Quick Start
-
-### Prerequisites
-
-- Python 3.12+
-- Node.js 18+
-- pnpm or npm
-- OCR dependencies for intake document analysis:
-  - Tesseract OCR (`tesseract-ocr`)
-  - Poppler utilities (`poppler-utils`)
-
-### Backend Setup
-
 ```bash
-cd /path/to/tenantguard
-python -m venv venv
-source venv/bin/activate
+cd backend
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-python src/main.py
+cp .env.example .env          # fill in your values
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver    # http://localhost:8000
 ```
 
-### Frontend Development
+### Frontend
 
 ```bash
 cd frontend
-pnpm install
-pnpm run dev
+npm install
+cp .env.local.example .env.local   # fill in your values
+npm run dev                         # http://localhost:3000
 ```
 
-### Production Build
+### Environment variables
 
-```bash
-cd frontend
-pnpm run build
-# Copy build output into Flask static folder if serving via Flask
-rsync -a --delete dist/ ../src/static/
+**`backend/.env`**
+```
+SECRET_KEY=
+OPENAI_API_KEY=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+DB_HOST=
+DB_PORT=
 ```
 
-## Conversational AI Workflow (No IDE)
-
-You can drive repo changes from any chat AI that can return unified diffs. This is the preferred path for remote or no-IDE contribution workflows.
-
-```bash
-bash scripts/install_branch_guard_hooks.sh
-venv/bin/python scripts/new_workorder.py --title "Short task title"
-venv/bin/python scripts/build_ai_packet.py --task "Describe requested change" --workorder WO-YYYYMMDD-### --output /tmp/tenantguard-ai-packet.md
-venv/bin/python scripts/extract_ai_patch.py --response /tmp/ai-response.md --output /tmp/tenantguard-ai.patch
-venv/bin/python scripts/apply_patch.py --patch /tmp/tenantguard-ai.patch --check
-venv/bin/python scripts/apply_patch.py --patch /tmp/tenantguard-ai.patch
+**`frontend/.env.local`**
+```
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_BACKEND_URL=http://127.0.0.1:8000/api/
+NEXT_PUBLIC_API_URL=http://localhost:8000
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_ID=
+GITHUB_SECRET=
 ```
 
-Required process details:
-
-- Read and follow `AGENTS.md`
-- Use a Work Order from `workorders/`
-- Follow `docs/conversational-ai-workflow.md`
-- Update `CHANGELOG.md` after work is complete
-
-## Deployment
-
-See `DEPLOYMENT.md` for detailed deployment instructions including:
-
-- Server requirements
-- Nginx configuration
-- SSL certificate setup
-- Environment variables
-- Database initialization
-- OCR dependencies for PDF/image text extraction
-
-## Key Features Implementation
-
-### Multi-Step Forms
-
-Both tenant and attorney intake forms use a sophisticated multi-step wizard with:
-
-- Progress tracking
-- Data validation
-- State persistence
-- Conditional logic
-- Professional UI/UX
-
-### Case-Attorney Matching
-
-Intelligent matching algorithm considers:
-
-- Geographic service areas
-- Practice area expertise
-- Case type preferences
-- Attorney availability
-- Experience levels
-
-### Data Management
-
-Comprehensive data handling with:
-
-- Input validation and sanitization
-- Error handling and logging
-- Search and filtering capabilities
-- Statistics and analytics
-- Audit trails
-
-## Security Features
-
-- Input validation and sanitization
-- CORS configuration
-- SQL injection prevention
-- Error handling without data exposure
-- Secure file upload handling
-
-## Performance Optimizations
-
-- Static file serving
-- Database indexing
-- Efficient queries
-- Frontend code splitting
-- Image optimization
-
-## Browser Support
-
-Modern evergreen browsers (Chrome, Firefox, Safari, Edge)
-
-## CI Secrets
-
-We use a dedicated CI secret name for repository CI tasks (notably running database migrations during preview/deploy workflows).
-
-- `CI_DB_URL`: Database connection URL used by CI to run Alembic migrations. Add this as a GitHub Actions secret named `CI_DB_URL` in the repository settings when you want CI to run `alembic upgrade head` during preview/deploy. Using a dedicated secret avoids exposing production credentials to CI workflows.
-
-Recommended additional secrets used by CI/deploy workflows:
-
-- `VERCEL_TOKEN`: Token used by the Vercel CLI for preview deployments.
-- `REDIS_URL`: Redis connection URL for workers and queue monitoring.
-- `LLM_API_KEY` (provider-specific name): API key for any LLM provider used by background analysis jobs (store under a provider-specific secret name if preferred).
-
-Note: After adding `CI_DB_URL` to repository secrets, update `.github/workflows/vercel-preview.yml` (if needed) to reference `CI_DB_URL` for migration steps instead of any other DB secret name. Be sure secrets are scoped appropriately (deployment vs preview) according to your environment strategy.
-
-## License
-
-Proprietary - TenantGuard Platform
-
-## Support
-
-For technical support or questions about the platform, contact the development team
 ---
 
-**TenantGuard** - Transforming tenant legal representation in Tennessee.
+## CI/CD Pipeline
+
+The pipeline is defined in `.github/workflows/deploy.yml` and uses **GitHub Actions + Docker + Google Artifact Registry**.
+
+### Deployment flow
+
+| Trigger | Target |
+|---|---|
+| Push to `main` | Staging VM (automatic) |
+| Git tag `v*` (e.g. `v1.2.0`) | Production VM (automatic) |
+
+```
+Push / Tag
+    │
+    ▼
+GitHub Actions
+    ├── Build backend Docker image
+    ├── Build frontend Docker image
+    ├── Push both to Google Artifact Registry
+    └── SSH into target VM
+         ├── git pull (latest compose files)
+         ├── docker compose pull (new images)
+         ├── python manage.py migrate
+         └── docker compose up -d
+```
+
+### Infrastructure on each VM
+
+```
+nginx (ports 80/443)
+  ├── /api/*   → Django (port 8000)
+  ├── /admin/* → Django (port 8000)
+  ├── /media/* → served from volume directly
+  └── /*       → Next.js (port 3000)
+
+cloud-sql-proxy  → Cloud SQL (PostgreSQL)
+```
+
+---
+
+## GitHub Secrets & Variables Setup
+
+Go to **Settings → Secrets and variables → Actions** in GitHub.
+
+### Secrets (sensitive)
+
+| Secret | Description |
+|---|---|
+| `GCP_SA_KEY` | GCP service account JSON key (Artifact Registry write + Cloud SQL access) |
+| `STAGING_HOST` | Staging VM public IP |
+| `STAGING_SSH_USER` | SSH user on staging VM (e.g. `ubuntu`) |
+| `STAGING_SSH_KEY` | Private SSH key for staging VM |
+| `PROD_HOST` | Production VM public IP |
+| `PROD_SSH_USER` | SSH user on production VM |
+| `PROD_SSH_KEY` | Private SSH key for production VM |
+| `CLOUD_SQL_INSTANCE_CONNECTION_NAME` | e.g. `my-project:us-central1:tenantguard-db` |
+
+### Variables (non-sensitive)
+
+| Variable | Description |
+|---|---|
+| `ARTIFACT_REGISTRY_URL` | e.g. `us-central1-docker.pkg.dev/my-project/tenantguard` |
+| `ARTIFACT_REGISTRY_REGION` | e.g. `us-central1` |
+| `NEXT_PUBLIC_API_URL` | Public API base URL (baked into frontend build) |
+
+---
+
+## VM Bootstrap (one-time per server)
+
+Run this on both the staging and production VMs the first time:
+
+```bash
+# Install Docker
+sudo apt-get update && sudo apt-get install -y docker.io docker-compose-plugin
+sudo usermod -aG docker $USER && newgrp docker
+
+# Clone the repo
+sudo git clone https://github.com/your-org/tenantguard2 /opt/tenantguard
+cd /opt/tenantguard
+
+# Place environment files
+cp /path/to/backend.env backend/.env
+cp /path/to/frontend.env.local frontend/.env.local
+
+# Place GCP service account credentials (used by cloud-sql-proxy)
+cp /path/to/gcp-credentials.json gcp-credentials.json
+```
+
+Then start the stack manually the first time:
+
+```bash
+cd /opt/tenantguard
+export ARTIFACT_REGISTRY=us-central1-docker.pkg.dev/my-project/tenantguard
+export IMAGE_TAG=latest
+export CLOUD_SQL_INSTANCE_CONNECTION_NAME=my-project:us-central1:tenantguard-db
+
+docker compose pull
+docker compose run --rm backend python manage.py migrate --noinput
+docker compose up -d
+```
+
+After that, all future deploys are handled automatically by the CI/CD pipeline.
+
+---
+
+## SSL Certificates
+
+Nginx expects certificates at:
+
+```
+ssl_certs/fullchain.pem
+ssl_certs/privkey.pem
+```
+
+To obtain/renew with Let's Encrypt (certbot):
+
+```bash
+sudo apt install certbot
+sudo certbot certonly --standalone -d yourdomain.com
+sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem /opt/tenantguard/ssl_certs/
+sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem /opt/tenantguard/ssl_certs/
+docker compose restart nginx
+```
+
+---
+
+## Releasing to Production
+
+```bash
+# Tag a release — this triggers the production deploy
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Monitor the deploy in the **Actions** tab on GitHub.
+
+---
+
+## Key API Routes
+
+```
+POST  /api/auth/register/
+POST  /api/auth/login/
+POST  /api/auth/google/
+POST  /api/auth/github/
+POST  /api/auth/token/refresh/
+
+GET   /api/blog/posts/           supports ?search=
+GET   /api/blog/posts/<slug>/
+GET   /api/blog/categories/
+POST  /api/blog/posts/<slug>/comments/
+
+GET   /api/chat/messages/        requires auth
+
+GET   /admin/ai-generator/       AI blog generation UI
+POST  /admin/blog/ai-generate-api/
+```

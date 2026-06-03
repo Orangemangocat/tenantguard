@@ -1,0 +1,76 @@
+{% load i18n %}
+<div class="td-view" id="td-form-view">
+
+  <!-- Back -->
+  <div class="td-form-header">
+    <a href="{% if todo %}{% url 'stafftodo:detail' todo.pk %}{% else %}{% url 'stafftodo:list' %}{% endif %}"
+       class="td-back" data-td-nav aria-label="Go back">← Back</a>
+    <h3 class="td-form-title">{% if todo %}Edit Task{% else %}New Task{% endif %}</h3>
+  </div>
+
+  <form method="post"
+        action="{% if todo %}{% url 'stafftodo:update' todo.pk %}{% else %}{% url 'stafftodo:create' %}{% endif %}"
+        data-td-form
+        class="td-form" novalidate>
+    {% csrf_token %}
+
+    <!-- Title -->
+    <div class="td-field{% if form.title.errors %} td-field--error{% endif %}">
+      <label class="td-label" for="{{ form.title.id_for_label }}">Title <span class="td-required">*</span></label>
+      {{ form.title }}
+      {% if form.title.errors %}
+      <div class="td-field-error">{{ form.title.errors|join:", " }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Description -->
+    <div class="td-field">
+      <label class="td-label" for="{{ form.description.id_for_label }}">Description</label>
+      {{ form.description }}
+    </div>
+
+    <!-- Status + Priority (side by side) -->
+    <div class="td-field-row">
+      <div class="td-field">
+        <label class="td-label" for="{{ form.status.id_for_label }}">Status</label>
+        {{ form.status }}
+      </div>
+      <div class="td-field">
+        <label class="td-label" for="{{ form.priority.id_for_label }}">Priority</label>
+        {{ form.priority }}
+      </div>
+    </div>
+
+    <!-- Assignee + Due date (side by side) -->
+    <div class="td-field-row">
+      <div class="td-field">
+        <label class="td-label" for="{{ form.assignee.id_for_label }}">Assignee</label>
+        {{ form.assignee }}
+      </div>
+      <div class="td-field">
+        <label class="td-label" for="{{ form.due_date.id_for_label }}">Due date</label>
+        {{ form.due_date }}
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="td-field">
+      <label class="td-label" for="{{ form.tags.id_for_label }}">Tags</label>
+      {{ form.tags }}
+      <div class="td-field-hint">Comma-separated, e.g. frontend, bug, api</div>
+    </div>
+
+    <!-- Actions -->
+    <div class="td-form-actions">
+      <button type="submit" class="td-btn td-btn--primary">{{ action }}</button>
+      {% if todo %}
+      <form method="post" action="{% url 'stafftodo:delete' todo.pk %}" data-td-form
+            class="td-inline-form" onsubmit="return confirm('Delete this task?')">
+        {% csrf_token %}
+        <button type="submit" class="td-btn td-btn--danger">Delete</button>
+      </form>
+      {% endif %}
+    </div>
+  </form>
+
+</div>

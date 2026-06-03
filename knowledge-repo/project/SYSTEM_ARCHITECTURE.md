@@ -308,9 +308,9 @@ The Flask application runs as a systemd service:
 
 ### Planned Integrations
 
-- **Email Service:** SendGrid, Mailgun, or AWS SES for transactional emails
+- **Email Service:** SendGrid or Mailgun for transactional emails
 - **Payment Processor:** Stripe or PayPal for attorney payments
-- **Document Storage:** AWS S3 or similar for uploaded documents
+- **Document Storage:** Google Cloud Storage for uploaded documents
 - **SMS Service:** Twilio for text notifications
 - **Analytics:** Google Analytics or Plausible
 

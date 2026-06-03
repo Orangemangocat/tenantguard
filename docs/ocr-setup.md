@@ -13,11 +13,12 @@ sudo apt install -y tesseract-ocr poppler-utils
 
 ## Python Dependencies
 
-The Python packages are listed in `requirements.txt`:
+The following packages must be added to `backend/requirements.txt` before use (they are not currently listed there):
 - `pytesseract`
 - `pdf2image`
-- `Pillow`
 - `PyPDF2`
+
+`Pillow` is already in `requirements.txt`.
 
 ## Notes
 

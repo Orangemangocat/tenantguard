@@ -1,0 +1,106 @@
+{% load i18n %}
+<div class="td-view" id="td-list-view">
+
+  <!-- Toolbar: view tabs + new button -->
+  <div class="td-toolbar">
+    <div class="td-tabs" role="tablist">
+      <a href="{% url 'stafftodo:list' %}?view=open{% if search %}&q={{ search|urlencode }}{% endif %}"
+         class="td-tab{% if view == 'open' %} td-tab--active{% endif %}"
+         data-td-nav aria-selected="{% if view == 'open' %}true{% else %}false{% endif %}">Open</a>
+      <a href="{% url 'stafftodo:list' %}?view=mine{% if search %}&q={{ search|urlencode }}{% endif %}"
+         class="td-tab{% if view == 'mine' %} td-tab--active{% endif %}"
+         data-td-nav aria-selected="{% if view == 'mine' %}true{% else %}false{% endif %}">Mine</a>
+      <a href="{% url 'stafftodo:list' %}?view=all{% if search %}&q={{ search|urlencode }}{% endif %}"
+         class="td-tab{% if view == 'all' %} td-tab--active{% endif %}"
+         data-td-nav aria-selected="{% if view == 'all' %}true{% else %}false{% endif %}">All</a>
+    </div>
+    <a href="{% url 'stafftodo:create' %}" class="td-btn td-btn--primary" data-td-nav>+ New</a>
+  </div>
+
+  <!-- Search -->
+  <div class="td-search-wrap">
+    <span class="td-search-icon">🔍</span>
+    <input type="search"
+           class="td-search-input"
+           placeholder="Search tasks…"
+           value="{{ search }}"
+           data-td-search
+           data-td-search-url="{% url 'stafftodo:list' %}?view={{ view }}"
+           aria-label="Search tasks">
+  </div>
+
+  <!-- Active tasks -->
+  <div class="td-task-list" id="td-task-list">
+    {% for todo in active_todos %}
+    <div class="td-task td-priority--{{ todo.priority }}{% if todo.is_overdue %} td-task--overdue{% endif %}{% if todo.status == 'blocked' %} td-task--blocked{% endif %}">
+
+      <!-- Status toggle -->
+      <form method="post" action="{% url 'stafftodo:status' todo.pk %}" data-td-form class="td-check-form">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="done">
+        <button type="submit" class="td-check" title="Mark done" aria-label="Mark done">
+          {% if todo.status == 'in_progress' %}▶{% elif todo.status == 'blocked' %}⊘{% else %}○{% endif %}
+        </button>
+      </form>
+
+      <!-- Title -->
+      <div class="td-task-body">
+        <a href="{% url 'stafftodo:detail' todo.pk %}" class="td-task-title" data-td-nav>{{ todo.title }}</a>
+        <div class="td-task-meta">
+          <span class="td-badge td-badge--{{ todo.priority }}">{{ todo.get_priority_display }}</span>
+          <span class="td-status-label">{{ todo.get_status_display }}</span>
+          {% if todo.assignee %}
+          <span class="td-assignee" title="{{ todo.assignee.get_full_name|default:todo.assignee.username }}">
+            {{ todo.assignee.username|slice:":2"|upper }}
+          </span>
+          {% endif %}
+          {% if todo.due_date %}
+          <span class="td-due{% if todo.is_overdue %} td-due--overdue{% endif %}">
+            {% if todo.is_overdue %}⚠ {% endif %}{{ todo.due_date|date:"M j" }}
+          </span>
+          {% endif %}
+          {% for tag in todo.tag_list %}
+          <span class="td-tag">{{ tag }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="td-empty">
+      {% if search %}
+        No tasks match "{{ search }}".
+      {% elif view == 'mine' %}
+        No tasks assigned to you.
+      {% else %}
+        No open tasks — nice work! 🎉
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Completed tasks (collapsible) -->
+  {% if done_todos %}
+  <details class="td-done-section">
+    <summary class="td-done-summary">Completed ({{ done_todos|length }})</summary>
+    <div class="td-task-list td-task-list--done">
+      {% for todo in done_todos %}
+      <div class="td-task td-task--done">
+        <form method="post" action="{% url 'stafftodo:status' todo.pk %}" data-td-form class="td-check-form">
+          {% csrf_token %}
+          <input type="hidden" name="status" value="open">
+          <button type="submit" class="td-check td-check--done" title="Reopen" aria-label="Reopen task">✓</button>
+        </form>
+        <div class="td-task-body">
+          <a href="{% url 'stafftodo:detail' todo.pk %}" class="td-task-title" data-td-nav>{{ todo.title }}</a>
+          <div class="td-task-meta">
+            {% if todo.assignee %}<span class="td-status-label">{{ todo.assignee.username }}</span>{% endif %}
+            <span class="td-status-label">{{ todo.updated_at|date:"M j" }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+
+</div>

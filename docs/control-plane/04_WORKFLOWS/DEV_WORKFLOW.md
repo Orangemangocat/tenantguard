@@ -15,7 +15,7 @@
   4. Validate/apply patch
   5. Run verification commands
   6. Update changelog(s) before merge
-- Supporting scripts:
+- Supporting scripts (planned — not yet implemented):
   - `scripts/new_workorder.py`
   - `scripts/build_ai_packet.py`
   - `scripts/extract_ai_patch.py`

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /blog/
+Disallow: /api/
+Disallow: /profile
+Disallow: /tenant-intake
+Disallow: /attorney-intake
+Disallow: /admin/
+
+Sitemap: https://tenantguard.net/sitemap.xml

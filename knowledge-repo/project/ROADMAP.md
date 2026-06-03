@@ -84,7 +84,7 @@
 **Timeline:** January 2026
 
 **Features:**
-- SMTP configuration (SendGrid or AWS SES)
+- SMTP configuration (SendGrid or Mailgun)
 - Email templates for common notifications
 - Case status updates
 - New message alerts
@@ -202,7 +202,7 @@
 **Timeline:** October - November 2026
 
 **Features:**
-- Move to cloud hosting (AWS, GCP, or Azure)
+- Move to Google Cloud hosting
 - Implement load balancing
 - Add Redis for caching and session storage
 - Set up CDN for static assets

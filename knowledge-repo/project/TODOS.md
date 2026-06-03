@@ -6,7 +6,7 @@
 
 - [ ] Configure SMTP for email notifications
   - Research email service providers
-  - Set up account (SendGrid, AWS SES, or Mailgun)
+  - Set up account (SendGrid or Mailgun)
   - Configure Flask to send emails
   - Test contact form email delivery
   - Create email templates for notifications
@@ -71,7 +71,7 @@
   - Implement KPI tracking
 
 - [ ] Implement file upload
-  - Choose storage solution (S3 or local)
+  - Choose storage solution (Google Cloud Storage or local)
   - Create upload API endpoint
   - Add file validation (type, size)
   - Display uploaded files in dashboard
@@ -188,7 +188,7 @@
 ### Infrastructure
 
 - [ ] Move to cloud hosting
-  - Choose cloud provider (AWS, GCP, Azure)
+  - Set up Google Cloud infrastructure (VMs, load balancers, etc.)
   - Set up infrastructure (VMs, load balancers, etc.)
   - Migrate application and database
   - Configure auto-scaling

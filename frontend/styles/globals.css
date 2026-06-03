@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+@plugin "@tailwindcss/typography";
+
+:root {
+  --color-background: #ffffff;
+  --color-backgroundSecondary: #f9fafb;
+  --color-backgroundTertiary: #f3f4f6;
+  --color-text: #111827;
+  --color-textSecondary: #6b7280;
+  --color-textTertiary: #9ca3af;
+  --color-primary: #dc2626;
+  --color-primaryHover: #b91c1c;
+  --color-primaryLight: #fee2e2;
+  --color-accent: #f97316;
+  --color-accentHover: #ea580c;
+  --color-border: #e5e7eb;
+  --color-borderHover: #d1d5db;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  --color-cardBg: #ffffff;
+  --color-cardBgHover: #f9fafb;
+  --color-navBg: #ffffff;
+  --color-navText: #111827;
+  --color-navBorder: #e5e7eb;
+
+  /* Workspace design tokens */
+  --color-navy: #1B2A4A;
+  --color-navy-light: #243660;
+  --color-teal: #0EA5E9;
+  --color-teal-light: #38BDF8;
+  --color-amber-warn: #F59E0B;
+  --color-red-urgent: #EF4444;
+  --color-green-safe: #10B981;
+  --color-warm-white: #FAF9F7;
+  --color-warm-gray: #F4F3F0;
+
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+button, a, input, textarea, select {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}

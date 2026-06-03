@@ -10,7 +10,7 @@ This document tracks unresolved questions, uncertainties, and decisions that nee
 
 **Options:**
 - SendGrid (popular, good free tier)
-- AWS SES (cost-effective, requires AWS account)
+- Google Cloud (via SMTP relay or SendGrid)
 - Mailgun (reliable, good API)
 - Postmark (focused on transactional emails)
 
@@ -73,7 +73,7 @@ This document tracks unresolved questions, uncertainties, and decisions that nee
 
 **Options:**
 - Store files on server filesystem
-- Use AWS S3 or similar cloud storage
+- Use Google Cloud Storage
 - Use a CDN for serving uploaded files
 
 **Considerations:**
@@ -365,11 +365,13 @@ This document tracks unresolved questions, uncertainties, and decisions that nee
 
 **Context:** Plan to move to cloud hosting in Q4 2026.
 
-**Options:**
-- AWS (most features, complex)
-- Google Cloud Platform (good for startups)
-- Azure (good for enterprise)
-- DigitalOcean (simple, affordable)
+**Decision:** Google Cloud Platform (already in use)
+
+**Options (resolved):**
+- ~~AWS (most features, complex)~~
+- **Google Cloud Platform** ✓ (chosen)
+- ~~Azure (good for enterprise)~~
+- ~~DigitalOcean (simple, affordable)~~
 
 **Considerations:**
 - Cost
