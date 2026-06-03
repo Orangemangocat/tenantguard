@@ -30,15 +30,21 @@ SECRET_KEY = "use-env-to-change-me"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
-    "tenantguard.net",
-    "www.tenantguard.net",
-    "dev.tenantguard.net",
-    "backend",
-    "frontend",
-]
+# Read ALLOWED_HOSTS from environment variable if set, otherwise use defaults
+_env_hosts = os.environ.get("ALLOWED_HOSTS", "")
+if _env_hosts:
+    ALLOWED_HOSTS = [h.strip() for h in _env_hosts.split(",") if h.strip()]
+else:
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        "tenantguard.net",
+        "www.tenantguard.net",
+        "dev.tenantguard.net",
+        "staging.tenantguard.net",
+        "backend",
+        "frontend",
+    ]
 
 # Trust the X-Forwarded-Proto header from nginx so Django knows requests are HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -48,6 +54,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://tenantguard.net",
     "https://www.tenantguard.net",
     "https://dev.tenantguard.net",
+    "https://staging.tenantguard.net",
 ]
 
 
