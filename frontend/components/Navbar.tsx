@@ -198,24 +198,27 @@ const Navbar = ({
                         <span>Admin Panel</span>
                       </a>
                     </DropdownMenuItem>
-                  ) : openCaseId !== null ? (
-                    <DropdownMenuItem
-                      onClick={() => router.push(`/case/${openCaseId}`)}
-                      className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
-                      style={{ color: 'var(--color-text)' }}
-                    >
-                      <FolderOpen className="mr-2 h-4 w-4" />
-                      <span>My Case</span>
-                    </DropdownMenuItem>
                   ) : (
-                    <DropdownMenuItem
-                      onClick={() => router.push('/intake')}
-                      className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
-                      style={{ color: 'var(--color-text)' }}
-                    >
-                      <HelpCircle className="mr-2 h-4 w-4" />
-                      <span>Get Help</span>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => router.push('/dashboard')}
+                        className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
+                        style={{ color: 'var(--color-text)' }}
+                      >
+                        <FolderOpen className="mr-2 h-4 w-4" />
+                        <span>My Dashboard</span>
+                      </DropdownMenuItem>
+                      {openCaseId !== null && (
+                        <DropdownMenuItem
+                          onClick={() => router.push(`/case/${openCaseId}`)}
+                          className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
+                          style={{ color: 'var(--color-text)' }}
+                        >
+                          <HelpCircle className="mr-2 h-4 w-4" />
+                          <span>My Case</span>
+                        </DropdownMenuItem>
+                      )}
+                    </>
                   )}
 
                   <DropdownMenuSeparator
@@ -350,20 +353,37 @@ const Navbar = ({
                               <Shield className="mr-2 h-4 w-4" />
                               Admin Panel
                             </Button>
-                          ) : openCaseId !== null ? (
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start h-11"
-                              onClick={() => {
-                                setIsMobileMenuOpen(false)
-                                setIsMobileUserOpen(false)
-                                router.push(`/case/${openCaseId}`)
-                              }}
-                            >
-                              <FolderOpen className="mr-2 h-4 w-4" />
-                              My Case
-                            </Button>
                           ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                className="w-full justify-start h-11"
+                                onClick={() => {
+                                  setIsMobileMenuOpen(false)
+                                  setIsMobileUserOpen(false)
+                                  router.push('/dashboard')
+                                }}
+                              >
+                                <FolderOpen className="mr-2 h-4 w-4" />
+                                My Dashboard
+                              </Button>
+                              {openCaseId !== null && (
+                                <Button
+                                  variant="ghost"
+                                  className="w-full justify-start h-11"
+                                  onClick={() => {
+                                    setIsMobileMenuOpen(false)
+                                    setIsMobileUserOpen(false)
+                                    router.push(`/case/${openCaseId}`)
+                                  }}
+                                >
+                                  <HelpCircle className="mr-2 h-4 w-4" />
+                                  My Case
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          {!isStaff && !openCaseId && (
                             <Button
                               variant="ghost"
                               className="w-full justify-start h-11"

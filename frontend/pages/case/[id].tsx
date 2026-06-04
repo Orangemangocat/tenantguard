@@ -755,6 +755,24 @@ export default function CasePage({ initialSubmission, priceDisplay }: Props) {
             </div>
           )}
 
+          {/* Tools navigation */}
+          <nav className="p-3 border-b border-white/10">
+            <p className="text-[10px] text-white/30 uppercase tracking-widest px-3 mb-2 mt-2">Tools</p>
+            {[
+              { href: `/case/${submission.id}/documents`, icon: Upload, label: 'Documents' },
+              { href: `/case/${submission.id}/motions`, icon: Gavel, label: 'Motions' },
+              { href: `/case/${submission.id}/actions`, icon: Lightbulb, label: 'Action Items' },
+              { href: `/case/${submission.id}/alerts`, icon: Mail, label: 'Alerts' },
+            ].map(({ href, icon: Icon, label }) => (
+              <Link key={href} href={href}>
+                <span className="w-full flex items-center gap-2.5 px-3 py-2 rounded-sm text-sm text-white/60 hover:text-white transition-colors mb-0.5 cursor-pointer">
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </span>
+              </Link>
+            ))}
+          </nav>
+
           {/* Notebook section nav (complete only) */}
           {isComplete && NAV_SECTIONS.length > 0 && (
             <nav className="p-3">
@@ -807,10 +825,10 @@ export default function CasePage({ initialSubmission, priceDisplay }: Props) {
 
           {/* Back link */}
           <div className="p-4 border-t border-white/10 mt-auto">
-            <Link href="/intake">
+            <Link href="/dashboard">
               <span className="flex items-center gap-2 text-sm text-white/50 hover:text-white cursor-pointer">
                 <ArrowLeft className="h-4 w-4" />
-                Back to chat
+                My Dashboard
               </span>
             </Link>
           </div>

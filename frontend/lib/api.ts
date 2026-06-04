@@ -189,4 +189,202 @@ export async function streamIntakeChat(
   }
 }
 
+// --- Dashboard API ---
+
+export interface DashboardSummary {
+  cases: number
+  active_cases: number
+  upcoming_deadlines: Array<{
+    case_id: number
+    case_name: string
+    type: string
+    date: string
+    days_remaining: number
+    label: string
+  }>
+  pending_alerts: number
+  recent_analyses: Array<{
+    id: number
+    document_name: string
+    category: string
+    summary: string
+    analyzed_at: string
+  }>
+}
+
+export const getDashboardSummary = async (token: string): Promise<DashboardSummary> => {
+  const response = await api.get('intake/dashboard/', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  return response.data
+}
+
+export interface DocumentAnalysisResult {
+  id: number
+  document_name: string
+  category: string
+  category_display: string
+  extracted_text: string
+  summary: string
+  key_dates: Array<{ label: string; date: string; is_deadline: boolean }>
+  legal_issues: Array<{ issue: string; severity: string; explanation: string }>
+  procedural_defects: Array<{ defect: string; explanation: string; actionable: boolean }>
+  tenant_rights: Array<{ right: string; statute: string; explanation: string }>
+  analyzed_at: string
+}
+
+export interface UploadAnalyzeResponse {
+  document: {
+    id: number
+    doc_type: string
+    original_filename: string
+    uploaded_at: string
+  }
+  analysis: DocumentAnalysisResult
+}
+
+export const uploadAndAnalyzeDocument = async (
+  submissionId: number,
+  file: File,
+  docType: string,
+  token: string,
+  options?: { received_date?: string; deadline_date?: string; notes?: string }
+): Promise<UploadAnalyzeResponse> => {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('doc_type', docType)
+  if (options?.received_date) formData.append('received_date', options.received_date)
+  if (options?.deadline_date) formData.append('deadline_date', options.deadline_date)
+  if (options?.notes) formData.append('notes', options.notes)
+
+  const response = await api.post(`intake/${submissionId}/upload-analyze/`, formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  return response.data
+}
+
+export interface CaseMotion {
+  id: number
+  motion_type: string
+  motion_type_display: string
+  title: string
+  content: string
+  instructions: string
+  filing_deadline: string | null
+  court_name: string
+  filing_fee: string
+  status: string
+  status_display: string
+  generated_at: string
+  updated_at: string
+}
+
+export const listMotions = async (submissionId: number, token: string): Promise<CaseMotion[]> => {
+  const response = await api.get(`intake/${submissionId}/motions/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  return response.data
+}
+
+export const generateMotion = async (
+  submissionId: number,
+  motionType: string,
+  token: string
+): Promise<CaseMotion> => {
+  const response = await api.post(
+    `intake/${submissionId}/motions/generate/`,
+    { motion_type: motionType },
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  return response.data
+}
+
+export const updateMotion = async (
+  submissionId: number,
+  motionId: number,
+  data: Partial<CaseMotion>,
+  token: string
+): Promise<CaseMotion> => {
+  const response = await api.patch(
+    `intake/${submissionId}/motions/${motionId}/`,
+    data,
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  return response.data
+}
+
+export interface CaseActionItem {
+  id: number
+  title: string
+  description: string
+  priority: string
+  priority_display: string
+  due_date: string | null
+  completed: boolean
+  completed_at: string | null
+  order: number
+  created_at: string
+}
+
+export const listActionItems = async (submissionId: number, token: string): Promise<CaseActionItem[]> => {
+  const response = await api.get(`intake/${submissionId}/actions/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  return response.data
+}
+
+export const toggleActionItem = async (
+  submissionId: number,
+  actionId: number,
+  completed: boolean,
+  token: string
+): Promise<CaseActionItem> => {
+  const response = await api.patch(
+    `intake/${submissionId}/actions/${actionId}/`,
+    { completed },
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  return response.data
+}
+
+export interface CaseAlert {
+  id: number
+  alert_type: string
+  alert_type_display: string
+  delivery_method: string
+  scheduled_for: string
+  message: string
+  status: string
+  status_display: string
+  is_overdue: boolean
+  sent_at: string | null
+  created_at: string
+}
+
+export const listAlerts = async (submissionId: number, token: string): Promise<CaseAlert[]> => {
+  const response = await api.get(`intake/${submissionId}/alerts/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  return response.data
+}
+
+export const createAlert = async (
+  submissionId: number,
+  data: {
+    alert_type: string
+    delivery_method: string
+    scheduled_for: string
+    message: string
+  },
+  token: string
+): Promise<CaseAlert> => {
+  const response = await api.post(`intake/${submissionId}/alerts/create/`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  return response.data
+}
+
 export default api;
