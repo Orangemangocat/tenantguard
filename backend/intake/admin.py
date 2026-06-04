@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import CaseNotebook, IntakeChatLog, IntakeDocument, IntakeSubmission, SMSSession
+from .models_dashboard import CaseAlert, CaseMotion, CaseActionItem, DocumentAnalysis
 
 
 class IntakeDocumentInline(admin.TabularInline):
@@ -19,13 +20,33 @@ class CaseNotebookInline(admin.StackedInline):
     can_delete = False
 
 
+class CaseMotionInline(admin.TabularInline):
+    model = CaseMotion
+    extra = 0
+    readonly_fields = ["motion_type", "title", "status", "generated_at"]
+    fields = ["motion_type", "title", "status", "filing_deadline", "generated_at"]
+
+
+class CaseActionItemInline(admin.TabularInline):
+    model = CaseActionItem
+    extra = 0
+    fields = ["title", "priority", "due_date", "completed"]
+
+
+class CaseAlertInline(admin.TabularInline):
+    model = CaseAlert
+    extra = 0
+    readonly_fields = ["alert_type", "scheduled_for", "status", "sent_at"]
+    fields = ["alert_type", "delivery_method", "scheduled_for", "message", "status", "sent_at"]
+
+
 @admin.register(IntakeSubmission)
 class IntakeSubmissionAdmin(admin.ModelAdmin):
     list_display = ["id", "full_name", "role", "issue_type", "urgency_level", "status", "created_at"]
     list_filter = ["role", "status", "issue_type", "county", "urgency_level", "government_assistance"]
     search_fields = ["first_name", "last_name", "email", "property_address", "landlord_name"]
     readonly_fields = ["status", "created_at", "updated_at"]
-    inlines = [IntakeDocumentInline, CaseNotebookInline]
+    inlines = [IntakeDocumentInline, CaseNotebookInline, CaseMotionInline, CaseActionItemInline, CaseAlertInline]
 
     fieldsets = [
         ("Status", {
@@ -135,3 +156,33 @@ class SMSSessionAdmin(admin.ModelAdmin):
     list_display = ["id", "phone", "submission", "created_at", "updated_at"]
     search_fields = ["phone"]
     readonly_fields = ["phone", "created_at", "updated_at"]
+
+
+@admin.register(DocumentAnalysis)
+class DocumentAnalysisAdmin(admin.ModelAdmin):
+    list_display = ["id", "document", "category", "analyzed_at"]
+    list_filter = ["category"]
+    search_fields = ["document__original_filename", "summary"]
+    readonly_fields = ["document", "category", "extracted_text", "summary", "key_dates",
+                       "legal_issues", "procedural_defects", "tenant_rights", "raw_analysis", "analyzed_at"]
+
+
+@admin.register(CaseMotion)
+class CaseMotionAdmin(admin.ModelAdmin):
+    list_display = ["id", "submission", "motion_type", "title", "status", "filing_deadline", "generated_at"]
+    list_filter = ["motion_type", "status"]
+    search_fields = ["title", "submission__first_name", "submission__last_name"]
+
+
+@admin.register(CaseActionItem)
+class CaseActionItemAdmin(admin.ModelAdmin):
+    list_display = ["id", "submission", "title", "priority", "due_date", "completed"]
+    list_filter = ["priority", "completed"]
+    search_fields = ["title", "submission__first_name", "submission__last_name"]
+
+
+@admin.register(CaseAlert)
+class CaseAlertAdmin(admin.ModelAdmin):
+    list_display = ["id", "submission", "alert_type", "delivery_method", "scheduled_for", "status"]
+    list_filter = ["alert_type", "status", "delivery_method"]
+    search_fields = ["message", "submission__first_name", "submission__last_name"]

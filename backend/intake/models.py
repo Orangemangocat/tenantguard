@@ -297,3 +297,12 @@ class SMSSession(models.Model):
 
     def __str__(self):
         return f"SMS {self.phone} → submission #{self.submission_id}"
+
+
+# Import additional dashboard models so they are registered with Django
+from .models_dashboard import (  # noqa: E402, F401
+    CaseAlert,
+    CaseMotion,
+    CaseActionItem,
+    DocumentAnalysis,
+)
