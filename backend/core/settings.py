@@ -209,8 +209,8 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "APP": {
-            "client_id": "<your google client id>",
-            "secret": "<your google secret>",
+            "client_id": os.environ.get("GOOGLE_CLIENT_ID", ""),
+            "secret": os.environ.get("GOOGLE_CLIENT_SECRET", ""),
             "key": "",  # leave empty
         },
         "SCOPE": [
@@ -224,8 +224,8 @@ SOCIALACCOUNT_PROVIDERS = {
     },
     "github": {
         "APP": {
-            "client_id": "<your github client id>",
-            "secret": "<your github secret>",
+            "client_id": os.environ.get("GITHUB_CLIENT_ID", ""),
+            "secret": os.environ.get("GITHUB_CLIENT_SECRET", ""),
             "key": "",
         },
         "SCOPE": [
