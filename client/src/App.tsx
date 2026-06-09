@@ -5,31 +5,62 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import GetStarted from "./pages/GetStarted";
+import AdLanding from "./pages/AdLanding";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import DemoLaunch from "./pages/DemoLaunch";
+import {
+  AttorneyDashboard,
+  AttorneyCases,
+  AttorneyCaseDetail,
+  AttorneyBids,
+  AttorneyBilling,
+} from "./pages/AttorneyPortal";
+import {
+  ClientDashboard,
+  ClientCaseDetail,
+  ClientBids,
+  ClientConsultations,
+} from "./pages/ClientPortal";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      {/* Public marketing site */}
+      <Route path="/" component={Home} />
+      <Route path="/get-started" component={GetStarted} />
+      <Route path="/tenant" component={GetStarted} />
+      <Route path="/demo" component={DemoLaunch} />
+
+      {/* Standalone social ad landing page */}
+      <Route path="/offer" component={AdLanding} />
+
+      {/* Payment return */}
+      <Route path="/payment/success" component={PaymentSuccess} />
+
+      {/* Attorney portal */}
+      <Route path="/attorney" component={AttorneyDashboard} />
+      <Route path="/attorney/cases" component={AttorneyCases} />
+      <Route path="/attorney/bids" component={AttorneyBids} />
+      <Route path="/attorney/billing" component={AttorneyBilling} />
+      <Route path="/attorney/case/:id" component={AttorneyCaseDetail} />
+
+      {/* Client portal */}
+      <Route path="/client" component={ClientDashboard} />
+      <Route path="/client/bids" component={ClientBids} />
+      <Route path="/client/consultations" component={ClientConsultations} />
+      <Route path="/client/case/:id" component={ClientCaseDetail} />
+
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <Router />
