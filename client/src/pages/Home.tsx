@@ -112,7 +112,7 @@ export default function Home() {
             { n: "1 in 10", l: "tenants have counsel in eviction court" },
             { n: "90%", l: "of landlords show up represented" },
             { n: "$0", l: "advertising cost passed to your clients" },
-            { n: "48 hrs", l: "typical time to a represented client" },
+            { n: "48 hrs", l: "average time to match a client with an attorney" },
           ].map((s) => (
             <div key={s.l}>
               <div className="font-display text-3xl font-extrabold text-[var(--brand-navy)]">{s.n}</div>

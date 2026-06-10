@@ -183,7 +183,7 @@ export default function AdLanding() {
           <span className="inline-flex items-center gap-1"><BadgeDollarSign className="h-3.5 w-3.5" /> Flat fees, no retainers</span>
           <span className="inline-flex items-center gap-1"><PiggyBank className="h-3.5 w-3.5" /> $25 consult, credited to your fee</span>
           <span className="inline-flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Bar-verified attorneys</span>
-          <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Offers in 24–48 hrs</span>
+          <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Hear back within 24–48 hrs</span>
         </div>
       </div>
     </div>
