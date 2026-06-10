@@ -7,7 +7,8 @@ import {
   Clock,
   ShieldCheck,
   Scale,
-  Heart,
+  PiggyBank,
+  BadgeDollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BRAND } from "@/lib/assets";
@@ -26,40 +27,40 @@ const STEPS = [
     key: "crisis",
     icon: <AlertTriangle className="h-7 w-7" />,
     tag: "Got an eviction notice?",
-    headline: "A notice on your door isn't the end of your story.",
-    body: "Most tenants never get to tell their side — not because they're wrong, but because they think they can't afford a lawyer. Landlords show up with attorneys. You shouldn't have to stand alone.",
+    headline: "Skipping a lawyer feels cheaper. It's the most expensive choice you can make.",
+    body: "Losing your case can mean losing your home, your deposit, and a mark on your record that follows you to the next lease. Most tenants go it alone — not because they're wrong, but because they assume a lawyer is out of reach. It doesn't have to be.",
     accent: "from-red-500/20 to-orange-500/10",
   },
   {
     key: "recognition",
-    icon: <Heart className="h-7 w-7" />,
-    tag: "You're not the problem",
-    headline: "The system is stacked — and the cost of finding a lawyer gets passed to you.",
-    body: "Traditional firms spend a fortune on advertising, and that cost lands on the tenant who can least afford it. That's exactly why qualified tenants go unrepresented. We built TenantGuard to break that cycle.",
+    icon: <PiggyBank className="h-7 w-7" />,
+    tag: "Why lawyers seem unaffordable",
+    headline: "You're not paying for a lawyer. You're paying for their advertising.",
+    body: "Traditional firms spend a fortune on ads and marketing — and that cost gets baked into your bill. The tenant who can least afford it ends up subsidizing the billboard. TenantGuard cuts the ad spend out entirely, so what you pay goes to representation, not marketing.",
     accent: "from-amber-500/20 to-yellow-500/10",
   },
   {
     key: "hope",
-    icon: <ShieldCheck className="h-7 w-7" />,
-    tag: "How TenantGuard helps",
-    headline: "Vetted local attorneys. Flat fees. No surprises.",
-    body: "Tell us your story once. Verified attorneys licensed in your county review your case and send flat-fee offers to represent you — a fixed price for your first two court appearances, with a clear price for a third if it's ever needed.",
+    icon: <BadgeDollarSign className="h-7 w-7" />,
+    tag: "One flat price. Known up front.",
+    headline: "A fixed fee to show up in court — no retainers, no hourly meter.",
+    body: "Verified attorneys in your county compete to represent you and send one flat-fee offer: a single fixed price covering your first two court appearances, plus a clear, locked-in price for a third only if it's ever needed. You see the full cost before you commit — no surprise invoices.",
     accent: "from-emerald-500/20 to-teal-500/10",
   },
   {
     key: "proof",
     icon: <Scale className="h-7 w-7" />,
-    tag: "Real representation",
-    headline: "Talk to an attorney for $25 — credited toward your fees.",
-    body: "Book a 30-minute consultation with a bidding attorney for just $25, and that amount goes straight toward your representation. No retainers. No hourly meters running while you explain your situation.",
+    tag: "Risk almost nothing to start",
+    headline: "Talk to a real attorney for $25 — and it comes off your fee.",
+    body: "Book a 30-minute consultation with a bidding attorney for just $25, and every dollar is credited straight toward your representation. No retainer to scrape together, no clock running while you explain your situation. If you move forward, it's already paid.",
     accent: "from-sky-500/20 to-blue-500/10",
   },
   {
     key: "action",
     icon: <CheckCircle2 className="h-7 w-7" />,
-    tag: "Take the first step",
-    headline: "Start your case in minutes.",
-    body: "It's free to tell your story and see who's ready to help. You only move forward when you're ready.",
+    tag: "Nothing to lose",
+    headline: "See your flat-fee offers — free.",
+    body: "It costs nothing to tell your story and see which attorneys want to represent you and at what fixed price. Compare offers, then only move forward when the number works for you.",
     accent: "from-orange-500/20 to-primary/10",
   },
 ];
@@ -179,9 +180,10 @@ export default function AdLanding() {
 
         {/* Trust footer */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/50">
+          <span className="inline-flex items-center gap-1"><BadgeDollarSign className="h-3.5 w-3.5" /> Flat fees, no retainers</span>
+          <span className="inline-flex items-center gap-1"><PiggyBank className="h-3.5 w-3.5" /> $25 consult, credited to your fee</span>
           <span className="inline-flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Bar-verified attorneys</span>
           <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Offers in 24–48 hrs</span>
-          <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Flat fees, no retainers</span>
         </div>
       </div>
     </div>

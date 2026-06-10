@@ -63,7 +63,7 @@
 ## Delivery
 - [x] Wire all nav buttons (esp. "Attorney Portal"); fixed dead /get-help footer link
 - [x] Checkpoint
-- [ ] Push to GitHub
+- [x] Push to GitHub (branch `attorney-portal` on Orangemangocat/tenantguard @ 43f1e89e, 155 files; main untouched)
 
 ## Attorney Credential Verification (added per user request)
 - [x] Attorney intake form: bar number (required)
@@ -73,3 +73,7 @@
 - [x] Optional upload: bar card / good-standing (schema supports credentialFileKey; UI capture is a known follow-up)
 - [x] Store credentials in attorneyProfiles; verification status field
 - [x] Gate bidding so attorney can only bid on cases in certified counties
+
+## Ad Page Copy Tuning (follow-up request)
+- [x] Rewrite /offer narrative to lead with cost-saving benefits (no ad markup, flat fees, no retainers, $25 credited)
+- [x] Add concrete cost-contrast / savings emphasis to headlines and trust strip
