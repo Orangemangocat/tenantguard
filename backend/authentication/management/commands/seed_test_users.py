@@ -7,6 +7,12 @@ Run:
 This creates (or resets) the following accounts:
 
   ┌─────────────────────────────────────────────────────────┐
+  │  SUPER ADMIN                                            │
+  │  Username: superadmin                                   │
+  │  Password: SuperAdmin123!                               │
+  │  Email:    admin@tenantguard.net                        │
+  │  Role:     superuser (full site control)                │
+  ├─────────────────────────────────────────────────────────┤
   │  TEST ATTORNEY                                          │
   │  Username: testattorney                                 │
   │  Password: TestAttorney123!                             │
@@ -30,12 +36,22 @@ User = get_user_model()
 
 TEST_USERS = [
     {
+        "username": "superadmin",
+        "email": "admin@tenantguard.net",
+        "password": "SuperAdmin123!",
+        "first_name": "Super",
+        "last_name": "Admin",
+        "is_staff": True,
+        "is_superuser": True,
+    },
+    {
         "username": "testattorney",
         "email": "testattorney@tenantguard.net",
         "password": "TestAttorney123!",
         "first_name": "Test",
         "last_name": "Attorney",
         "is_staff": True,
+        "is_superuser": False,
     },
     {
         "username": "testtenant",
@@ -44,12 +60,13 @@ TEST_USERS = [
         "first_name": "Test",
         "last_name": "Tenant",
         "is_staff": False,
+        "is_superuser": False,
     },
 ]
 
 
 class Command(BaseCommand):
-    help = "Seed test attorney and tenant accounts for staging/development."
+    help = "Seed test accounts (superadmin, attorney, tenant) for staging/development."
 
     def handle(self, *args, **options):
         for user_data in TEST_USERS:
@@ -63,6 +80,7 @@ class Command(BaseCommand):
                     "first_name": user_data["first_name"],
                     "last_name": user_data["last_name"],
                     "is_staff": user_data["is_staff"],
+                    "is_superuser": user_data.get("is_superuser", False),
                     "is_active": True,
                 },
             )
@@ -73,22 +91,30 @@ class Command(BaseCommand):
                 user.first_name = user_data["first_name"]
                 user.last_name = user_data["last_name"]
                 user.is_staff = user_data["is_staff"]
+                user.is_superuser = user_data.get("is_superuser", False)
                 user.is_active = True
 
             # Always reset the password so we know what it is
             user.set_password(password)
             user.save()
 
+            role = "SUPERADMIN" if user.is_superuser else ("staff/attorney" if user.is_staff else "tenant")
             status = "CREATED" if created else "RESET"
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"  [{status}] {username} / {password} "
-                    f"({'staff/attorney' if user.is_staff else 'tenant'})"
+                    f"  [{status}] {username} / {password} ({role})"
                 )
             )
 
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS("✓ Test users seeded successfully."))
+        self.stdout.write("")
+        self.stdout.write("  Super Admin Login (FULL SITE CONTROL):")
+        self.stdout.write("    Username: superadmin")
+        self.stdout.write("    Password: SuperAdmin123!")
+        self.stdout.write("    Django Admin: /admin/")
+        self.stdout.write("    AI Blog Writer: /admin/ai-generator/")
+        self.stdout.write("    Staff Todos: /staff/todos/")
         self.stdout.write("")
         self.stdout.write("  Test Attorney Login:")
         self.stdout.write("    Username: testattorney")

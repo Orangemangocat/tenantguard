@@ -22,6 +22,11 @@ export default function SignIn({ providers, csrfToken, callbackUrl }: Props) {
     setLoading(false);
   };
 
+  const fillSuperAdmin = () => {
+    setUsername("superadmin");
+    setPassword("SuperAdmin123!");
+  };
+
   const fillTestAttorney = () => {
     setUsername("testattorney");
     setPassword("TestAttorney123!");
@@ -40,7 +45,39 @@ export default function SignIn({ providers, csrfToken, callbackUrl }: Props) {
           <h2 className="text-lg font-bold text-yellow-800 mb-3 flex items-center gap-2">
             <span className="text-xl">🧪</span> Test Accounts
           </h2>
+          <p className="text-xs text-yellow-700 mb-3">
+            First time? Hit <code className="bg-yellow-100 px-1 rounded">/api/seed-test-users/</code> to create these accounts.
+          </p>
           <div className="space-y-3">
+            {/* Super Admin */}
+            <div className="rounded bg-red-50 p-3 border-2 border-red-300">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-red-800">Super Admin</span>
+                <div className="flex gap-1">
+                  <a
+                    href="/admin/"
+                    className="text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded font-medium"
+                  >
+                    Django Admin
+                  </a>
+                  <button
+                    onClick={fillSuperAdmin}
+                    className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded font-medium"
+                  >
+                    Fill
+                  </button>
+                </div>
+              </div>
+              <div className="text-sm text-gray-600 font-mono">
+                <div>Username: <span className="font-bold text-gray-900">superadmin</span></div>
+                <div>Password: <span className="font-bold text-gray-900">SuperAdmin123!</span></div>
+              </div>
+              <div className="mt-2 text-xs text-red-700">
+                Full control: Users, Blog, AI Writer, Intake, Todos, Site Settings
+              </div>
+            </div>
+
+            {/* Test Attorney */}
             <div className="rounded bg-white p-3 border border-yellow-200">
               <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold text-gray-800">Test Attorney</span>
@@ -56,6 +93,8 @@ export default function SignIn({ providers, csrfToken, callbackUrl }: Props) {
                 <div>Password: <span className="font-bold text-gray-900">TestAttorney123!</span></div>
               </div>
             </div>
+
+            {/* Test Tenant */}
             <div className="rounded bg-white p-3 border border-yellow-200">
               <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold text-gray-800">Test Tenant</span>
@@ -72,9 +111,6 @@ export default function SignIn({ providers, csrfToken, callbackUrl }: Props) {
               </div>
             </div>
           </div>
-          <p className="mt-3 text-xs text-yellow-700">
-            First time? Hit <code className="bg-yellow-100 px-1 rounded">/api/seed-test-users/</code> to create these accounts.
-          </p>
         </div>
 
         {/* ===== SIGN IN FORM ===== */}
