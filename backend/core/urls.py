@@ -31,6 +31,7 @@ urlpatterns = [
     path("api/stripe/webhook/", StripeWebhookView.as_view(), name="stripe-webhook"),
     path("api/seed-test-users/", seed_test_users_view, name="seed-test-users"),
     path("staff/todos/", include("stafftodo.urls", namespace="stafftodo")),
+    path("admin/seo-dashboard/", include("seo.urls", namespace="seo")),
     path("admin/ai-generator/", ai_generator_view, name='ai-generator'),
     path("admin/blog/ai-generate-api/", ai_generate_api, name='ai-generate-api'),
     path("admin/blog/ai-posts/", ai_posts_list_api, name='ai-posts-list'),

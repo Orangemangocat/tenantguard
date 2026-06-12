@@ -91,6 +91,7 @@ The credentials are also displayed directly on the sign-in page in a yellow bann
 |-------------------|------------------------------------------|
 | Django Admin Home | `/admin/`                                |
 | User Management   | `/admin/auth/user/`                      |
+| SEO Dashboard     | `/admin/seo-dashboard/`                  |
 | Blog Posts        | `/admin/blog/post/`                      |
 | AI Blog Writer    | `/admin/ai-generator/`                   |
 | Categories        | `/admin/blog/category/`                  |

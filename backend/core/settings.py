@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     "chat.apps.ChatConfig",
     "intake.apps.IntakeConfig",
     "stafftodo.apps.StafftodoConfig",
+    "seo.apps.SeoConfig",
     "google_analytics_django",
 ]
 
@@ -249,6 +250,11 @@ JAZZMIN_SETTINGS = {
     "topmenu_links": [
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
         {"model": "auth.User"},
+        {
+            "name": "SEO Dashboard",
+            "url": "/admin/seo-dashboard/",
+            "permissions": ["auth.view_user"],
+        },
         {
             "name": "AI Blog Writer",
             "url": "ai-generator",

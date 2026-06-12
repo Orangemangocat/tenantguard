@@ -1,0 +1,285 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}SEO Dashboard — {{ site_url }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  .seo-dashboard { padding: 20px; }
+  .seo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .seo-card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .seo-card .value { font-size: 2em; font-weight: bold; color: #417690; margin: 8px 0 4px; }
+  .seo-card .label { font-size: 0.85em; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+  .seo-section { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .seo-section h3 { margin: 0 0 16px; color: #333; border-bottom: 2px solid #417690; padding-bottom: 8px; }
+  .seo-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+  .seo-table th { background: #f8f8f8; padding: 10px 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600; }
+  .seo-table td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+  .seo-table tr:hover td { background: #f5f9fc; }
+  .seo-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .chart-container { position: relative; height: 300px; margin: 16px 0; }
+  .setup-box { background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 24px; margin: 20px 0; }
+  .setup-box h3 { color: #856404; margin-top: 0; }
+  .setup-box code { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  .setup-box ol { line-height: 2; }
+  .inspect-form { display: flex; gap: 8px; margin-bottom: 16px; }
+  .inspect-form input { flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; }
+  .inspect-form button { padding: 8px 16px; background: #417690; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; }
+  .inspect-form button:hover { background: #205067; }
+  .inspect-result { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 16px; margin-top: 12px; display: none; }
+  .inspect-result.show { display: block; }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: 600; }
+  .badge-pass { background: #d4edda; color: #155724; }
+  .badge-fail { background: #f8d7da; color: #721c24; }
+  .badge-warn { background: #fff3cd; color: #856404; }
+  .badge-neutral { background: #e2e3e5; color: #383d41; }
+  .sitemap-item { border: 1px solid #eee; border-radius: 4px; padding: 12px; margin-bottom: 8px; background: #fafafa; }
+  .sitemap-item .path { font-family: monospace; font-weight: 600; color: #417690; }
+  .period-note { font-size: 0.85em; color: #888; margin-bottom: 16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="seo-dashboard">
+  <h2>SEO Dashboard — {{ site_url }}</h2>
+
+  {% if setup_needed %}
+  <!-- ===== SETUP INSTRUCTIONS ===== -->
+  <div class="setup-box">
+    <h3>⚠️ Google Search Console API Not Connected</h3>
+    <p><strong>Error:</strong> {{ api_error }}</p>
+    <p>To enable live SEO data, complete these steps:</p>
+    <ol>
+      <li>Go to <a href="https://console.cloud.google.com/apis/library/searchconsole.googleapis.com" target="_blank">GCP Console</a> and <strong>enable the Search Console API</strong> for your project (<code>tenantguard-480405</code>)</li>
+      <li>Find your GCE service account email (or create a dedicated one)</li>
+      <li>In <a href="https://search.google.com/search-console/users" target="_blank">Search Console → Settings → Users and permissions</a>, add the service account email as a <strong>Full</strong> user</li>
+      <li>Install the Python client on the backend: <code>pip install google-api-python-client google-auth</code></li>
+      <li>Set env vars on the staging server:
+        <ul>
+          <li><code>SITE_URL=https://tenantguard.net</code> (your verified property URL)</li>
+          <li><code>GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json</code> (if not on GCE)</li>
+        </ul>
+      </li>
+      <li>Redeploy and refresh this page</li>
+    </ol>
+    <p style="margin-top:16px; padding-top:12px; border-top:1px solid #e0c36a;">
+      <strong>What this dashboard will show once connected:</strong><br>
+      Total clicks &amp; impressions • Average CTR &amp; position • Top search queries •
+      Top pages • Daily performance chart • Sitemap indexing status •
+      Individual URL inspection (is it indexed? why not?)
+    </p>
+  </div>
+
+  {% else %}
+  <!-- ===== PERFORMANCE SUMMARY ===== -->
+  <p class="period-note">Data period: {{ summary.period }}</p>
+  <div class="seo-grid">
+    <div class="seo-card">
+      <div class="label">Total Clicks</div>
+      <div class="value">{{ summary.total_clicks|floatformat:0 }}</div>
+    </div>
+    <div class="seo-card">
+      <div class="label">Total Impressions</div>
+      <div class="value">{{ summary.total_impressions|floatformat:0 }}</div>
+    </div>
+    <div class="seo-card">
+      <div class="label">Avg CTR</div>
+      <div class="value">{{ summary.avg_ctr }}%</div>
+    </div>
+    <div class="seo-card">
+      <div class="label">Avg Position</div>
+      <div class="value">{{ summary.avg_position }}</div>
+    </div>
+  </div>
+
+  <!-- ===== DAILY CHART ===== -->
+  <div class="seo-section">
+    <h3>Daily Performance (Last 28 Days)</h3>
+    <div class="chart-container">
+      <canvas id="dailyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- ===== TOP QUERIES ===== -->
+  <div class="seo-section">
+    <h3>Top Search Queries</h3>
+    <table class="seo-table">
+      <thead>
+        <tr><th>Query</th><th class="num">Clicks</th><th class="num">Impressions</th><th class="num">CTR</th><th class="num">Position</th></tr>
+      </thead>
+      <tbody>
+        {% for q in top_queries %}
+        <tr>
+          <td>{{ q.query }}</td>
+          <td class="num">{{ q.clicks }}</td>
+          <td class="num">{{ q.impressions }}</td>
+          <td class="num">{{ q.ctr }}%</td>
+          <td class="num">{{ q.position }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No query data available yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== TOP PAGES ===== -->
+  <div class="seo-section">
+    <h3>Top Pages</h3>
+    <table class="seo-table">
+      <thead>
+        <tr><th>Page URL</th><th class="num">Clicks</th><th class="num">Impressions</th><th class="num">CTR</th><th class="num">Position</th></tr>
+      </thead>
+      <tbody>
+        {% for p in top_pages %}
+        <tr>
+          <td style="max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ p.page }}">{{ p.page }}</td>
+          <td class="num">{{ p.clicks }}</td>
+          <td class="num">{{ p.impressions }}</td>
+          <td class="num">{{ p.ctr }}%</td>
+          <td class="num">{{ p.position }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No page data available yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== INDEX COVERAGE / SITEMAPS ===== -->
+  <div class="seo-section">
+    <h3>Indexing &amp; Sitemap Status</h3>
+    {% if index_coverage.error %}
+      <p style="color:#dc3545;">{{ index_coverage.error }}</p>
+    {% elif index_coverage.sitemaps %}
+      {% for sm in index_coverage.sitemaps %}
+      <div class="sitemap-item">
+        <div class="path">{{ sm.path }}</div>
+        <div style="margin-top:6px; font-size:0.9em; color:#555;">
+          Last submitted: {{ sm.last_submitted|default:"Never" }} •
+          Last downloaded by Google: {{ sm.last_downloaded|default:"Never" }}
+          {% if sm.is_pending %}<span class="badge badge-warn">Pending</span>{% endif %}
+          {% if sm.errors %}<span class="badge badge-fail">{{ sm.errors }} error{{ sm.errors|pluralize }}</span>{% endif %}
+          {% if sm.warnings %}<span class="badge badge-warn">{{ sm.warnings }} warning{{ sm.warnings|pluralize }}</span>{% endif %}
+        </div>
+        {% if sm.contents %}
+        <div style="margin-top:6px; font-size:0.85em;">
+          {% for c in sm.contents %}
+            <span class="badge badge-neutral">{{ c.type }}: {{ c.submitted }} submitted / {{ c.indexed }} indexed</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p>No sitemaps found. <a href="https://search.google.com/search-console/sitemaps" target="_blank">Submit your sitemap in Search Console</a>.</p>
+    {% endif %}
+  </div>
+
+  {% endif %}
+
+  <!-- ===== URL INSPECTOR ===== -->
+  <div class="seo-section">
+    <h3>URL Inspector — Check If a Page Is Indexed</h3>
+    <p style="font-size:0.9em; color:#666; margin-bottom:12px;">
+      Enter a full URL from your site to check its indexing status, crawl state, and any issues.
+      {% if setup_needed %}(Requires API connection above.){% endif %}
+    </p>
+    <div class="inspect-form">
+      <input type="url" id="inspectUrl" placeholder="https://tenantguard.net/blog/your-post-slug" />
+      <button onclick="inspectUrl()">Inspect</button>
+    </div>
+    <div id="inspectResult" class="inspect-result"></div>
+  </div>
+
+</div>
+
+<script>
+{% if daily_data %}
+// ===== DAILY PERFORMANCE CHART =====
+const dailyData = {{ daily_data|safe }};
+const ctx = document.getElementById('dailyChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: dailyData.map(d => d.date),
+    datasets: [
+      {
+        label: 'Clicks',
+        data: dailyData.map(d => d.clicks),
+        borderColor: '#417690',
+        backgroundColor: 'rgba(65,118,144,0.1)',
+        fill: true,
+        tension: 0.3,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Impressions',
+        data: dailyData.map(d => d.impressions),
+        borderColor: '#79aec8',
+        backgroundColor: 'rgba(121,174,200,0.1)',
+        fill: true,
+        tension: 0.3,
+        yAxisID: 'y1',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'top' } },
+    scales: {
+      y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Clicks' } },
+      y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Impressions' }, grid: { drawOnChartArea: false } },
+    }
+  }
+});
+{% endif %}
+
+// ===== URL INSPECTOR =====
+async function inspectUrl() {
+  const url = document.getElementById('inspectUrl').value.trim();
+  const resultDiv = document.getElementById('inspectResult');
+  if (!url) { alert('Enter a URL to inspect'); return; }
+
+  resultDiv.className = 'inspect-result show';
+  resultDiv.innerHTML = '<p>Inspecting... (this may take a few seconds)</p>';
+
+  try {
+    const resp = await fetch(`/admin/seo-dashboard/inspect/?url=${encodeURIComponent(url)}`);
+    const data = await resp.json();
+
+    if (data.error) {
+      resultDiv.innerHTML = `<p style="color:#dc3545;"><strong>Error:</strong> ${data.error}</p>`;
+      return;
+    }
+
+    const verdictBadge = (v) => {
+      if (v === 'PASS') return '<span class="badge badge-pass">PASS — Indexed</span>';
+      if (v === 'NEUTRAL') return '<span class="badge badge-neutral">NEUTRAL</span>';
+      if (v === 'FAIL') return '<span class="badge badge-fail">FAIL — Not Indexed</span>';
+      return `<span class="badge badge-neutral">${v || 'Unknown'}</span>`;
+    };
+
+    resultDiv.innerHTML = `
+      <h4 style="margin:0 0 12px;">Inspection: ${data.url}</h4>
+      <table class="seo-table">
+        <tr><td><strong>Verdict</strong></td><td>${verdictBadge(data.verdict)}</td></tr>
+        <tr><td><strong>Coverage State</strong></td><td>${data.coverage_state || '—'}</td></tr>
+        <tr><td><strong>Indexing State</strong></td><td>${data.indexing_state || '—'}</td></tr>
+        <tr><td><strong>Last Crawl Time</strong></td><td>${data.last_crawl_time || 'Never crawled'}</td></tr>
+        <tr><td><strong>Crawled As</strong></td><td>${data.crawled_as || '—'}</td></tr>
+        <tr><td><strong>Page Fetch State</strong></td><td>${data.page_fetch_state || '—'}</td></tr>
+        <tr><td><strong>robots.txt State</strong></td><td>${data.robots_txt_state || '—'}</td></tr>
+        <tr><td><strong>Mobile Usability</strong></td><td>${verdictBadge(data.mobile_usability)}</td></tr>
+      </table>
+    `;
+  } catch (e) {
+    resultDiv.innerHTML = `<p style="color:#dc3545;">Request failed: ${e.message}</p>`;
+  }
+}
+</script>
+{% endblock %}
