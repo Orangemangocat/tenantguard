@@ -20,6 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from blog.views import ai_generator_view, ai_generate_api, ai_posts_list_api, ai_post_load_api
 from intake.payment_views import StripeWebhookView
+from authentication.seed_views import seed_test_users_view
 
 urlpatterns = [
     path("summernote/", include("django_summernote.urls")),
@@ -28,6 +29,7 @@ urlpatterns = [
     path("api/chat/", include("chat.urls")),
     path("api/intake/", include("intake.urls")),
     path("api/stripe/webhook/", StripeWebhookView.as_view(), name="stripe-webhook"),
+    path("api/seed-test-users/", seed_test_users_view, name="seed-test-users"),
     path("staff/todos/", include("stafftodo.urls", namespace="stafftodo")),
     path("admin/ai-generator/", ai_generator_view, name='ai-generator'),
     path("admin/blog/ai-generate-api/", ai_generate_api, name='ai-generate-api'),
