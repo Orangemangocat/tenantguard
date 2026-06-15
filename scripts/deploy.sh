@@ -41,7 +41,12 @@ export IMAGE_TAG
 echo "[deploy] Pulling images..."
 docker compose pull
 
-# Step 4: Restart services
+# Step 4: Run database migrations
+echo "[deploy] Running migrations..."
+docker compose run --rm backend python manage.py makemigrations --noinput
+docker compose run --rm backend python manage.py migrate --noinput
+
+# Step 5: Restart services
 echo "[deploy] Starting services..."
 docker compose up -d --remove-orphans
 
