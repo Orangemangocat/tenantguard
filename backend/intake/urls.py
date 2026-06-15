@@ -20,8 +20,13 @@ from .dashboard_views import (
     AlertListView,
     AlertCreateView,
 )
+from .quick_analyze_views import QuickAnalyzeView, ClaimUploadView
 
 urlpatterns = [
+    # ── Quick upload (unauthenticated) ────────────────────────────────────
+    path("quick-analyze/", QuickAnalyzeView.as_view(), name="quick-analyze"),
+    path("claim-upload/", ClaimUploadView.as_view(), name="claim-upload"),
+
     # ── Existing intake endpoints ─────────────────────────────────────────
     path("", IntakeSubmissionListView.as_view(), name="intake-list"),
     path("submit/", IntakeSubmissionCreateView.as_view(), name="intake-submit"),

@@ -306,3 +306,4 @@ from .models_dashboard import (  # noqa: E402, F401
     CaseActionItem,
     DocumentAnalysis,
 )
+from .models_pending import PendingUpload  # noqa: E402, F401

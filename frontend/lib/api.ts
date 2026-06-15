@@ -387,4 +387,45 @@ export const createAlert = async (
   return response.data
 }
 
+// --- Quick Analyze (unauthenticated) ---
+
+export interface QuickAnalyzeResponse {
+  token: string
+  document_type: string
+  summary: string
+  urgency: string
+  key_dates: Array<{ label: string; date: string; is_deadline: boolean }>
+  next_steps: string[]
+  analysis_error?: string
+}
+
+export const quickAnalyzeDocument = async (file: File): Promise<QuickAnalyzeResponse> => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await api.post('intake/quick-analyze/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
+}
+
+export interface ClaimUploadResponse {
+  submission_id: number
+  document_id: number
+  doc_type: string
+  message: string
+}
+
+export const claimUpload = async (
+  token: string,
+  submissionId: number | null,
+  authToken: string
+): Promise<ClaimUploadResponse> => {
+  const response = await api.post(
+    'intake/claim-upload/',
+    { token, submission_id: submissionId },
+    { headers: { Authorization: `Bearer ${authToken}` } }
+  )
+  return response.data
+}
+
 export default api;

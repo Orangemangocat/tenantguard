@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import CaseNotebook, IntakeChatLog, IntakeDocument, IntakeSubmission, SMSSession
 from .models_dashboard import CaseAlert, CaseMotion, CaseActionItem, DocumentAnalysis
+from .models_pending import PendingUpload
 
 
 class IntakeDocumentInline(admin.TabularInline):
@@ -186,3 +187,11 @@ class CaseAlertAdmin(admin.ModelAdmin):
     list_display = ["id", "submission", "alert_type", "delivery_method", "scheduled_for", "status"]
     list_filter = ["alert_type", "status", "delivery_method"]
     search_fields = ["message", "submission__first_name", "submission__last_name"]
+
+
+@admin.register(PendingUpload)
+class PendingUploadAdmin(admin.ModelAdmin):
+    list_display = ["id", "token", "original_filename", "document_type", "claimed", "created_at"]
+    list_filter = ["claimed", "document_type"]
+    search_fields = ["original_filename", "document_type", "summary"]
+    readonly_fields = ["token", "created_at"]

@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { SessionProvider } from "next-auth/react";
 import "../styles/globals.css";
 import Chat from "@/components/Chat";
+import ClaimPendingUpload from "@/components/ClaimPendingUpload";
 import StaffTodoWidget from "@/components/StaffTodoWidget";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { pageview } from "@/lib/analytics";
@@ -24,6 +25,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
     <SessionProvider session={session}>
       <Component {...pageProps} />
       <Chat />
+      <ClaimPendingUpload />
       {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
       <StaffTodoWidget />
     </SessionProvider>

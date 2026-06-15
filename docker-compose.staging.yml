@@ -11,6 +11,8 @@ services:
     env_file: ./backend/.env
     environment:
       - DJANGO_SETTINGS_MODULE=core.settings
+    volumes:
+      - media_data:/app/media
     expose:
       - "8000"
     depends_on:
@@ -62,6 +64,7 @@ services:
 
 volumes:
   pgdata:
+  media_data:
 
 networks:
   tenantguard-net:

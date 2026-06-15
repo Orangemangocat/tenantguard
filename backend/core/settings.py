@@ -185,6 +185,7 @@ else:
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://dev.tenantguard.net",
+        "https://staging.tenantguard.net",
         "https://tenantguard.net",
         "https://www.tenantguard.net",
         "http://backend:8000",

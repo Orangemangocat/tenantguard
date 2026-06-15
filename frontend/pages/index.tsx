@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { ArrowRight, FileText, Gavel, Shield, CheckCircle, Clock, TrendingUp } from 'lucide-react'
 import Navbar from '@/components/Navbar'
+import NoticeUploadHero from '@/components/NoticeUploadHero'
 import { useSession, signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { getPosts, fixMediaUrl } from '@/lib/api'
@@ -88,39 +89,8 @@ export default function Home({ recentPosts }: { recentPosts: any[] }) {
       />
 
       <main>
-        {/* ── Hero ─────────────────────────────────────────────────────────── */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="max-w-7xl mx-auto text-center"
-            variants={stagger}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div variants={fadeUp} custom={0}>
-              <Badge variant="outline" className="mb-6 border-red-800 text-red-800">Tenant-first</Badge>
-            </motion.div>
-            <motion.h1 variants={fadeUp} custom={1} className="text-3xl sm:text-5xl md:text-6xl font-bold mb-6 text-gray-900">
-              Transforming Tenant
-              <span className="block text-red-800">Legal Representation</span>
-            </motion.h1>
-            <motion.p variants={fadeUp} custom={2} className="text-xl mb-8 max-w-3xl mx-auto text-gray-600">
-              Technology-enabled self-service platform connecting tenants with qualified attorneys
-              for streamlined landlord-tenant dispute resolution.
-            </motion.p>
-            <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Button size="lg" className="bg-red-800 text-white hover:opacity-90 w-full sm:w-auto" onClick={() => handleStartIntake('tenant')}>
-                  Start Your Case <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Button size="lg" variant="outline" className="border-red-800 text-red-800 hover:bg-red-50 w-full sm:w-auto" onClick={() => handleStartIntake('attorney')}>
-                  Attorney Portal
-                </Button>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        </section>
+        {/* ── Hero: Upload Notice ─────────────────────────────────────────── */}
+        <NoticeUploadHero />
 
         {/* ── The Challenge ─────────────────────────────────────────────────── */}
         <section className="py-16 bg-gray-50">
