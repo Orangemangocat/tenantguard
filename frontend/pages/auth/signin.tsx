@@ -14,27 +14,52 @@ export default function SignIn({ providers, csrfToken, callbackUrl }: Props) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Runs the actual NextAuth credentials sign-in. Reads the result so we can
+  // surface a visible error instead of silently failing.
+  const doLogin = async (user: string, pass: string) => {
+    setError("");
+    setLoading(true);
+    const res = await signIn("credentials", {
+      username: user,
+      password: pass,
+      redirect: false,
+      callbackUrl,
+    });
+    setLoading(false);
+    if (res?.error) {
+      setError(
+        "Login failed: invalid username or password. If you copied & pasted, check for an extra space. Otherwise use the one-click buttons above."
+      );
+      return;
+    }
+    // Success — go where NextAuth told us, or the dashboard.
+    window.location.href = res?.url || callbackUrl || "/dashboard";
+  };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    await signIn("credentials", { username, password, callbackUrl });
-    setLoading(false);
+    await doLogin(username, password);
   };
 
+  // One-click: fill the fields (for visibility) AND immediately log in.
   const fillSuperAdmin = () => {
     setUsername("superadmin");
     setPassword("SuperAdmin123!");
+    doLogin("superadmin", "SuperAdmin123!");
   };
 
   const fillTestAttorney = () => {
     setUsername("testattorney");
     setPassword("TestAttorney123!");
+    doLogin("testattorney", "TestAttorney123!");
   };
 
   const fillTestTenant = () => {
     setUsername("testtenant");
     setPassword("TestTenant123!");
+    doLogin("testtenant", "TestTenant123!");
   };
 
   return (
@@ -64,7 +89,7 @@ export default function SignIn({ providers, csrfToken, callbackUrl }: Props) {
                     onClick={fillSuperAdmin}
                     className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded font-medium"
                   >
-                    Fill
+                    Fill &amp; Login
                   </button>
                 </div>
               </div>
@@ -116,6 +141,13 @@ export default function SignIn({ providers, csrfToken, callbackUrl }: Props) {
         {/* ===== SIGN IN FORM ===== */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">Sign In</h1>
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
 
           {/* Credentials form */}
           <form onSubmit={handleCredentialsSubmit} className="space-y-4">
