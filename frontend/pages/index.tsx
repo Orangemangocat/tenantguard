@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { ArrowRight, FileText, Gavel, Shield, CheckCircle, Clock, TrendingUp } from 'lucide-react'
 import Navbar from '@/components/Navbar'
+import DocumentUploadHero from '@/components/DocumentUploadHero'
 import { useSession, signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { getPosts, fixMediaUrl } from '@/lib/api'
@@ -65,17 +66,17 @@ export default function Home({ recentPosts }: { recentPosts: any[] }) {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       <Head>
         <title>TenantGuard - Transforming Tenant Legal Representation</title>
-        <meta name="description" content="Technology-enabled self-service platform connecting tenants with qualified attorneys for streamlined landlord-tenant dispute resolution." />
+        <meta name="description" content="Got a notice from your landlord? Upload it now for free AI analysis. TenantGuard connects Tennessee tenants with qualified attorneys for eviction defense." />
         <link rel="canonical" href={siteUrl} />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="TenantGuard" />
         <meta property="og:url" content={siteUrl} />
-        <meta property="og:title" content="TenantGuard - Transforming Tenant Legal Representation" />
-        <meta property="og:description" content="Technology-enabled self-service platform connecting tenants with qualified attorneys for streamlined landlord-tenant dispute resolution." />
+        <meta property="og:title" content="TenantGuard - Upload Your Notice, Get Instant Help" />
+        <meta property="og:description" content="Got a notice from your landlord? Upload it now for free AI analysis. Know your rights and deadlines in seconds." />
         <meta property="og:image" content={ogImage} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="TenantGuard - Transforming Tenant Legal Representation" />
-        <meta name="twitter:description" content="Technology-enabled self-service platform connecting tenants with qualified attorneys for streamlined landlord-tenant dispute resolution." />
+        <meta name="twitter:title" content="TenantGuard - Upload Your Notice, Get Instant Help" />
+        <meta name="twitter:description" content="Got a notice from your landlord? Upload it now for free AI analysis. Know your rights and deadlines in seconds." />
         <meta name="twitter:image" content={ogImage} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgJsonLd }} />
       </Head>
@@ -88,38 +89,94 @@ export default function Home({ recentPosts }: { recentPosts: any[] }) {
       />
 
       <main>
-        {/* ── Hero ─────────────────────────────────────────────────────────── */}
-        <section className="py-20 px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="max-w-7xl mx-auto text-center"
-            variants={stagger}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div variants={fadeUp} custom={0}>
-              <Badge variant="outline" className="mb-6 border-red-800 text-red-800">Tenant-first</Badge>
-            </motion.div>
-            <motion.h1 variants={fadeUp} custom={1} className="text-3xl sm:text-5xl md:text-6xl font-bold mb-6 text-gray-900">
-              Transforming Tenant
-              <span className="block text-red-800">Legal Representation</span>
-            </motion.h1>
-            <motion.p variants={fadeUp} custom={2} className="text-xl mb-8 max-w-3xl mx-auto text-gray-600">
-              Technology-enabled self-service platform connecting tenants with qualified attorneys
-              for streamlined landlord-tenant dispute resolution.
-            </motion.p>
-            <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Button size="lg" className="bg-red-800 text-white hover:opacity-90 w-full sm:w-auto" onClick={() => handleStartIntake('tenant')}>
-                  Start Your Case <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+        {/* ── Hero with Upload ─────────────────────────────────────────────── */}
+        <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left side — text and CTAs */}
+              <motion.div
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+              >
+                <motion.div variants={fadeUp} custom={0}>
+                  <Badge variant="outline" className="mb-6 border-red-800 text-red-800">Tenant-first</Badge>
+                </motion.div>
+                <motion.h1 variants={fadeUp} custom={1} className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-gray-900 leading-tight">
+                  Got a Notice from
+                  <span className="block text-red-800">Your Landlord?</span>
+                </motion.h1>
+                <motion.p variants={fadeUp} custom={2} className="text-lg mb-6 text-gray-600 leading-relaxed">
+                  Don't panic. Upload it right now and our AI will instantly tell you what it means, 
+                  your deadline to respond, your rights, and exactly what to do next.
+                </motion.p>
+                <motion.p variants={fadeUp} custom={3} className="text-base mb-8 text-gray-500">
+                  Free. No account needed. Results in seconds.
+                </motion.p>
+                <motion.div variants={fadeUp} custom={4} className="flex flex-col sm:flex-row gap-4">
+                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                    <Button size="lg" className="bg-red-800 text-white hover:opacity-90 w-full sm:w-auto" onClick={() => handleStartIntake('tenant')}>
+                      Start Your Case <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                    <Button size="lg" variant="outline" className="border-red-800 text-red-800 hover:bg-red-50 w-full sm:w-auto" onClick={() => handleStartIntake('attorney')}>
+                      Attorney Portal
+                    </Button>
+                  </motion.div>
+                </motion.div>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Button size="lg" variant="outline" className="border-red-800 text-red-800 hover:bg-red-50 w-full sm:w-auto" onClick={() => handleStartIntake('attorney')}>
-                  Attorney Portal
-                </Button>
+
+              {/* Right side — Upload component */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <DocumentUploadHero />
               </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── What You'll Get (social proof / value prop) ──────────────────── */}
+        <section className="py-12 bg-white border-y border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              className="text-center mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">What You'll Get in Seconds</h2>
+              <p className="text-gray-600">Our AI reads your document and gives you a clear action plan</p>
             </motion.div>
-          </motion.div>
+            <motion.div
+              className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+              variants={stagger}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-50px' }}
+            >
+              {[
+                { icon: FileText, title: 'Document Type', desc: 'Know exactly what notice you received and what it means legally' },
+                { icon: Clock, title: 'Your Deadline', desc: 'See exactly how many days you have to respond — don\'t miss it' },
+                { icon: Shield, title: 'Your Rights', desc: 'Tennessee-specific rights that protect you in this situation' },
+                { icon: CheckCircle, title: 'Next Steps', desc: 'Clear, numbered action plan for what to do right now' },
+              ].map(({ icon: Icon, title, desc }, i) => (
+                <motion.div key={title} variants={fadeUp} custom={i}>
+                  <Card className="h-full border-none shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-5">
+                      <Icon className="h-8 w-8 text-red-800 mb-3" />
+                      <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
+                      <p className="text-sm text-gray-600">{desc}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
         </section>
 
         {/* ── The Challenge ─────────────────────────────────────────────────── */}
@@ -229,7 +286,7 @@ export default function Home({ recentPosts }: { recentPosts: any[] }) {
             </motion.div>
             <motion.div className="grid md:grid-cols-2 gap-12" variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-50px' }}>
               {[
-                { title: 'Tenant Journey', steps: ['Signup with guided situation assessment', 'Case intake with dispute categorization', 'Document upload and organization', 'Legal guidance and document generation'] },
+                { title: 'Tenant Journey', steps: ['Upload your notice for instant analysis', 'Complete guided case intake with dispute categorization', 'Upload supporting documents and organize your case', 'Get matched with a qualified attorney'] },
                 { title: 'Attorney Journey', steps: ['Browse pre-qualified cases with filters', 'Evaluate complete case documentation', 'Streamlined client handoff process', 'Integrated case and billing management'] },
               ].map(({ title, steps }) => (
                 <motion.div key={title} variants={fadeUp} whileHover="hover" animate="rest" initial="rest">
@@ -328,7 +385,7 @@ export default function Home({ recentPosts }: { recentPosts: any[] }) {
               {[
                 { title: 'Frontend', items: [['Next.js','16.1.6'],['React','18.2.0'],['TypeScript','5.9.3'],['Tailwind CSS','4.2.1'],['NextAuth.js','4.22.1']] },
                 { title: 'Backend', items: [['Django','5.0.3'],['Django REST Framework','3.15.1'],['SimpleJWT','5.3.1'],['django-allauth','0.61.1'],['OpenAI SDK','2.28.0']] },
-                { title: 'AI & Data', items: [['GPT-4 Turbo','Preview'],['DALL-E','3'],['pypdf','4.3.1'],['PostgreSQL','18.2'],['Multi-agent pipeline','Custom']] },
+                { title: 'AI & Data', items: [['GPT-4o','Latest'],['Document Analysis','Vision AI'],['pypdf','4.3.1'],['PostgreSQL','16'],['Multi-agent pipeline','Custom']] },
               ].map(({ title, items }, i) => (
                 <motion.div key={title} variants={fadeUp} custom={i} whileHover="hover" animate="rest" initial="rest">
                   <motion.div variants={cardHover}>
