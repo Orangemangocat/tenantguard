@@ -1,542 +1,239 @@
 # Workflow Model
 
-This document externalizes the latent workflows I follow when working on the TenantGuard project.
+This document describes the development, deployment, and operational workflows for TenantGuard. Updated June 2026 to reflect the current Django/Next.js/Docker/GCP architecture.
+
+> **Important:** This file supersedes all legacy references to Flask, SQLite, direct server deployment, `deploy_fixed.sh`, systemd services, or SSH to `35.237.102.136`. Those workflows are obsolete.
+
+---
 
 ## Development Workflow
 
-### Phase 1: Receive and Clarify Request
+### Local Development Setup
 
-**Steps:**
-1. User provides a request or identifies an issue
-2. I acknowledge the request with a brief message
-3. If the request is ambiguous, I ask clarifying questions
-4. If the request is clear, I proceed to planning
+The project uses a Makefile for convenience. First-time setup:
 
-**Decision Point:** Do I have enough information to proceed?
-- **Yes:** Move to Phase 2
-- **No:** Ask clarifying questions
+```bash
+make setup    # Creates venv, installs deps, checks env files
+make dev      # Starts both backend and frontend dev servers
+```
 
----
+Manual setup if needed:
 
-### Phase 2: Plan the Work
+```bash
+# Backend
+cd backend
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver    # http://localhost:8000
 
-**Steps:**
-1. Break down the request into specific tasks
-2. Identify the files and components that need to be changed
-3. Consider potential challenges and edge cases
-4. Create a mental (or explicit) plan of action
+# Frontend
+cd frontend
+npm install
+npm run dev                   # http://localhost:3000
+```
 
-**Decision Point:** Is this a simple fix or a complex feature?
-- **Simple:** Proceed directly to implementation
-- **Complex:** Create a more detailed plan and possibly share it with the user
+### Development Cycle
 
----
+The standard development cycle follows this sequence:
 
-### Phase 3: Implement the Changes
+1. **Inspect** the relevant code before making changes. Read models, views, serializers, URLs, and any frontend consumers.
+2. **Implement** the smallest correct change that fits the existing architecture.
+3. **Verify** locally. Run `python manage.py check` for backend changes, `npm run lint && npm run build` for frontend changes.
+4. **Commit** with a clear, descriptive message following conventional commit style (e.g., `feat:`, `fix:`, `docs:`).
+5. **Push to main** which triggers automatic staging deployment.
+6. **Verify on staging** at https://staging.tenantguard.net using the test accounts.
+7. **Tag for production** only after staging verification: `git tag v1.x.x && git push origin v1.x.x`.
 
-**Steps:**
-1. Navigate to the appropriate directory in the sandbox
-2. Read the relevant files to understand the current state
-3. Make the necessary changes (edit, create, or delete files)
-4. Follow coding best practices (clear names, comments, etc.)
-5. Ensure changes are consistent with the existing codebase
+### Branching Strategy
 
-**Decision Point:** Are the changes complete?
-- **Yes:** Move to Phase 4
-- **No:** Continue implementing
-
----
-
-### Phase 4: Test Locally
-
-**Steps:**
-1. Build the frontend (if frontend changes were made)
-2. Check for build errors
-3. If backend changes were made, test API endpoints with curl
-4. Verify that the changes work as expected
-
-**Decision Point:** Do the changes work correctly?
-- **Yes:** Move to Phase 5
-- **No:** Debug and fix issues, then retest
+The current model is trunk-based development on `main`. Feature branches may be used for large changes but are merged via pull request. The `legacy/flask-vite` branch preserves the old codebase for historical reference only.
 
 ---
 
-### Phase 5: Commit to Version Control
+## Deployment Workflow
 
-**Steps:**
-1. Run `git status` to see what has changed
-2. Run `git add` to stage the changes
-3. Run `git commit` with a descriptive message
-4. Run `git push` to push the changes to GitHub
+### Staging Deployment (Automatic)
 
-**Decision Point:** Are there any uncommitted changes?
-- **Yes:** Commit them
-- **No:** Proceed to deployment
+Every push to `main` triggers the staging deployment via GitHub Actions:
+
+1. GitHub Actions builds backend and frontend Docker images
+2. Images are pushed to Google Artifact Registry
+3. Actions SSHes into the staging VM
+4. Fetches environment files from GCS bucket
+5. Runs `docker compose pull` to get new images
+6. Runs Django migrations (`python manage.py migrate --noinput`)
+7. Seeds test accounts (`python manage.py seed_test_users`)
+8. Restarts services with `docker compose up -d`
+
+Staging is available at https://staging.tenantguard.net immediately after a successful deploy.
+
+### Production Deployment (Tag-Triggered)
+
+Production deploys are triggered by pushing a git tag matching `v*`:
+
+```bash
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+The pipeline follows the same steps as staging but targets the production VM and does not seed test accounts.
+
+**Production deployment rules:**
+- Never deploy to production without testing on staging first
+- Always ask for confirmation before tagging for production
+- Monitor the GitHub Actions tab for deploy status
+- Verify the live site after deployment
+
+### Deployment Verification
+
+After any deployment, verify:
+
+1. Site loads correctly (check homepage, blog, intake pages)
+2. Authentication works (sign in with test accounts on staging)
+3. API endpoints respond (check `/api/blog/posts/`, admin panel)
+4. No console errors in browser dev tools
+5. Check GitHub Actions logs for any warnings
+
+### Rollback Procedure
+
+If a deployment causes issues:
+
+1. Identify the last known-good image tag in Artifact Registry
+2. SSH into the affected VM
+3. Update `IMAGE_TAG` in the compose environment
+4. Run `docker compose pull && docker compose up -d`
+5. Verify the rollback resolved the issue
 
 ---
 
-### Phase 6: Deploy to Server
+## Testing Workflow
 
-**Steps:**
-1. Run the deployment script (`./deploy_fixed.sh`)
-2. Monitor the deployment process
-3. Check for errors in the deployment output
-4. Verify that the service is running
+### Current State
 
-**Decision Point:** Did the deployment succeed?
-- **Yes:** Move to Phase 7
-- **No:** Investigate the error, fix it, and redeploy
+No automated test suites are configured. Verification relies on:
 
----
+- `python manage.py check` (Django system checks)
+- `npm run lint` (ESLint for frontend)
+- `npm run build` (TypeScript compilation check)
+- Manual testing on staging with test accounts
 
-### Phase 7: Verify on Live Site
+### Test Accounts (Staging Only)
 
-**Steps:**
-1. Open the live site in a browser
-2. Test the new functionality or verify the fix
-3. Check for any regressions or unexpected issues
-4. Ensure the site is working correctly
+| Role | Username | Password |
+| :--- | :--- | :--- |
+| Super Admin | `superadmin` | `SuperAdmin123!` |
+| Attorney | `testattorney` | `TestAttorney123!` |
+| Tenant | `testtenant` | `TestTenant123!` |
 
-**Decision Point:** Is the live site working as expected?
-- **Yes:** Move to Phase 8
-- **No:** Investigate the issue, fix it, and redeploy
+These are auto-seeded on every staging deploy and displayed on the sign-in page.
 
 ---
 
-### Phase 8: Document and Report
+## Content Workflow (AI Blog Generation)
 
-**Steps:**
-1. Create a summary of the work completed
-2. Include screenshots, code snippets, or other evidence
-3. Explain what was done, why it was done, and what the impact is
-4. Deliver the report to the user
+The AI blog generation pipeline is admin-triggered:
 
-**Decision Point:** Is the documentation complete?
-- **Yes:** Task complete
-- **No:** Add more details
+1. Admin navigates to `/admin/ai-generator/`
+2. Pipeline runs three agents sequentially:
+   - ContextualResearcherAgent reads `docs/` and `knowledge-repo/` for context
+   - TopicsAgent suggests 5 topic ideas
+   - BlogAuthorAgent writes the full article
+3. Generated post is saved as a draft for editorial review
+4. Admin reviews, edits if needed, and publishes
+
+Content must remain legally accurate, professionally toned, and aligned with TenantGuard's brand voice.
 
 ---
 
 ## Debugging Workflow
 
 ### Phase 1: Identify the Problem
-
-**Steps:**
-1. Observe the symptoms (error message, unexpected behavior, etc.)
-2. Reproduce the issue if possible
-3. Gather information (logs, error messages, stack traces)
-
-**Decision Point:** Can I reproduce the issue?
-- **Yes:** Move to Phase 2
-- **No:** Gather more information or ask the user for details
-
----
+Observe symptoms, reproduce the issue, gather information from logs and error messages. Check `docker compose logs` on the relevant VM if it's a deployment issue.
 
 ### Phase 2: Hypothesize the Cause
-
-**Steps:**
-1. Based on the symptoms, form hypotheses about what could be causing the issue
-2. Prioritize hypotheses based on likelihood (start with the simplest explanation)
-3. Consider recent changes that might have introduced the issue
-
-**Decision Point:** Do I have a strong hypothesis?
-- **Yes:** Move to Phase 3
-- **No:** Gather more information or try a different approach
-
----
+Form hypotheses based on symptoms. Prioritize by likelihood. Consider recent commits and deploys.
 
 ### Phase 3: Test the Hypothesis
-
-**Steps:**
-1. Design a test to confirm or refute the hypothesis
-2. Run the test (e.g., check a file, run a command, review logs)
-3. Observe the results
-
-**Decision Point:** Does the test confirm the hypothesis?
-- **Yes:** Move to Phase 4
-- **No:** Form a new hypothesis and repeat Phase 2
-
----
+Design a test to confirm or refute. Check relevant code, run commands, review Docker logs.
 
 ### Phase 4: Implement the Fix
-
-**Steps:**
-1. Make the necessary changes to fix the issue
-2. Test the fix locally to ensure it works
-3. Commit the fix to version control
-
-**Decision Point:** Does the fix resolve the issue?
-- **Yes:** Move to Phase 5
-- **No:** Revise the fix and retest
-
----
+Make the smallest correct change. Test locally. Commit with a clear message explaining the fix.
 
 ### Phase 5: Deploy and Verify
-
-**Steps:**
-1. Deploy the fix to the server
-2. Verify that the issue is resolved on the live site
-3. Check for any side effects or new issues
-
-**Decision Point:** Is the issue fully resolved?
-- **Yes:** Document the fix and report to the user
-- **No:** Continue debugging
+Push to main (staging auto-deploys). Verify the fix on staging. Only tag for production after confirmation.
 
 ---
 
-## Research Workflow
+## Operational Workflows
 
-### Phase 1: Define the Research Question
+### Adding a New Feature
 
-**Steps:**
-1. Clarify what information is needed
-2. Define the scope of the research
-3. Identify potential sources of information
+1. Determine if it affects backend, frontend, or both
+2. If backend: create models, migrations, serializers, views, URLs, admin config
+3. If frontend: create pages/components, wire API calls, handle auth if needed
+4. If cross-layer: ensure API contract is consistent between both sides
+5. Update documentation if the change affects setup, env vars, or deployment
+6. Commit, push, verify on staging
 
-**Decision Point:** Is the research question clear?
-- **Yes:** Move to Phase 2
-- **No:** Clarify with the user
+### Database Schema Changes
 
----
+1. Modify the Django model
+2. Run `python manage.py makemigrations`
+3. Review the generated migration file
+4. Run `python manage.py migrate` locally
+5. Commit the migration file with the model change
+6. Migration runs automatically on deploy
 
-### Phase 2: Gather Information
+### Environment Variable Changes
 
-**Steps:**
-1. Search for relevant information (web search, documentation, examples)
-2. Visit relevant websites and read articles
-3. Take notes and save key findings
-4. Collect visual examples (screenshots, mockups)
-
-**Decision Point:** Have I gathered enough information?
-- **Yes:** Move to Phase 3
-- **No:** Continue searching
-
----
-
-### Phase 3: Analyze and Synthesize
-
-**Steps:**
-1. Review the information collected
-2. Identify patterns, themes, and best practices
-3. Draw conclusions and make recommendations
-4. Organize the findings into a coherent structure
-
-**Decision Point:** Are the findings clear and actionable?
-- **Yes:** Move to Phase 4
-- **No:** Gather more information or refine the analysis
+1. Add the variable to the appropriate `.env` file template
+2. Update `README.md` with the new variable
+3. If needed for deployment, add to GitHub Actions secrets/variables
+4. If needed on VMs, update the GCS bucket env files
+5. Document the change in the commit message
 
 ---
 
-### Phase 4: Create Deliverables
+## Recovery Procedures
 
-**Steps:**
-1. Write a report or create visual mockups
-2. Include examples, screenshots, and references
-3. Provide clear recommendations
-4. Format the deliverables professionally
+### If staging is broken
+- Check GitHub Actions logs for the failed deploy
+- SSH into staging VM and check `docker compose logs`
+- Fix the issue, push to main, let it redeploy
 
-**Decision Point:** Are the deliverables complete?
-- **Yes:** Deliver to the user
-- **No:** Add more details or refine
+### If production is broken
+- Immediately check if it's a Cloudflare issue (check status.cloudflare.com)
+- Check GitHub Actions logs for the last production deploy
+- If the deploy caused it, rollback to the previous image tag
+- If it's a database issue, check Cloud SQL console
 
----
-
-## Deployment Workflow (Detailed)
-
-### Step 1: Pre-Deployment Checks
-
-**Actions:**
-- Verify that all changes are committed to GitHub
-- Ensure the local repository is up to date
-- Check that the deployment script is available and executable
-
-**Checklist:**
-- [ ] All changes committed
-- [ ] Repository up to date
-- [ ] Deployment script ready
+### If auth is broken
+- Check both NextAuth config and Django JWT settings
+- Verify environment variables (NEXTAUTH_SECRET, backend SECRET_KEY)
+- Check token refresh logic in `frontend/lib/api.ts`
+- Test with a fresh browser session (clear cookies)
 
 ---
 
-### Step 2: Connect to Server
+## Documentation Maintenance
 
-**Actions:**
-- SSH into the server using passwordless authentication
-- Verify that the connection is successful
+When completing significant work, update:
 
-**Command:**
-```bash
-ssh manus@35.237.102.136
-```
-
----
-
-### Step 3: Run Deployment Script
-
-**Actions:**
-- Navigate to the home directory (if not already there)
-- Run the deployment script
-- Monitor the output for errors
-
-**Command:**
-```bash
-./deploy_fixed.sh
-```
-
----
-
-### Step 4: Monitor Deployment
-
-**Actions:**
-- Watch the deployment script output
-- Look for error messages or warnings
-- Verify that each step completes successfully
-
-**Key Steps to Monitor:**
-- Git pull
-- Frontend build
-- File copy
-- Service restart
-
----
-
-### Step 5: Verify Service Status
-
-**Actions:**
-- Check that the systemd service is running
-- Review recent logs for errors
-
-**Commands:**
-```bash
-sudo systemctl status tenantguard
-sudo journalctl -u tenantguard --no-pager | tail -50
-```
-
----
-
-### Step 6: Test Live Site
-
-**Actions:**
-- Open the live site in a browser
-- Test the new functionality
-- Check for any regressions
-- Verify that the site is responsive and working correctly
-
-**URL:**
-```
-https://www.tenantguard.net
-```
-
----
-
-### Step 7: Post-Deployment Verification
-
-**Actions:**
-- Create a summary of the deployment
-- Document any issues encountered and how they were resolved
-- Report the results to the user
-
-**Checklist:**
-- [ ] Service running
-- [ ] Site accessible
-- [ ] New functionality working
-- [ ] No regressions
-- [ ] Documentation complete
-
----
-
-## Code Review Workflow (Self-Review)
-
-### Step 1: Read the Code
-
-**Actions:**
-- Read through all the changes I made
-- Check for typos, syntax errors, and logical errors
-- Ensure the code is clear and understandable
-
----
-
-### Step 2: Check for Best Practices
-
-**Actions:**
-- Verify that the code follows established patterns
-- Check for proper naming conventions
-- Ensure comments are added where necessary
-- Verify that the code is DRY (Don't Repeat Yourself)
-
----
-
-### Step 3: Test Edge Cases
-
-**Actions:**
-- Think about edge cases and potential issues
-- Test the code with unusual inputs or scenarios
-- Verify that error handling is in place
-
----
-
-### Step 4: Verify Integration
-
-**Actions:**
-- Ensure the new code integrates well with the existing codebase
-- Check for any breaking changes
-- Verify that all dependencies are met
-
----
-
-### Step 5: Approve or Revise
-
-**Decision Point:** Is the code ready to commit?
-- **Yes:** Commit and proceed
-- **No:** Make revisions and repeat the review
-
----
-
-## Documentation Workflow
-
-### Step 1: Identify What Needs Documentation
-
-**Actions:**
-- Determine what was done that needs to be documented
-- Consider the audience (user, future developers, etc.)
-- Decide on the format (report, guide, reference, etc.)
-
----
-
-### Step 2: Gather Information
-
-**Actions:**
-- Collect all relevant information (code changes, screenshots, test results)
-- Review notes and findings
-- Organize the information logically
-
----
-
-### Step 3: Write the Documentation
-
-**Actions:**
-- Write clear, concise, and informative content
-- Use headings, tables, and lists to organize information
-- Include examples and visual aids
-- Follow the user's preferred format and style
-
----
-
-### Step 4: Review and Refine
-
-**Actions:**
-- Read through the documentation
-- Check for clarity, accuracy, and completeness
-- Fix any typos or errors
-- Ensure the documentation is easy to understand
-
----
-
-### Step 5: Deliver the Documentation
-
-**Actions:**
-- Save the documentation to a file
-- Attach the file to a message to the user
-- Provide a brief summary of the documentation
+1. `AGENTS.md` — if the change affects how agents should work in the repo
+2. `README.md` — if setup steps, env vars, or deployment process changed
+3. `knowledge-repo/` — if project state, architecture, or decisions changed
+4. `docs/` — if control-plane directives, schemas, or governance changed
+5. Commit documentation updates alongside code changes
 
 ---
 
 ## Error Recovery Workflow
 
-### Step 1: Acknowledge the Error
-
-**Actions:**
-- Recognize that an error has occurred
-- Don't panic or try to hide it
-- Inform the user if the error impacts them
-
----
-
-### Step 2: Assess the Impact
-
-**Actions:**
-- Determine how severe the error is
-- Identify what is affected (site, data, functionality)
-- Decide on the urgency of the fix
-
----
-
-### Step 3: Implement a Quick Fix (if possible)
-
-**Actions:**
-- If there's a simple, immediate fix, implement it
-- Restore from a backup if necessary
-- Restart services if needed
-
----
-
-### Step 4: Investigate the Root Cause
-
-**Actions:**
-- Determine why the error occurred
-- Review logs, code, and recent changes
-- Identify the underlying issue
-
----
-
-### Step 5: Implement a Permanent Fix
-
-**Actions:**
-- Make the necessary changes to prevent the error from recurring
-- Test the fix thoroughly
-- Deploy the fix
-
----
-
-### Step 6: Document and Learn
-
-**Actions:**
-- Document what went wrong and how it was fixed
-- Identify lessons learned
-- Update processes or documentation to prevent similar errors in the future
-
----
-
-## Continuous Improvement Workflow
-
-### Step 1: Reflect on Completed Work
-
-**Actions:**
-- After completing a task, take a moment to reflect
-- Consider what went well and what could be improved
-- Identify any patterns or recurring issues
-
----
-
-### Step 2: Identify Improvements
-
-**Actions:**
-- Based on the reflection, identify specific improvements
-- Consider process improvements, code quality, documentation, etc.
-- Prioritize improvements based on impact
-
----
-
-### Step 3: Implement Improvements
-
-**Actions:**
-- Make the identified improvements
-- Update processes, scripts, or documentation
-- Test the improvements to ensure they work
-
----
-
-### Step 4: Monitor Results
-
-**Actions:**
-- Observe the impact of the improvements
-- Determine if they are effective
-- Make further adjustments if needed
-
----
-
-### Step 5: Share Learnings
-
-**Actions:**
-- Document the improvements and their impact
-- Share learnings with the user or team
-- Build a knowledge base for future reference
+1. **Acknowledge** the error immediately; do not hide it
+2. **Assess impact** — what is affected (site, data, functionality)?
+3. **Quick fix** if possible (restart service, rollback image)
+4. **Investigate root cause** — review logs, code, recent changes
+5. **Implement permanent fix** — smallest correct change
+6. **Document** what went wrong and how it was fixed

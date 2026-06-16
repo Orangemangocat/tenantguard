@@ -1,321 +1,235 @@
 # Hidden Dependencies
 
-This document externalizes the hidden dependencies in my reasoning—things that I rely on but that are not explicitly stated in the code or documentation.
+This document captures the non-obvious dependencies, assumptions, and coupling in the TenantGuard project that are not immediately visible from reading the code alone. Updated June 2026 for the current Django/Next.js/Docker/GCP architecture.
+
+> **Important:** All references to Flask, SQLite, systemd, `deploy_fixed.sh`, or SSH to `35.237.102.136` are obsolete. This document reflects the current production architecture.
+
+---
 
 ## Infrastructure Dependencies
 
-### Dependency: SSH Key Authentication
+### Google Cloud Platform
 
-**What:** SSH key authentication is configured between the sandbox and the testing server.
+The project depends on multiple GCP services that must be configured and available:
 
-**Why It Matters:** All deployment commands assume passwordless SSH access.
+| Service | Purpose | Failure Impact |
+| :--- | :--- | :--- |
+| Cloud SQL (PostgreSQL) | Primary database | Complete data loss / site down |
+| Google Artifact Registry | Docker image storage | Cannot deploy new versions |
+| Google Cloud Storage | Env files, media, secrets | Cannot deploy; media broken |
+| GCE VMs | Staging and production hosting | Site down |
+| cloud-sql-proxy | Secure DB connection from VMs | Database unreachable |
 
-**Risk:** If the SSH key is lost or the server is rebuilt, deployment will fail.
+The cloud-sql-proxy runs as a Docker container alongside the app and must be healthy for the backend to connect to PostgreSQL. If it crashes, the backend will return 500 errors on any database operation.
 
-**Mitigation:** The SSH key setup process is documented in the deployment guide.
+### Cloudflare
 
----
+DNS and CDN are managed by Cloudflare. Dependencies:
 
-### Dependency: Nginx Configuration
+- A records point to Cloudflare IPs (172.67.157.108, 104.21.82.117), not directly to origin VMs
+- SSL is terminated at Cloudflare edge; origin uses Let's Encrypt certificates
+- If Cloudflare is misconfigured, the site appears down even if the origin is healthy
+- Cloudflare caching may serve stale content after deployments (purge cache if needed)
 
-**What:** Nginx is configured to proxy requests to the Flask backend on port 5000.
+### GitHub Actions
 
-**Why It Matters:** The Flask app doesn't serve static files directly; Nginx handles that.
+CI/CD depends on GitHub Actions being available and having valid secrets:
 
-**Risk:** If the Nginx configuration is changed or corrupted, the site will break.
+- `GCP_SA_KEY` — service account JSON for Artifact Registry and GCS access
+- `STAGING_HOST`, `STAGING_SSH_USER`, `STAGING_SSH_KEY` — staging VM access
+- `PROD_HOST`, `PROD_SSH_USER`, `PROD_SSH_KEY` — production VM access
+- `CLOUD_SQL_INSTANCE_CONNECTION_NAME` — database connection string
 
-**Mitigation:** The Nginx configuration is stored on the server at `/etc/nginx/sites-available/tenantguard`.
-
----
-
-### Dependency: Systemd Service
-
-**What:** The Flask backend runs as a systemd service called `tenantguard`.
-
-**Why It Matters:** The deployment script assumes it can restart the service using `systemctl`.
-
-**Risk:** If the service is disabled or the service file is deleted, deployment will fail.
-
-**Mitigation:** The service file is stored on the server at `/etc/systemd/system/tenantguard.service`.
-
----
-
-### Dependency: Python Virtual Environment
-
-**What:** A Python virtual environment exists at `/var/www/tenantguard/venv` with all required dependencies installed.
-
-**Why It Matters:** The Flask app runs using this virtual environment.
-
-**Risk:** If the virtual environment is deleted or corrupted, the app will fail to start.
-
-**Mitigation:** The deployment script now excludes `venv/` from being overwritten.
+If any secret expires or is rotated without updating GitHub, deployments will fail silently or with SSH errors.
 
 ---
 
-### Dependency: Node.js and pnpm
+## Authentication Dependencies
 
-**What:** Node.js and pnpm are installed on the server.
+### Three-Layer Auth Chain
 
-**Why It Matters:** The deployment script uses pnpm to build the frontend.
+Authentication depends on three systems being correctly synchronized:
 
-**Risk:** If Node.js or pnpm is uninstalled or updated to an incompatible version, builds will fail.
+1. **NextAuth** (frontend) — requires `NEXTAUTH_SECRET` and OAuth client credentials
+2. **Axios interceptor** (frontend) — requires correct `NEXT_PUBLIC_API_URL` pointing to backend
+3. **Django SimpleJWT** (backend) — requires `SECRET_KEY` for token signing
 
-**Mitigation:** Document the required versions and consider using a version manager like `nvm`.
+If any of these are misconfigured or out of sync:
+- `NEXTAUTH_SECRET` mismatch → sessions invalid after restart
+- `NEXT_PUBLIC_API_URL` wrong → API calls fail silently
+- `SECRET_KEY` changed → all existing JWT tokens become invalid
 
----
+### OAuth Provider Dependencies
 
-## Code Dependencies
-
-### Dependency: Shared Database Instance
-
-**What:** The `db` instance is created in `src/models/user.py` and imported by other models.
-
-**Why It Matters:** All models must use the same database instance to avoid initialization errors.
-
-**Risk:** If a new model is created and doesn't import the shared `db` instance, it will cause errors.
-
-**Mitigation:** Document this pattern and ensure all new models follow it.
-
----
-
-### Dependency: React Router
-
-**What:** The frontend uses React Router for navigation (assumed, based on the structure).
-
-**Why It Matters:** Navigation between pages relies on React Router being properly configured.
-
-**Risk:** If React Router is not installed or configured, navigation will break.
-
-**Mitigation:** Verify that React Router is in `package.json` and properly configured in `App.jsx`.
-
----
-
-### Dependency: Tailwind CSS
-
-**What:** The frontend uses Tailwind CSS for styling.
-
-**Why It Matters:** All component styling relies on Tailwind classes being available.
-
-**Risk:** If Tailwind is not properly configured or built, styles will not apply.
-
-**Mitigation:** Ensure Tailwind is configured in `tailwind.config.js` and included in the build process.
+Google and GitHub OAuth require:
+- Valid OAuth app credentials (client ID + secret) in both frontend and backend env
+- Correct redirect URIs configured in Google Cloud Console and GitHub OAuth app settings
+- If redirect URIs don't match the current domain, OAuth login will fail with a redirect error
 
 ---
 
 ## Data Dependencies
 
-### Dependency: Database File Location
+### Database Schema and Migrations
 
-**What:** The SQLite database file is located at `/var/www/tenantguard/database/tenantguard.db`.
+Django migrations must run in order. Dependencies:
 
-**Why It Matters:** The Flask app expects to find the database at this location.
+- Migrations are applied automatically during deployment
+- If a migration fails, the deploy may leave the database in an inconsistent state
+- The `seed_test_users` management command depends on the User model schema being current
+- CaseNotebook depends on IntakeSubmission existing (foreign key)
+- IntakeDocument depends on IntakeSubmission existing (foreign key)
+- IntakeChatLog and SMSSession depend on IntakeSubmission
 
-**Risk:** If the database file is moved or deleted, the app will fail to start or lose all data.
+### AI Blog Pipeline Dependencies
 
-**Mitigation:** Regular backups and documentation of the database location.
-
----
-
-### Dependency: Database Schema
-
-**What:** The database schema is defined by the SQLAlchemy models in `src/models/`.
-
-**Why It Matters:** Changes to the models require database migrations.
-
-**Risk:** If the models are changed without updating the database, the app will crash.
-
-**Mitigation:** Implement a migration system (e.g., Alembic) for future schema changes.
+The blog generation pipeline depends on:
+- `OPENAI_API_KEY` being set and valid in `backend/.env`
+- `docs/` and `knowledge-repo/` containing current, accurate content (the ContextualResearcherAgent reads these)
+- If the knowledge-repo is stale, generated blog content may reference outdated information
+- If no API key is set, the pipeline falls back to simulated responses (useful for testing but not production)
 
 ---
 
-## External Service Dependencies
+## Build and Deploy Dependencies
 
-### Dependency: GitHub Availability
+### Docker Image Build
 
-**What:** The deployment script pulls code from GitHub.
+Backend Dockerfile depends on:
+- `requirements.txt` being complete and installable
+- Python version compatibility with all packages
+- `staticfiles/` being collectible via `python manage.py collectstatic`
 
-**Why It Matters:** If GitHub is down or the repository is inaccessible, deployment will fail.
+Frontend Dockerfile depends on:
+- `package.json` and `package-lock.json` being in sync
+- Environment variables being available at build time for `NEXT_PUBLIC_*` vars
+- TypeScript compilation succeeding (no type errors)
 
-**Risk:** Deployment cannot proceed without access to GitHub.
+### Deploy Script Dependencies
 
-**Mitigation:** Have a backup plan, such as deploying from a local copy of the repository.
+The GitHub Actions deploy workflow depends on:
+- SSH access to target VMs (keys must be valid and not expired)
+- GCS bucket containing current `.env` and `.env.local` files
+- Docker and Docker Compose being installed on target VMs
+- Sufficient disk space on VMs for new images
+- Network connectivity between GitHub Actions runners and GCP
 
----
+### Environment File Chain
 
-### Dependency: DNS Resolution
+Environment files flow through multiple locations:
 
-**What:** The domain `www.tenantguard.net` resolves to `35.237.102.136`.
+```
+Developer's local .env files
+    ↓ (manual upload)
+GCS bucket (canonical source for deployment)
+    ↓ (fetched by deploy script)
+VM filesystem (used by Docker Compose)
+    ↓ (mounted into containers)
+Running containers (read by Django/Next.js)
+```
 
-**Why It Matters:** Users access the site via the domain name.
-
-**Risk:** If DNS fails or the domain expires, the site will be inaccessible.
-
-**Mitigation:** Monitor DNS settings and domain expiration.
-
----
-
-## Browser Dependencies
-
-### Dependency: Modern Browser Features
-
-**What:** The frontend uses modern JavaScript features (ES6+) and CSS variables.
-
-**Why It Matters:** The site may not work correctly in very old browsers.
-
-**Risk:** Users on old browsers may have a degraded experience.
-
-**Mitigation:** Consider adding a browser compatibility notice or polyfills.
-
----
-
-### Dependency: JavaScript Enabled
-
-**What:** The frontend is a React app and requires JavaScript to function.
-
-**Why It Matters:** Users with JavaScript disabled will see a blank page.
-
-**Risk:** Accessibility issue for users who disable JavaScript.
-
-**Mitigation:** Consider adding a `<noscript>` message explaining that JavaScript is required.
+If the GCS bucket files are outdated, deployments will use stale configuration.
 
 ---
 
-## Implicit Knowledge Dependencies
+## Frontend-Backend Coupling
 
-### Dependency: Understanding of Flask Blueprints
+### API Contract
 
-**What:** The backend uses Flask blueprints to organize routes.
+The frontend depends on specific backend API response shapes:
 
-**Why It Matters:** New routes must be added to the appropriate blueprint and registered in `main.py`.
+- Blog post list/detail endpoints return specific field names
+- Auth endpoints return tokens in expected format
+- Intake endpoints accept specific field structures
+- Any backend serializer change can break the frontend silently
 
-**Risk:** If someone unfamiliar with Flask blueprints tries to add a route, they may do it incorrectly.
+### URL Routing Coupling
 
-**Mitigation:** Document the blueprint structure and provide examples.
+Nginx routing rules create implicit coupling:
 
----
+- `/api/auth/*` must route to Next.js (not Django) for NextAuth to work
+- `/api/*` (except auth) must route to Django
+- `/admin/*` must route to Django
+- If nginx config is changed without updating both sides, routes will 404
 
-### Dependency: Understanding of React Context API
+### Static File Serving
 
-**What:** The theme system uses React Context to manage global state.
-
-**Why It Matters:** Changes to the theme system require understanding how Context works.
-
-**Risk:** Incorrect modifications could break the theme system.
-
-**Mitigation:** Document the Context API usage and provide clear examples.
-
----
-
-### Dependency: Understanding of CSS Variables
-
-**What:** The theme system uses CSS custom properties (variables) to apply themes.
-
-**Why It Matters:** Adding new themed components requires using the CSS variables.
-
-**Risk:** New components may not respect the theme if they don't use the variables.
-
-**Mitigation:** Document the CSS variable naming convention and provide examples.
-
----
-
-## File System Dependencies
-
-### Dependency: Directory Structure
-
-**What:** The project has a specific directory structure (e.g., `frontend/`, `src/`, `database/`).
-
-**Why It Matters:** Scripts and configurations assume this structure.
-
-**Risk:** Moving files or directories could break the deployment script or the app.
-
-**Mitigation:** Document the directory structure and avoid making changes without updating all dependencies.
-
----
-
-### Dependency: File Permissions
-
-**What:** Certain files and directories must have specific permissions (e.g., `www-data` ownership for the database).
-
-**Why It Matters:** Incorrect permissions will cause the app to fail.
-
-**Risk:** File permission errors are common after deployments.
-
-**Mitigation:** The deployment script now includes a step to fix database permissions.
+- Django's `collectstatic` must run for admin/DRF static files to be served
+- Frontend static assets are served by Next.js directly
+- Media uploads go to GCS (not local filesystem)
 
 ---
 
 ## Timing Dependencies
 
-### Dependency: Service Restart Timing
+### Deployment Order
 
-**What:** The deployment script restarts the systemd service after copying files.
+During deployment, operations must happen in this order:
+1. Pull new Docker images
+2. Run migrations (before starting new backend)
+3. Start new containers
 
-**Why It Matters:** The service must be restarted for changes to take effect.
+If migrations run against the old code or new code starts before migrations complete, errors can occur.
 
-**Risk:** If the service is not restarted, users will see the old version of the app.
+### Token Expiry
 
-**Mitigation:** The deployment script includes a service restart step.
-
----
-
-### Dependency: Build Order
-
-**What:** The frontend must be built before the static files are copied.
-
-**Why It Matters:** The static files are generated by the build process.
-
-**Risk:** If the build step is skipped, the site will serve old or missing files.
-
-**Mitigation:** The deployment script enforces the correct build order.
+- Access tokens expire after 45 minutes
+- Refresh tokens expire after 7 days
+- If a user's session is older than 7 days, they must re-authenticate
+- Token refresh happens automatically via Axios interceptor, but if the refresh endpoint is down, users get logged out
 
 ---
 
-## Environment Dependencies
+## Knowledge and Content Dependencies
 
-### Dependency: Environment Variables
+### Knowledge-Repo → AI Pipeline
 
-**What:** The Flask app relies on environment variables for configuration (e.g., database path, secret keys).
+The AI blog generation pipeline reads from `docs/` and `knowledge-repo/` at generation time. If these files contain outdated information (e.g., references to Flask or SQLite), the generated content will be inaccurate.
 
-**Why It Matters:** Without the correct environment variables, the app will fail to start.
+### AGENTS.md → Agent Behavior
 
-**Risk:** If the environment variables are not set or are incorrect, the app will crash.
+Coding agents (Codex, Claude Code, etc.) read `AGENTS.md` as their primary instruction source. If this file is outdated or contradicts the actual codebase, agents will make incorrect decisions.
 
-**Mitigation:** Document all required environment variables and their expected values.
+### Control-Plane Docs → Governance
+
+The `docs/control-plane/` directory defines agent directives, output schemas, and governance rules. These must stay aligned with the actual implementation.
 
 ---
 
-### Dependency: Working Directory
+## External Service Dependencies
 
-**What:** Some scripts assume they are run from a specific directory.
-
-**Why It Matters:** Relative paths will break if the script is run from the wrong directory.
-
-**Risk:** Deployment or build failures due to incorrect working directory.
-
-**Mitigation:** Use absolute paths or include `cd` commands in scripts to ensure the correct working directory.
+| Service | Used For | Failure Mode |
+| :--- | :--- | :--- |
+| OpenAI API | Blog generation, case analysis | AI features degrade to fallback |
+| Stripe | Payment processing | Payments fail |
+| Google OAuth | Social login | Google sign-in unavailable |
+| GitHub OAuth | Social login | GitHub sign-in unavailable |
+| Google Search Console | SEO dashboard | SEO data unavailable |
+| Twilio (planned) | SMS intake | SMS intake unavailable |
 
 ---
 
 ## Conceptual Dependencies
 
-### Dependency: Understanding of the Tenant-Attorney Relationship
+### Tenant-Attorney Relationship Model
 
-**What:** The platform is designed around the concept of tenants seeking legal help from attorneys.
+The platform is designed around tenants seeking legal help from attorneys. All features should support this core relationship. Changes that don't account for this can break the user experience.
 
-**Why It Matters:** Design and feature decisions are based on this relationship.
+### Legal Workflow Assumptions
 
-**Risk:** Changes that don't account for this relationship could break the user experience.
+The platform assumes specific legal workflows: intake → document collection → case analysis → attorney matching → representation. Features should align with how landlord-tenant cases are actually handled in Tennessee courts.
 
-**Mitigation:** Keep this core concept in mind when making design decisions.
+### Trust Sensitivity
+
+Users may be stressed, vulnerable, or dealing with housing instability. All user-facing changes must feel clear, calm, credible, and professional. This is a hidden dependency on tone and UX quality that affects every frontend change.
 
 ---
 
-### Dependency: Understanding of Legal Workflows
+## Common Failure Patterns
 
-**What:** The platform is designed to support legal workflows (case intake, document submission, attorney matching).
-
-**Why It Matters:** Features should align with how legal cases are actually handled.
-
-**Risk:** Features that don't fit the legal workflow will be confusing or useless.
-
-**Mitigation:** Research legal workflows and consult with legal professionals when designing new features.
+1. **Deploy succeeds but site is broken** — Usually a missing env var or stale GCS bucket file
+2. **Auth stops working after deploy** — Usually SECRET_KEY or NEXTAUTH_SECRET changed
+3. **API returns 500** — Usually cloud-sql-proxy is down or migration failed
+4. **OAuth login fails** — Usually redirect URI mismatch after domain/URL change
+5. **Blog generation produces bad content** — Usually knowledge-repo is stale
+6. **Static files missing** — Usually `collectstatic` didn't run or nginx config is wrong

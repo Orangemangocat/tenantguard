@@ -2,360 +2,287 @@
 
 ## Overview
 
-TenantGuard follows a traditional three-tier web application architecture with a React frontend, Flask backend, and SQLite database.
+TenantGuard is a split-stack web application with a Django REST API backend and a Next.js TypeScript frontend, deployed via Docker Compose on Google Cloud Platform VMs with PostgreSQL (Cloud SQL) as the database.
+
+---
 
 ## Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                         Users                                │
-│              (Tenants, Attorneys, Visitors)                  │
+│              (Tenants, Attorneys, Staff, Admin)              │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+                        │ HTTPS (Cloudflare CDN/WAF)
+                        ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Cloudflare Edge                           │
+│            (DNS, CDN, DDoS protection, SSL)                 │
 └───────────────────────┬─────────────────────────────────────┘
                         │
                         │ HTTPS
                         ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      Nginx Web Server                        │
-│                  (www.tenantguard.net)                       │
+│                   Nginx (ports 80/443)                       │
 │                                                              │
-│  ┌──────────────────────┐  ┌──────────────────────┐        │
-│  │   Static Files       │  │   Proxy to Flask     │        │
-│  │   /src/static/       │  │   Port 5000          │        │
-│  └──────────────────────┘  └──────────────────────┘        │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        │ HTTP (internal)
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Flask Application                          │
-│                    (Python Backend)                          │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │    Routes    │  │    Models    │  │   Business   │      │
-│  │              │  │              │  │     Logic    │      │
-│  │  /api/cases  │  │    Case      │  │              │      │
-│  │  /api/attor  │  │  Attorney    │  │  Validation  │      │
-│  │  /api/contact│  │    User      │  │   Matching   │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        │ SQLAlchemy ORM
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    SQLite Database                           │
-│              /var/www/tenantguard/database/                  │
-│                                                              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                  │
-│  │  users   │  │  cases   │  │attorneys │                  │
-│  └──────────┘  └──────────┘  └──────────┘                  │
-└─────────────────────────────────────────────────────────────┘
+│  Routing:                                                    │
+│  /api/auth/*           → Next.js (port 3000)                │
+│  /api/*, /admin/*,     → Django  (port 8000)                │
+│  /staff/*, /static/*                                        │
+│  /*                    → Next.js (port 3000)                │
+└───────┬───────────────────────────────┬─────────────────────┘
+        │                               │
+        ▼                               ▼
+┌───────────────────┐     ┌───────────────────────────────────┐
+│   Next.js App     │     │         Django REST API            │
+│   (port 3000)     │     │         (port 8000)               │
+│                   │     │                                    │
+│  - Pages/routing  │     │  Apps:                             │
+│  - NextAuth       │     │  - authentication (JWT, OAuth)    │
+│  - React UI       │     │  - blog (posts, AI generation)    │
+│  - TypeScript     │     │  - chat (legal assistant)         │
+│  - Tailwind CSS   │     │  - intake (submissions, docs,     │
+│  - Chakra UI      │     │           notebooks, SMS)         │
+│                   │     │  - seo (Search Console dashboard) │
+│                   │     │  - stafftodo (internal tasks)     │
+└───────────────────┘     └───────────────┬───────────────────┘
+                                          │
+                                          │ localhost:5432
+                                          ▼
+                          ┌───────────────────────────────────┐
+                          │       cloud-sql-proxy             │
+                          │     (secure tunnel to Cloud SQL)  │
+                          └───────────────┬───────────────────┘
+                                          │
+                                          ▼
+                          ┌───────────────────────────────────┐
+                          │     Google Cloud SQL               │
+                          │     (PostgreSQL)                   │
+                          │     DB: tenantguard_db             │
+                          └───────────────────────────────────┘
 ```
+
+---
 
 ## Frontend Architecture
 
 ### Technology Stack
 
-- **Framework:** React 18
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS
-- **Component Library:** Shadcn/UI
-- **State Management:** React Context API (for themes)
-- **Routing:** React Router (assumed, to be verified)
+| Technology | Purpose |
+| :--- | :--- |
+| Next.js 16 | Framework (pages router, SSR/SSG) |
+| React 18 | UI library |
+| TypeScript | Type safety |
+| Tailwind CSS 4 | Utility-first styling |
+| Chakra UI 2 | Component library |
+| Framer Motion | Animations |
+| Axios | HTTP client with interceptors |
+| next-auth 4 | Authentication (session, OAuth) |
 
-### Component Hierarchy
+### Page Structure
 
 ```
-App.jsx
-├── ThemeProvider (Context)
-│   ├── Header
-│   │   ├── Logo
-│   │   ├── Navigation
-│   │   └── ThemeSwitcher
-│   ├── Hero Section
-│   ├── Features Section
-│   ├── How It Works Section
-│   ├── CTA Section
-│   ├── Footer
-│   └── Modals
-│       ├── CaseIntakeForm (8 steps)
-│       ├── AttorneyIntakeForm (7 steps)
-│       └── ContactPage
+frontend/
+├── pages/
+│   ├── index.tsx              # Landing page
+│   ├── auth/signin.tsx        # Sign-in (with test account banner)
+│   ├── dashboard.tsx          # User dashboard
+│   ├── intake.tsx             # Guided intake form
+│   ├── tenant-intake.tsx      # Tenant-specific intake
+│   ├── attorney-intake.tsx    # Attorney-specific intake
+│   ├── case/[id].tsx          # Case detail
+│   ├── case/[id]/documents.tsx
+│   ├── case/[id]/motions.tsx
+│   ├── case/[id]/actions.tsx
+│   ├── case/[id]/alerts.tsx
+│   ├── blog/index.tsx         # Blog listing
+│   ├── blog/[slug].tsx        # Blog post detail
+│   ├── profile.tsx            # User profile
+│   ├── privacy.tsx            # Privacy policy
+│   ├── terms.tsx              # Terms of service
+│   └── api/auth/[...nextauth].js  # NextAuth API route
+├── components/
+│   ├── Navbar.tsx
+│   ├── Chat.tsx
+│   ├── RecentPostsSidebar.tsx
+│   └── StaffTodoWidget.tsx
+├── lib/                       # API client, auth utilities
+├── styles/                    # Global CSS
+├── public/                    # Static assets
+└── types/                     # TypeScript definitions
 ```
 
-### Build Process
+### Auth Flow (Frontend Side)
 
-1. Source files in `frontend/src/`
-2. Vite builds and bundles to `frontend/dist/`
-3. Built files copied to `src/static/` for serving by Flask
+1. User signs in via `/auth/signin` (credentials or OAuth)
+2. NextAuth handles session creation and token storage
+3. Axios interceptor attaches `Authorization: Bearer <access_token>` to API calls
+4. Token refresh happens automatically before expiry
+5. Protected pages check session before rendering
 
-### Theme System
-
-The theme system uses CSS custom properties (variables) defined in `theme.css`:
-
-```css
-:root {
-  --primary: #dc2626;
-  --secondary: #1e293b;
-  --background: #ffffff;
-  --text: #1e293b;
-  /* ... more variables ... */
-}
-```
-
-Themes are defined in `themes.js` and managed by `ThemeContext.jsx`. The `ThemeSwitcher.jsx` component allows users to select a theme, which is persisted in localStorage.
+---
 
 ## Backend Architecture
 
 ### Technology Stack
 
-- **Framework:** Flask
-- **ORM:** SQLAlchemy
-- **Database:** SQLite
-- **Process Manager:** Systemd
+| Technology | Purpose |
+| :--- | :--- |
+| Django 5.0.3 | Web framework |
+| Django REST Framework 3.15 | API layer |
+| djangorestframework-simplejwt | JWT token auth (45-min access, 7-day refresh) |
+| django-allauth | OAuth social login (Google, GitHub) |
+| django-jazzmin | Admin UI theme |
+| django-taggit | Blog tagging |
+| CKEditor / Summernote | Rich text editing |
+| OpenAI SDK | AI blog generation, case analysis |
+| Stripe SDK | Payment processing |
 
-### Application Structure
+### Django Apps
 
-```
-src/
-├── main.py (application entry point)
-├── models/
-│   ├── user.py (User model, shared db instance)
-│   ├── case.py (Case model)
-│   └── attorney.py (Attorney model)
-└── routes/
-    ├── user.py (user-related endpoints)
-    ├── attorney.py (attorney-related endpoints)
-    └── contact.py (contact form endpoint)
-```
+| App | Purpose |
+| :--- | :--- |
+| `core` | Project settings, base configuration |
+| `authentication` | Registration, login, OAuth callbacks, JWT endpoints, user management |
+| `blog` | Blog posts, categories, comments, AI generation pipeline |
+| `chat` | Legal assistant chat message storage |
+| `intake` | Intake submissions, documents, case notebooks, SMS sessions, payments |
+| `seo` | SEO dashboard (Google Search Console integration) |
+| `stafftodo` | Internal staff task management with comments and activity log |
 
-### API Endpoints
+### Key Backend Patterns
 
-| Endpoint | Method | Description |
-| :--- | :--- | :--- |
-| `/api/cases` | POST | Create a new tenant case |
-| `/api/cases/<id>` | GET | Retrieve a specific case |
-| `/api/attorneys` | POST | Submit attorney application |
-| `/api/attorneys/<id>` | GET | Retrieve attorney application |
-| `/api/contact` | POST | Submit contact form |
+- ViewSets and ModelSerializers for CRUD
+- Permission classes for access control
+- Custom management commands (e.g., `seed_test_users`, image URL repair)
+- Admin customization with Jazzmin theme
+- AI agents as class hierarchy extending `BaseAgent`
 
-### Database Models
-
-**User Model:**
-- Stores user account information
-- Includes email, password hash, role
-
-**Case Model:**
-- Stores tenant case information
-- Includes case number, tenant details, property info, dispute details
-- Status field tracks case lifecycle
-
-**Attorney Model:**
-- Stores attorney application information
-- Includes name, contact info, bar number, expertise, budget
-
-### Shared Database Instance
-
-All models import the shared `db` instance from `src/models/user.py`:
-
-```python
-from src.models.user import db
-```
-
-This ensures all models use the same SQLAlchemy instance, preventing initialization errors.
+---
 
 ## Database Architecture
 
-### Database Type
+### Engine
 
-SQLite (file-based relational database)
+PostgreSQL (Google Cloud SQL), accessed via cloud-sql-proxy on localhost:5432.
 
-### Location
+### Core Models
 
-`/var/www/tenantguard/database/tenantguard.db`
+See `PROJECT_STATE_RECONSTRUCTED.md` for full model field details.
 
-### Permissions
+**Key entities:**
+- `User` (Django auth)
+- `IntakeSubmission` (full case intake data)
+- `IntakeDocument` (uploaded documents with OCR text)
+- `CaseNotebook` (AI-generated case analysis)
+- `IntakeChatLog` (conversation records)
+- `SMSSession` (phone-to-intake mapping)
+- `Post`, `Category`, `Comment` (blog)
+- `Message` (chat)
+- `Todo`, `TodoComment`, `TodoActivity` (staff tasks)
 
-- Owner: `www-data:www-data`
-- Permissions: `664` (read/write for owner and group)
+### Migration Management
 
-### Schema Management
+Django's built-in migration system. Migrations run automatically during deployment via GitHub Actions.
 
-Currently, schema is managed through SQLAlchemy models. No migration system is in place yet.
-
-**Future:** Implement Alembic for database migrations.
+---
 
 ## Deployment Architecture
 
-### Server Setup
+### Environments
 
-- **OS:** Linux (Ubuntu/Debian assumed)
-- **Web Server:** Nginx
-- **Application Server:** Flask (via Systemd)
-- **Process Manager:** Systemd
+| Environment | Domain | Trigger |
+| :--- | :--- | :--- |
+| Staging | staging.tenantguard.net | Push to `main` |
+| Production | tenantguard.net | Git tag `v*` |
 
-### Nginx Configuration
+### Deployment Pipeline
 
-Nginx serves as a reverse proxy, forwarding requests to the Flask application:
+```
+Push/Tag → GitHub Actions
+  ├── Build backend Docker image
+  ├── Build frontend Docker image
+  ├── Push to Google Artifact Registry
+  └── SSH into target VM
+       ├── Fetch env files from GCS bucket
+       ├── docker compose pull
+       ├── Run Django migrations
+       ├── Seed test accounts (staging only)
+       └── docker compose up -d
+```
 
-- Static files served directly from `/var/www/tenantguard/src/static/`
-- API requests proxied to Flask on `localhost:5000`
-- HTTPS enabled with SSL certificates
+### VM Stack (each environment)
 
-### Systemd Service
+```
+Docker Compose orchestrates:
+  ├── nginx          (ports 80/443, reverse proxy)
+  ├── backend        (Django on port 8000)
+  ├── frontend       (Next.js on port 3000)
+  └── cloud-sql-proxy (PostgreSQL tunnel on port 5432)
+```
 
-The Flask application runs as a systemd service:
-
-- **Service Name:** `tenantguard`
-- **User:** `www-data`
-- **Working Directory:** `/var/www/tenantguard`
-- **Command:** Runs Flask using the Python virtual environment
-
-### Deployment Process
-
-1. **Git Pull:** Pull latest code from GitHub to `/home/manus/repos/tenantguard`
-2. **Build Frontend:** Run `pnpm run build` in `/var/www/tenantguard/frontend`
-3. **Copy Static Files:** Copy `frontend/dist/*` to `src/static/`
-4. **Sync Backend:** Rsync backend files from repo to `/var/www/tenantguard`
-5. **Fix Permissions:** Set correct ownership and permissions for database
-6. **Restart Service:** Restart the `tenantguard` systemd service
+---
 
 ## Security Architecture
 
-### Current Security Measures
+### Current Measures
 
-1. **HTTPS:** All traffic encrypted with SSL/TLS
-2. **Input Validation:** Form inputs validated on frontend and backend
-3. **Database Permissions:** Database files owned by `www-data` with restricted permissions
+1. **HTTPS everywhere** — Cloudflare SSL + Let's Encrypt on VMs
+2. **JWT authentication** — Short-lived access tokens (45 min), long-lived refresh (7 days)
+3. **OAuth integration** — Google and GitHub social login via django-allauth
+4. **Backend-enforced permissions** — DRF permission classes on all protected endpoints
+5. **Secrets management** — Environment variables, GCS bucket for deployment secrets
+6. **Cloudflare WAF** — DDoS protection and edge security
+7. **Docker isolation** — Services run in containers with limited exposure
 
-### Planned Security Measures
+### Known Security Gaps (to address)
 
-1. **User Authentication:** Secure login with password hashing (bcrypt)
-2. **Session Management:** Secure session cookies with CSRF protection
-3. **API Rate Limiting:** Prevent abuse and DDoS attacks
-4. **SQL Injection Prevention:** Parameterized queries via SQLAlchemy
-5. **XSS Prevention:** Input sanitization and output encoding
+1. Hardcoded SECRET_KEY in some config paths — move to env-only
+2. Production deploy may reference staging SSH password — verify
+3. Snakeoil SSL paths in nginx config — replace with real certs
+4. No automated security testing
+5. Rate limiting not yet implemented
+6. CSRF hardening incomplete
 
-## Scalability Considerations
-
-### Current Limitations
-
-- **SQLite:** Not suitable for high-concurrency or large-scale deployments
-- **Single Server:** No load balancing or redundancy
-- **No Caching:** Every request hits the database
-
-### Future Scalability Improvements
-
-1. **Migrate to PostgreSQL:** Better concurrency and scalability
-2. **Add Redis:** Caching and session storage
-3. **Load Balancing:** Multiple application servers behind a load balancer
-4. **CDN:** Serve static assets from a CDN
-5. **Database Replication:** Read replicas for improved performance
-6. **Containerization:** Docker for easier deployment and scaling
-
-## Monitoring and Logging
-
-### Current State
-
-- **Systemd Logs:** Application logs via `journalctl -u tenantguard`
-- **Nginx Logs:** Access and error logs in `/var/log/nginx/`
-
-### Future Improvements
-
-1. **Application Logging:** Structured logging with log levels
-2. **Error Tracking:** Sentry or similar for error monitoring
-3. **Performance Monitoring:** New Relic, Datadog, or similar
-4. **Uptime Monitoring:** Pingdom or UptimeRobot
-5. **Analytics:** Google Analytics or Plausible for user behavior tracking
-
-## Data Flow
-
-### Tenant Case Submission
-
-1. User fills out CaseIntakeForm in React frontend
-2. Form data validated on frontend
-3. POST request sent to `/api/cases`
-4. Flask validates data and creates Case object
-5. SQLAlchemy saves Case to database
-6. Response sent back to frontend with case number
-7. Frontend displays confirmation
-
-### Attorney Application
-
-1. User fills out AttorneyIntakeForm in React frontend
-2. Form data validated on frontend
-3. POST request sent to `/api/attorneys`
-4. Flask validates data and creates Attorney object
-5. SQLAlchemy saves Attorney to database
-6. Response sent back to frontend with application ID
-7. Frontend displays confirmation
-
-### Contact Form Submission
-
-1. User fills out ContactPage form in React frontend
-2. Form data validated on frontend
-3. POST request sent to `/api/contact`
-4. Flask logs contact information (SMTP to be configured)
-5. Response sent back to frontend
-6. Frontend displays success message
+---
 
 ## Integration Points
 
-### Current Integrations
+### Active Integrations
 
-- **GitHub:** Code repository and version control
-- **pnpm:** Package management for frontend dependencies
-- **Vite:** Frontend build tool
+| Service | Purpose |
+| :--- | :--- |
+| Google Cloud Platform | Hosting, database, storage, registry |
+| Cloudflare | DNS, CDN, WAF |
+| OpenAI API | AI blog generation, case analysis |
+| Google OAuth | Social login |
+| GitHub OAuth | Social login |
+| Stripe | Payment processing (test mode) |
+| Google Search Console | SEO dashboard |
 
 ### Planned Integrations
 
-- **Email Service:** SendGrid or Mailgun for transactional emails
-- **Payment Processor:** Stripe or PayPal for attorney payments
-- **Document Storage:** Google Cloud Storage for uploaded documents
-- **SMS Service:** Twilio for text notifications
-- **Analytics:** Google Analytics or Plausible
+| Service | Purpose |
+| :--- | :--- |
+| Twilio/SMS | Intake via text message (partially implemented) |
+| Email service | Transactional notifications |
+| Document OCR | Enhanced document processing |
+
+---
 
 ## Development Workflow
 
-1. **Local Development:** Make changes in sandbox environment
-2. **Testing:** Build frontend and test locally
-3. **Version Control:** Commit changes to Git
-4. **Push to GitHub:** Push changes to remote repository
-5. **Deployment:** Run deployment script on server
-6. **Verification:** Test on live site
+1. **Local development:** `make dev` starts both backend and frontend
+2. **Backend checks:** `python manage.py check`, `makemigrations`, `migrate`
+3. **Frontend checks:** `npm run lint`, `npm run build`
+4. **Commit to main:** Triggers automatic staging deployment
+5. **Verify on staging:** Test at staging.tenantguard.net
+6. **Tag for production:** `git tag v1.x.x && git push origin v1.x.x`
+7. **Monitor:** Check GitHub Actions tab for deploy status
 
-## Technology Decisions
+---
 
-### Why React?
+## Legacy Architecture (Archived — Do Not Use)
 
-- Modern, popular framework with strong ecosystem
-- Component-based architecture for reusability
-- Good performance with virtual DOM
-- Excellent developer experience
-
-### Why Flask?
-
-- Lightweight and flexible Python framework
-- Easy to learn and use
-- Good for rapid prototyping
-- Strong ecosystem of extensions
-
-### Why SQLite?
-
-- Simple setup, no separate database server needed
-- Sufficient for current scale and testing
-- Easy to back up (single file)
-- Plan to migrate to PostgreSQL for production
-
-### Why Tailwind CSS?
-
-- Utility-first approach for rapid development
-- Consistent design system
-- Small bundle size with purging
-- Excellent documentation
-
-### Why Vite?
-
-- Fast build times
-- Modern development experience
-- Hot module replacement
-- Optimized production builds
+The prior implementation (preserved on `legacy/flask-vite` branch) used Flask, SQLite, Vite, React (JSX), direct server deployment via bash script, and systemd. **All legacy deployment instructions are obsolete.** The current architecture is as described in this document.

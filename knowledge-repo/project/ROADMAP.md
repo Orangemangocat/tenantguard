@@ -1,376 +1,193 @@
 # TenantGuard Product Roadmap
 
-## Current Phase: Foundation (December 2025)
-
-### Completed
-
-✅ Core website structure with React and Flask  
-✅ Tenant case intake form (8 steps)  
-✅ Attorney application form (7 steps)  
-✅ Contact form with backend API  
-✅ Theme system with 4 color schemes  
-✅ Responsive design for mobile and desktop  
-✅ Deployment automation with custom script  
-✅ Database schema for users, cases, and attorneys  
-✅ Testing server deployment at www.tenantguard.net  
-
-### In Progress
-
-🔄 User authentication system  
-🔄 Email notification configuration (SMTP)  
-🔄 Workspace design research and mockups  
+Updated June 2026 to reflect actual progress. The project migrated from Flask/SQLite to Django/Next.js/PostgreSQL in early 2026, completing many items that were previously planned.
 
 ---
 
-## Phase 1: Core Platform (Q1 2026)
+## Completed (as of June 2026)
 
-### User Authentication and Authorization
+### Infrastructure Migration (Completed Q1 2026)
+- Migrated from Flask/SQLite/Vite to Django/Next.js/PostgreSQL
+- Deployed on Google Cloud Platform (GCE VMs, Cloud SQL, Artifact Registry, GCS)
+- Docker Compose containerization for all services
+- GitHub Actions CI/CD (push to main → staging, git tag → production)
+- Cloudflare DNS/CDN/WAF protection
+- Staging environment at staging.tenantguard.net
+- Production at tenantguard.net
 
-**Timeline:** January 2026
+### User Authentication (Completed Q1 2026)
+- JWT-based authentication (45-min access, 7-day refresh tokens)
+- Google OAuth social login
+- GitHub OAuth social login
+- NextAuth session management on frontend
+- Role-based access (tenant, attorney, staff, superadmin)
+- Test account seeding for staging
 
-**Features:**
-- User registration and login
-- Secure password storage (bcrypt)
-- Session management
-- Password reset functionality
-- Role-based access control (tenant, attorney, admin)
+### Content and Blog System (Completed Q1 2026)
+- AI blog generation pipeline (multi-agent: researcher → topics → author)
+- Blog with categories, tags, search, SEO fields
+- CKEditor/Summernote rich text editing
+- Dynamic sitemap and robots.txt
+- SEO dashboard with Google Search Console integration
 
-**Success Criteria:**
-- Users can create accounts and log in securely
-- Sessions persist across page reloads
-- Password reset works via email
+### Intake System (Completed Q1 2026)
+- Guided intake form for tenants and attorneys
+- Document upload with OCR text extraction
+- AI-powered case notebook generation (summary, facts, timeline, key terms, recommendations)
+- SMS intake session mapping (partially implemented)
+- Stripe payment integration for analysis fee (test mode)
 
----
+### User Dashboard (Completed Q1 2026)
+- Case overview page
+- Document management
+- Motions view
+- Actions view
+- Alerts view
 
-### Tenant Dashboard
-
-**Timeline:** January - February 2026
-
-**Features:**
-- Case overview (status, timeline, next steps)
-- Document upload and management
-- Communication with assigned attorney
-- Case history and notes
-- Educational resources
-
-**Success Criteria:**
-- Tenants can view all their cases in one place
-- Document upload works reliably
-- Interface is intuitive and easy to use
-
----
-
-### Attorney Dashboard
-
-**Timeline:** February - March 2026
-
-**Features:**
-- Case list (active, pending, closed)
-- Task management and deadlines
-- Client communication tools
-- Document review and management
-- Performance metrics (KPIs)
-- Calendar integration
-
-**Success Criteria:**
-- Attorneys can efficiently manage multiple cases
-- Task tracking reduces missed deadlines
-- Dashboard provides actionable insights
+### Admin and Staff Tools (Completed Q1 2026)
+- Django admin with Jazzmin theme
+- Staff todo panel with comments and activity log
+- AI blog generator admin interface
+- User management
+- Intake submission management
 
 ---
+
+## In Progress (Q2-Q3 2026)
+
+### Attorney Matching System
+- Automated case-to-attorney matching based on expertise, location, caseload
+- Manual override for admin
+- Notification to both parties when matched
+- **Priority:** High
+- **Target:** Q3 2026
 
 ### Email Notification System
-
-**Timeline:** January 2026
-
-**Features:**
-- SMTP configuration (SendGrid or Mailgun)
-- Email templates for common notifications
-- Case status updates
+- Transactional email service integration (SendGrid or similar)
+- Case status update notifications
 - New message alerts
-- Welcome emails
-
-**Success Criteria:**
-- All transactional emails are sent reliably
-- Email templates are professional and branded
-- Users can opt out of non-essential emails
-
----
-
-## Phase 2: Matching and Communication (Q2 2026)
-
-### Attorney Matching Algorithm
-
-**Timeline:** April - May 2026
-
-**Features:**
-- Automated case assignment based on:
-  - Attorney expertise
-  - Geographic location
-  - Current caseload
-  - Budget preferences
-- Manual override for admin
-- Notification to attorney and tenant when matched
-
-**Success Criteria:**
-- 90% of cases are matched within 24 hours
-- Matches are appropriate based on case requirements
-- Both tenants and attorneys are satisfied with matches
-
----
+- Welcome emails and onboarding sequences
+- **Priority:** High
+- **Target:** Q2-Q3 2026
 
 ### In-Platform Messaging
-
-**Timeline:** May - June 2026
-
-**Features:**
 - Real-time messaging between tenants and attorneys
 - Message history and search
-- File attachments
-- Read receipts
+- File attachments in messages
 - Email notifications for new messages
+- **Priority:** Medium-High
+- **Target:** Q3 2026
 
-**Success Criteria:**
-- Messages are delivered instantly
-- Users prefer in-platform messaging to email
-- Conversation history is easily accessible
-
----
-
-## Phase 3: Payments and Analytics (Q3 2026)
-
-### Payment System
-
-**Timeline:** July - August 2026
-
-**Features:**
-- Stripe integration for payment processing
+### Payment System Completion
+- Move Stripe from test mode to production
 - Attorney subscription plans
 - Per-case billing options
 - Payment history and invoices
-- Automated billing
+- **Priority:** Medium
+- **Target:** Q3 2026
 
-**Success Criteria:**
-- Attorneys can easily pay for services
-- Payment processing is secure and reliable
-- Revenue is tracked accurately
+### Automated Testing
+- Backend unit tests (Django TestCase)
+- Frontend component tests
+- Integration tests for auth flow
+- CI pipeline test step
+- **Priority:** Medium
+- **Target:** Q2-Q3 2026
 
 ---
 
+## Planned (Q4 2026)
+
 ### Analytics and Reporting
-
-**Timeline:** August - September 2026
-
-**Features:**
-- Key metrics tracking:
-  - Time to match
-  - Case resolution rate
-  - User satisfaction
-  - Revenue and growth
+- Key metrics tracking (time to match, resolution rate, user satisfaction)
 - Admin dashboard with visualizations
 - Exportable reports
 - User feedback collection
 
-**Success Criteria:**
-- Platform performance is measurable
-- Data-driven decisions can be made
-- Reports are accurate and actionable
+### Security Hardening
+- Rate limiting on all endpoints
+- CSRF hardening
+- Security audit
+- Penetration testing
+- Automated vulnerability scanning
+
+### Performance Optimization
+- Redis caching layer
+- Database query optimization
+- CDN optimization for static assets
+- Monitoring and alerting (uptime, error rates, response times)
+
+### Geographic Expansion Preparation
+- Research legal requirements for additional Tennessee counties
+- Adapt platform for multi-jurisdiction support
+- Begin attorney recruitment in new areas
 
 ---
 
-## Phase 4: Scalability and Expansion (Q4 2026)
-
-### Database Migration
-
-**Timeline:** October 2026
-
-**Features:**
-- Migrate from SQLite to PostgreSQL
-- Implement database migrations with Alembic
-- Set up database backups and replication
-- Optimize queries for performance
-
-**Success Criteria:**
-- Migration completes without data loss
-- Platform performance improves
-- Database can handle increased load
-
----
-
-### Infrastructure Improvements
-
-**Timeline:** October - November 2026
-
-**Features:**
-- Move to Google Cloud hosting
-- Implement load balancing
-- Add Redis for caching and session storage
-- Set up CDN for static assets
-- Implement monitoring and alerting
-
-**Success Criteria:**
-- Platform can handle 10x current traffic
-- 99.9% uptime
-- Page load times under 2 seconds
-
----
-
-### Geographic Expansion
-
-**Timeline:** November - December 2026
-
-**Features:**
-- Research legal requirements for new jurisdictions
-- Adapt platform to support multiple jurisdictions
-- Recruit attorneys in new areas
-- Launch in 2-3 additional Tennessee counties
-
-**Success Criteria:**
-- Platform successfully operates in multiple jurisdictions
-- Legal compliance maintained
-- User growth in new areas
-
----
-
-## Phase 5: Advanced Features (2027)
+## Future (2027+)
 
 ### Mobile Applications
-
-**Timeline:** Q1 2027
-
-**Features:**
-- Native iOS app
-- Native Android app
+- Native iOS and Android apps
 - Feature parity with web platform
 - Push notifications
-- Offline mode for viewing case information
-
-**Success Criteria:**
-- Apps are available in App Store and Google Play
-- User ratings above 4.5 stars
-- 30% of users access platform via mobile apps
-
----
+- Offline mode for case information
 
 ### Document Automation
-
-**Timeline:** Q2 2027
-
-**Features:**
-- Auto-generate legal documents based on case details
-- Templates for common documents (demand letters, court filings)
+- Auto-generate legal documents from case details
+- Templates for demand letters, court filings
 - E-signature integration
 - Document version control
 
-**Success Criteria:**
-- 80% of common documents are auto-generated
-- Document generation saves attorneys 2+ hours per case
-- Documents are legally accurate and compliant
-
----
-
-### AI-Powered Features
-
-**Timeline:** Q3 2027
-
-**Features:**
-- AI-powered case analysis and recommendations
+### Advanced AI Features
 - Predictive analytics for case outcomes
-- Chatbot for basic tenant questions
-- Automated case summarization
-
-**Success Criteria:**
-- AI recommendations are accurate and helpful
-- Chatbot resolves 50% of basic inquiries
-- Users trust and value AI features
-
----
+- Enhanced chatbot for tenant questions
+- Automated case summarization improvements
+- AI-powered attorney recommendations
 
 ### Court System Integration
-
-**Timeline:** Q4 2027
-
-**Features:**
-- Integration with local court systems for filing
+- Electronic filing where available
 - Automated court date tracking
-- Electronic service of process
-- Real-time case status updates from courts
-
-**Success Criteria:**
-- Electronic filing is available for 80% of cases
-- Court integration reduces manual work
-- Compliance with all court requirements
-
----
-
-## Long-Term Vision (2028+)
+- Real-time case status from courts
 
 ### National Expansion
-
-- Expand to all 50 states
-- Partner with national legal aid organizations
-- Establish TenantGuard as the leading tenant legal platform
-
-### Platform Ecosystem
-
-- Open API for third-party integrations
-- Marketplace for legal services and tools
-- Community features (forums, resources, support groups)
-
-### Social Impact
-
-- Measure and report on social impact (tenants helped, evictions prevented)
-- Partner with nonprofits and advocacy groups
-- Influence policy and legislation to protect tenant rights
+- Expand beyond Tennessee
+- Partner with legal aid organizations
+- Multi-state legal compliance
 
 ---
 
-## Success Metrics by Phase
+## Success Metrics
 
 | Phase | Key Metric | Target |
 | :--- | :--- | :--- |
-| Foundation | Platform deployed | ✅ Complete |
-| Phase 1 | Active users | 100 tenants, 20 attorneys |
-| Phase 2 | Cases matched | 80% within 24 hours |
-| Phase 3 | Revenue | $10,000/month |
-| Phase 4 | Jurisdictions | 5+ counties |
-| Phase 5 | Mobile users | 30% of total users |
-| Long-term | National presence | All 50 states |
+| Current (Q2 2026) | Platform fully functional | Active staging + production |
+| Q3 2026 | Attorney matching live | 80% cases matched within 24 hours |
+| Q4 2026 | Active users | 100 tenants, 20 attorneys |
+| 2027 | Revenue | $10,000/month |
+| 2027+ | Geographic reach | 5+ Tennessee counties |
 
 ---
 
 ## Dependencies and Risks
 
 ### Critical Dependencies
-
-- **Legal Compliance:** Must comply with all relevant laws and regulations
-- **Attorney Recruitment:** Need sufficient attorneys to meet tenant demand
-- **Funding:** Requires capital for development and marketing
-- **Technology:** Reliable infrastructure and tools
+- Legal compliance in all jurisdictions served
+- Sufficient attorney recruitment to meet tenant demand
+- Funding for infrastructure and development
+- Reliable GCP infrastructure
 
 ### Key Risks
-
-- **Low User Adoption:** Tenants and attorneys may not use the platform
-- **Legal Challenges:** Regulatory or legal issues could delay or halt progress
-- **Competition:** Other platforms could capture market share
-- **Technical Issues:** Bugs, security vulnerabilities, or downtime could harm reputation
+- Low user adoption (tenants and attorneys may not use the platform)
+- Legal/regulatory challenges
+- Competition from other legal-tech platforms
+- Technical debt from rapid development
 
 ### Mitigation Strategies
-
 - Continuous user feedback and iteration
 - Legal consultation and compliance monitoring
-- Differentiation through superior UX and features
-- Robust testing, security audits, and monitoring
+- Differentiation through superior UX and AI-powered features
+- Regular code review, testing, and documentation
 
 ---
 
-## Flexibility and Iteration
-
-This roadmap is a living document and will be updated based on:
-
-- User feedback and needs
-- Market conditions and competition
-- Technical constraints and opportunities
-- Business priorities and resources
-
-The team will review and adjust the roadmap quarterly to ensure it remains aligned with the platform's mission and goals.
+This roadmap is a living document updated as the project progresses. Priorities may shift based on user feedback, market conditions, and resource availability.

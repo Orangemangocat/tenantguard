@@ -1,305 +1,258 @@
 # Decision Logic and Tradeoffs
 
-This document externalizes the decision-making logic and tradeoffs I apply when working on the TenantGuard project.
+This document captures the architectural and operational decisions made for TenantGuard, including the rationale and tradeoffs. Updated to reflect the current Django/Next.js/PostgreSQL/GCP architecture (June 2026).
 
-## Architectural Decisions
-
-### Decision: Use SQLite for the Database
-
-**Chosen:** SQLite
-
-**Alternatives Considered:** PostgreSQL, MySQL
-
-**Tradeoffs:**
-- **Pro:** Simple to set up, no separate database server required, good for development and small-scale deployments.
-- **Con:** Limited scalability, not ideal for high-concurrency scenarios.
-
-**Rationale:** For the current stage of the project (testing and early deployment), SQLite is sufficient. A migration to a more robust database can be planned for the future if needed.
-
-**Implicit Logic:** Prioritize simplicity and speed of development over scalability in the early stages.
+> **Note:** The project was originally built with Flask/SQLite/Vite and later migrated to the current stack in early 2026. Legacy decisions are preserved in the "Historical Decisions" section at the bottom for context.
 
 ---
 
-### Decision: Use React + Vite for the Frontend
+## Current Architecture Decisions
 
-**Chosen:** React 18 with Vite
+### Decision 1: Django over Flask (Migration)
 
-**Alternatives Considered:** Vue, Angular, plain JavaScript
+**Choice:** Migrated from Flask to Django 5.0.3 with Django REST Framework.
+
+**Rationale:**
+- Django's built-in admin, auth, ORM, and migration system eliminate significant custom code
+- DRF provides standardized API patterns (serializers, viewsets, permissions)
+- django-allauth handles OAuth complexity (Google, GitHub) out of the box
+- Django's mature ecosystem supports the growing feature set (blog, intake, chat, staff tools)
+- Better suited for a multi-app architecture with clear boundaries
 
 **Tradeoffs:**
-- **Pro:** React is widely used, has a large ecosystem, and Vite provides fast build times.
-- **Con:** React has a learning curve and can be overkill for simple sites.
+- Heavier framework with more conventions to learn
+- Less flexibility for unconventional patterns
+- Migration required significant rewrite effort
 
-**Rationale:** React is a good choice for a dynamic, interactive application like TenantGuard. Vite's fast build times improve developer productivity.
-
-**Implicit Logic:** Choose modern, well-supported technologies that will make development faster and easier.
+**Status:** Complete. Django is the production backend.
 
 ---
 
-### Decision: Use Flask for the Backend
+### Decision 2: PostgreSQL over SQLite
 
-**Chosen:** Flask (Python)
+**Choice:** PostgreSQL via Google Cloud SQL, accessed through cloud-sql-proxy.
 
-**Alternatives Considered:** Django, Express (Node.js), FastAPI
+**Rationale:**
+- Production-grade concurrency and reliability
+- Cloud SQL provides managed backups, replication, and monitoring
+- Required for multi-user concurrent access patterns
+- Better support for complex queries, JSON fields, full-text search
+- cloud-sql-proxy provides secure, credential-free local access
 
 **Tradeoffs:**
-- **Pro:** Flask is lightweight, flexible, and easy to learn. Python has a rich ecosystem for data processing and integration.
-- **Con:** Flask requires more manual configuration than Django, which includes more built-in features.
+- More complex local development setup (need proxy or local PostgreSQL)
+- Cloud SQL has ongoing cost
+- Dependency on GCP infrastructure
 
-**Rationale:** Flask provides the right balance of simplicity and flexibility for this project. Django would be overkill for the current requirements.
-
-**Implicit Logic:** Choose lightweight frameworks that give us control without unnecessary complexity.
+**Status:** Complete. PostgreSQL is the production database.
 
 ---
 
-## Deployment Decisions
+### Decision 3: Next.js over Vite/React SPA
 
-### Decision: Use a Custom Deployment Script
+**Choice:** Next.js with TypeScript, pages router, and server-side rendering.
 
-**Chosen:** Custom bash script (`deploy_fixed.sh`)
-
-**Alternatives Considered:** CI/CD tools (GitHub Actions, Jenkins), manual deployment
+**Rationale:**
+- SSR/SSG improves SEO (critical for legal content/blog)
+- File-based routing simplifies page organization
+- Built-in API routes support NextAuth without a separate auth server
+- TypeScript catches errors at build time
+- Better performance for initial page loads
 
 **Tradeoffs:**
-- **Pro:** Full control over the deployment process, no dependency on external services, easy to customize.
-- **Con:** Requires maintenance, less sophisticated than full CI/CD pipelines.
+- More complex than a simple Vite SPA
+- Server-side rendering adds deployment complexity
+- Pages router (not app router) — chosen for stability and next-auth 4 compatibility
 
-**Rationale:** For a small project with a single deployment target, a custom script is sufficient and easier to understand than a full CI/CD setup.
-
-**Implicit Logic:** Use the simplest tool that meets the requirements. Avoid over-engineering.
+**Status:** Complete. Next.js is the production frontend.
 
 ---
 
-### Decision: Deploy Directly to the Testing Server
+### Decision 4: Docker Compose + GitHub Actions CI/CD
 
-**Chosen:** Direct deployment to `35.237.102.136`
+**Choice:** Containerized deployment with automated CI/CD pipeline.
 
-**Alternatives Considered:** Separate staging environment, containerization (Docker)
+**Rationale:**
+- Reproducible environments across staging and production
+- GitHub Actions provides free CI/CD for the repo
+- Docker images ensure consistent behavior regardless of VM state
+- Artifact Registry provides secure, versioned image storage
+- Separation of staging (push to main) and production (git tag) reduces risk
 
 **Tradeoffs:**
-- **Pro:** Simple, fast, no additional infrastructure required.
-- **Con:** Higher risk of breaking the live site, no staging environment for testing.
+- More complex than direct server deployment
+- Docker adds resource overhead on VMs
+- Debugging requires container-aware tooling
+- Image builds take time in CI
 
-**Rationale:** Given the current stage of the project and the assumption that the testing server is isolated, direct deployment is acceptable.
-
-**Implicit Logic:** Prioritize speed and simplicity over safety in the early stages, but plan to add a staging environment later.
+**Status:** Complete. This is the production deployment model.
 
 ---
 
-## UI/UX Decisions
+### Decision 5: Cloudflare for DNS/CDN/Security
 
-### Decision: Implement a Theme Switcher
+**Choice:** Cloudflare fronts the public domain with DNS, CDN, and WAF.
 
-**Chosen:** Multiple themes (Light, Dark, Blue Professional, Green Legal)
-
-**Alternatives Considered:** Single theme, user-customizable colors
+**Rationale:**
+- Free tier provides DDoS protection, CDN caching, and SSL
+- Hides origin server IPs
+- Easy DNS management
+- Performance benefits from edge caching
 
 **Tradeoffs:**
-- **Pro:** Provides personalization, improves accessibility (dark mode), appeals to different user preferences.
-- **Con:** Increases complexity, requires more testing to ensure all themes work correctly.
+- Adds a dependency on Cloudflare's infrastructure
+- Some debugging complexity when issues are at the edge vs. origin
+- Must configure origin certificates correctly
 
-**Rationale:** The user explicitly requested this feature, and it adds significant value to the user experience.
-
-**Implicit Logic:** When the user requests a feature, prioritize implementing it well over questioning whether it's needed.
+**Status:** Active. Cloudflare manages tenantguard.net DNS.
 
 ---
 
-### Decision: Use Color-Coded Status Badges
+### Decision 6: JWT Authentication with NextAuth
 
-**Chosen:** Different colors for different case statuses (e.g., red for "Action Required," green for "Resolved")
+**Choice:** Three-layer auth: NextAuth (frontend session) → Axios interceptor (token attachment) → Django SimpleJWT (backend validation).
 
-**Alternatives Considered:** Text-only status indicators, icons
+**Rationale:**
+- NextAuth handles OAuth complexity on the frontend
+- JWT tokens are stateless and scalable
+- Short-lived access tokens (45 min) limit exposure
+- Refresh tokens (7 days) provide session continuity
+- Backend remains the authoritative permission enforcer
 
 **Tradeoffs:**
-- **Pro:** Provides at-a-glance understanding, improves usability.
-- **Con:** Requires careful color selection to ensure accessibility (color-blind users).
+- Three-layer auth is complex to debug
+- Token refresh logic must be carefully synchronized
+- Any auth change requires checking both layers
+- High-risk area for bugs
 
-**Rationale:** Color-coding is a common pattern in dashboard design and is highly effective for quick status recognition.
-
-**Implicit Logic:** Use established UI patterns that users are familiar with.
+**Status:** Active. Auth changes are treated as high-risk.
 
 ---
 
-## Code Organization Decisions
+### Decision 7: AI Blog Generation Pipeline
 
-### Decision: Separate Frontend and Backend Code
+**Choice:** Multi-agent pipeline using OpenAI API with fallback to simulated responses.
 
-**Chosen:** `frontend/` and `src/` directories
-
-**Alternatives Considered:** Monolithic structure, separate repositories
+**Rationale:**
+- Automated content generation reduces manual effort
+- Multi-agent approach (researcher → topics → author) produces higher quality
+- Fallback mode allows development/testing without API costs
+- Admin-triggered (not automated) maintains editorial control
+- Knowledge-repo provides brand/legal alignment context
 
 **Tradeoffs:**
-- **Pro:** Clear separation of concerns, easier to manage dependencies.
-- **Con:** Requires coordination between frontend and backend development.
+- Depends on OpenAI API availability and pricing
+- Generated content requires editorial review
+- Prompt changes can silently alter output quality
+- Knowledge-repo must stay current for good results
 
-**Rationale:** This is a standard pattern for full-stack applications and makes the codebase easier to navigate.
-
-**Implicit Logic:** Follow industry best practices for code organization.
+**Status:** Active. Accessible via `/admin/ai-generator/`.
 
 ---
 
-### Decision: Use a Context API for Theme Management
+### Decision 8: Staging-First Deployment Protocol
 
-**Chosen:** React Context API
+**Choice:** All changes deploy to staging first; production only via explicit git tag after testing.
 
-**Alternatives Considered:** Redux, Zustand, prop drilling
+**Rationale:**
+- Reduces risk of breaking production
+- Staging environment mirrors production for realistic testing
+- Test accounts are auto-seeded on staging for verification
+- Clear separation of "deployed" vs. "released"
 
 **Tradeoffs:**
-- **Pro:** Simple, built into React, no additional dependencies.
-- **Con:** Can lead to performance issues if not used carefully (though not a concern for theme management).
+- Slower path to production
+- Staging must be maintained as a separate environment
+- Requires discipline to actually test before tagging
 
-**Rationale:** The Context API is the right tool for managing global state like themes without adding unnecessary complexity.
-
-**Implicit Logic:** Use built-in tools when they are sufficient; avoid adding dependencies unless necessary.
+**Status:** Active. This is a standing operational rule.
 
 ---
 
-## Security and Data Decisions
+## Operational Heuristics
 
-### Decision: Store Passwords as Environment Variables
+### When to add a new Django app
+- When the feature has its own models, views, and URL namespace
+- When it represents a distinct domain concept (not just a utility)
+- When it would clutter an existing app to add it there
 
-**Chosen:** Environment variables on the server
+### When to add a new frontend page
+- When the feature needs its own URL for navigation/bookmarking
+- When it represents a distinct user workflow
+- When it would make an existing page too complex
 
-**Alternatives Considered:** Configuration files, secrets management services (AWS Secrets Manager, HashiCorp Vault)
+### When to add a dependency
+- Only when the existing stack cannot reasonably do it
+- Only when the operational cost (Docker build, maintenance) is justified
+- Prefer Django/Next.js built-in capabilities first
 
-**Tradeoffs:**
-- **Pro:** Simple, no additional services required.
-- **Con:** Less secure than dedicated secrets management, environment variables can be exposed if the server is compromised.
-
-**Rationale:** For the current stage of the project, environment variables are sufficient. A more robust solution can be implemented later.
-
-**Implicit Logic:** Use the simplest secure solution for the current stage, but plan to upgrade as the project matures.
-
----
-
-### Decision: Validate Input on Both Frontend and Backend
-
-**Chosen:** Dual validation
-
-**Alternatives Considered:** Backend-only validation
-
-**Tradeoffs:**
-- **Pro:** Provides immediate feedback to users (frontend), ensures data integrity (backend).
-- **Con:** Requires maintaining validation logic in two places.
-
-**Rationale:** Frontend validation improves UX, backend validation ensures security. Both are necessary.
-
-**Implicit Logic:** Never trust client-side validation alone; always validate on the server.
-
----
-
-## Performance Decisions
-
-### Decision: Use CSS Variables for Theming
-
-**Chosen:** CSS custom properties (variables)
-
-**Alternatives Considered:** CSS-in-JS, SCSS variables
-
-**Tradeoffs:**
-- **Pro:** Native browser support, fast, easy to update dynamically.
-- **Con:** Limited browser support in very old browsers (not a concern for this project).
-
-**Rationale:** CSS variables are the modern standard for theming and provide the best performance.
-
-**Implicit Logic:** Use native browser features when they are well-supported and meet the requirements.
+### When to create a migration
+- Any time a model field is added, removed, or changed
+- Keep migrations small and focused
+- Consider existing data and nullable/default implications
+- Always mention migrations in commit messages and summaries
 
 ---
 
 ## Tradeoff Patterns
 
 ### Pattern: Speed vs. Perfection
-
-**General Approach:** Prioritize getting a working solution quickly, then iterate and improve.
-
-**Rationale:** In the early stages of a project, it's more important to have something working than to have something perfect.
-
-**Example:** The initial deployment script had issues, but it was good enough to get started. We then iterated and improved it.
-
----
+**Approach:** Prioritize getting a working solution quickly, then iterate and improve.
+**Current application:** Ship to staging fast, test thoroughly, tag for production only when confident.
 
 ### Pattern: Simplicity vs. Scalability
-
-**General Approach:** Choose simple solutions that work for the current scale, but design them to be replaceable as the project grows.
-
-**Rationale:** Over-engineering for future scale can slow down development and add unnecessary complexity.
-
-**Example:** SQLite is simple and works for now, but we know it can be replaced with PostgreSQL later if needed.
-
----
+**Approach:** Choose solutions that work for current scale but are replaceable.
+**Current application:** Cloud SQL handles current load; can add read replicas or Redis caching later if needed.
 
 ### Pattern: User Experience vs. Development Effort
-
-**General Approach:** Prioritize user experience, but look for ways to achieve it efficiently.
-
-**Rationale:** The platform's success depends on users finding it valuable and easy to use.
-
-**Example:** Implementing the theme switcher required significant effort, but it greatly enhances the user experience.
-
----
+**Approach:** Prioritize user experience, but look for efficient implementation paths.
+**Current application:** Guided intake forms, AI case analysis, and clean dashboards are worth the effort because they directly serve vulnerable users.
 
 ### Pattern: Consistency vs. Innovation
-
-**General Approach:** Favor consistency with established patterns, but be open to innovation when it provides clear value.
-
-**Rationale:** Consistency makes the platform easier to use and maintain, but innovation can differentiate it from competitors.
-
-**Example:** The dashboard designs follow established patterns from platforms like Clio, but we added unique features like the theme switcher.
+**Approach:** Favor consistency with established patterns; innovate only when it provides clear user value.
+**Current application:** Follow Django/Next.js conventions; innovate in the AI pipeline and legal workflow areas.
 
 ---
 
 ## Decision-Making Process
 
-### Step 1: Understand the Requirement
-
-**Question:** What is the user trying to achieve?
-
-**Action:** Clarify the requirement if it's ambiguous.
-
----
-
-### Step 2: Identify Constraints
-
-**Question:** What are the technical, time, and resource constraints?
-
-**Action:** Consider the current state of the project, available tools, and the user's priorities.
+1. **Understand the requirement** — Clarify what the user/task is trying to achieve
+2. **Identify constraints** — Technical, time, resource, and architectural constraints
+3. **Generate options** — Multiple approaches including simple and complex
+4. **Evaluate tradeoffs** — Development time, maintainability, performance, UX, security
+5. **Choose the safest correct option** — Most value with least risk
+6. **Implement and verify** — Test before declaring done
+7. **Document** — Record the decision and rationale
 
 ---
 
-### Step 3: Generate Options
+## Historical Decisions (Legacy — For Context Only)
 
-**Question:** What are the possible ways to meet the requirement?
+These decisions applied to the original Flask/SQLite/Vite implementation (December 2025). They are **fully superseded** by the current architecture.
 
-**Action:** Brainstorm multiple approaches, including simple and complex solutions.
+### Why Flask was originally chosen
+- Lightweight for rapid prototyping
+- Simple to deploy on a single server
+- Low learning curve for initial development
 
----
+### Why SQLite was originally chosen
+- Zero configuration for initial development
+- Single-file database easy to backup
+- Sufficient for single-user testing
 
-### Step 4: Evaluate Tradeoffs
+### Why Vite/React SPA was originally chosen
+- Fast build times for development
+- Simple client-side routing
+- Modern developer experience
 
-**Question:** What are the pros and cons of each option?
+### Why direct server deployment was originally used
+- Simplest possible deployment for a testing server
+- No CI/CD overhead during initial prototyping
+- Custom bash script (`deploy_fixed.sh`) handled the workflow
 
-**Action:** Consider factors like development time, maintainability, performance, and user experience.
+### Why a theme switcher was implemented
+- User-requested feature
+- Provides personalization (Light, Dark, Blue Professional, Green Legal)
+- Uses CSS custom properties for performance
 
----
-
-### Step 5: Choose the Best Option
-
-**Question:** Which option best balances the tradeoffs given the current context?
-
-**Action:** Select the option that provides the most value with the least risk.
-
----
-
-### Step 6: Implement and Validate
-
-**Question:** Does the implementation work as expected?
-
-**Action:** Test the solution and verify that it meets the requirement.
-
----
-
-### Step 7: Document and Reflect
-
-**Question:** What did I learn, and how can I improve next time?
-
-**Action:** Document the decision and its rationale, and reflect on the outcome.
+**All legacy architectural decisions were superseded when the project matured and required production-grade infrastructure, multi-user concurrency, and automated deployment.**

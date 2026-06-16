@@ -1,16 +1,31 @@
-# Project State Reconstructed
+# Project State — Current
 
-This document provides a complete reconstruction of the current state of the TenantGuard project as of December 13, 2025.
+This document provides the authoritative reconstruction of the current state of the TenantGuard project as of June 2026.
+
+> **Important:** This file supersedes any legacy references to Flask, SQLite, Vite, or direct-server deployment. The project was fully migrated to Django + Next.js + PostgreSQL + GCP in early 2026. The legacy Flask/Vite codebase is preserved on the `legacy/flask-vite` branch for historical reference only.
+
+---
 
 ## Current Status
 
-**Project Phase:** Active Development and Testing
+**Project Phase:** Active Development (post-migration, feature expansion)
 
-**Deployment Status:** Deployed to testing server at https://www.tenantguard.net
+**Live Production Site:** https://tenantguard.net and https://www.tenantguard.net
 
-**Repository:** https://github.com/Orangemangocat/tenantguard
+**Staging Site:** https://staging.tenantguard.net
 
-**Last Major Update:** December 13, 2025 - Theme system implementation and deployment script fixes
+**Primary Repository:** https://github.com/Orangemangocat/tenantguard
+
+**Secondary Repository (empty, reserved):** https://github.com/Orangemangocat/tennantdefend
+
+**Also referenced:** https://github.com/KarlHaines82/tenantguard2 (same codebase, alternate account)
+
+**Last Major Commits (as of March 2026):**
+- `bc7c6f2` — Fix NextAuth secret env fallback
+- `ceda98d` — Add robots.txt pointing crawlers to sitemap
+- `f78b127` — Add dynamic sitemap for public pages and blog posts
+- `83eaf5f` — Fixed env script to copy env files to docker containers
+- `54cb164` — Fixed blog URLs, added Django image URL repair command, intake work, SMS functionality
 
 ---
 
@@ -20,394 +35,307 @@ This document provides a complete reconstruction of the current state of the Ten
 
 | Component | Details |
 | :--- | :--- |
-| **Server IP** | 35.237.102.136 |
-| **Domain** | www.tenantguard.net |
-| **OS** | Linux (assumed Ubuntu/Debian) |
-| **Web Server** | Nginx (proxying to Flask on port 5000) |
-| **Application Server** | Flask (Python) running as systemd service |
-| **Database** | SQLite at `/var/www/tenantguard/database/tenantguard.db` |
-| **Deployment Directory** | `/var/www/tenantguard` |
-| **Repository Directory** | `/home/manus/repos/tenantguard` |
-| **User Account** | `manus` (with sudo privileges) |
-| **Service User** | `www-data` (runs the Flask app) |
+| **Production Domain** | tenantguard.net (Cloudflare-fronted) |
+| **Staging Domain** | staging.tenantguard.net |
+| **DNS/Proxy** | Cloudflare (nameservers: meilani.ns.cloudflare.com, garret.ns.cloudflare.com) |
+| **Cloudflare A Records** | 172.67.157.108, 104.21.82.117 |
+| **Hosting Provider** | Google Cloud Platform |
+| **Compute** | GCE-style VMs (staging + production) |
+| **Database** | Cloud SQL (PostgreSQL) via cloud-sql-proxy |
+| **Container Registry** | Google Artifact Registry |
+| **Media/Secrets Storage** | Google Cloud Storage buckets |
+| **Containerization** | Docker Compose |
+| **CI/CD** | GitHub Actions |
+
+### Runtime Services (per VM)
+
+| Service | Port | Purpose |
+| :--- | :--- | :--- |
+| nginx | 80/443 | Reverse proxy, SSL termination |
+| Django backend | 8000 | REST API, admin, AI pipelines |
+| Next.js frontend | 3000 | User-facing UI, NextAuth |
+| cloud-sql-proxy | 5432 | Secure PostgreSQL tunnel |
+
+### Public Host Routing (nginx)
+
+| Path Pattern | Routes To |
+| :--- | :--- |
+| `/api/auth/` | Frontend (NextAuth) |
+| `/api/*`, `/admin/*`, `/staff/*`, `/summernote/*`, `/static/*` | Django backend |
+| `/*` (everything else) | Next.js frontend |
 
 ---
 
-### Technology Stack
+## Technology Stack
 
-**Frontend:**
+### Frontend
+- Next.js 16
 - React 18
-- Vite (build tool)
-- Tailwind CSS (styling)
-- Shadcn/UI (component library)
-- React Context API (theme management)
+- TypeScript
+- Tailwind CSS 4
+- Chakra UI 2
+- Framer Motion
+- Axios
+- next-auth 4
 
-**Backend:**
-- Python 3.x
-- Flask (web framework)
-- SQLAlchemy (ORM)
-- SQLite (database)
+### Backend
+- Django 5.0.3
+- Django REST Framework 3.15
+- djangorestframework-simplejwt (JWT auth)
+- django-allauth (OAuth: Google, GitHub)
+- CKEditor / django-summernote (rich text)
+- django-taggit (blog tags)
+- django-jazzmin (admin UI)
+- OpenAI SDK (AI blog generation, case analysis)
 
-**Deployment:**
-- Git (version control)
-- GitHub (repository hosting)
-- Custom bash deployment script
-- Systemd (service management)
-- Nginx (web server)
+### Database
+- PostgreSQL (Cloud SQL)
+- Default DB name: `tenantguard_db`
+- Access via Cloud SQL proxy on localhost:5432
+
+### Infrastructure
+- Docker + Docker Compose
+- GitHub Actions CI/CD
+- Google Artifact Registry (container images)
+- Google Cloud Storage (media, env files, secrets)
+- Cloudflare (DNS, CDN, DDoS protection)
+- Let's Encrypt SSL certificates
 
 ---
 
-## Codebase Structure
+## Repository Structure
 
 ```
-/home/ubuntu/tenantguard/
+tenantguard/
+├── AGENTS.md                  # Canonical agent instructions
+├── CLAUDE.md                  # Pointer to AGENTS.md
+├── README.md                  # Developer setup and CI/CD docs
+├── TEST_ACCOUNTS.md           # Staging test credentials
+├── Makefile                   # Developer convenience targets
+├── docker-compose.yml         # Local/production orchestration
+├── docker-compose.staging.yml # Staging-specific overrides
+├── backend/
+│   ├── Dockerfile
+│   ├── manage.py
+│   ├── requirements.txt
+│   ├── core/                  # Django project settings
+│   ├── authentication/        # Registration, login, OAuth, JWT
+│   ├── blog/                  # Blog posts, AI generation pipeline
+│   ├── chat/                  # Legal assistant chat messages
+│   ├── intake/                # Intake submissions, documents, case notebooks, SMS
+│   ├── seo/                   # SEO dashboard (Google Search Console)
+│   ├── stafftodo/             # Internal staff task management
+│   ├── staticfiles/           # Collected static files
+│   └── templates/             # Admin templates
 ├── frontend/
-│   ├── src/
-│   │   ├── App.jsx (main application component)
-│   │   ├── themes.js (theme configurations)
-│   │   ├── theme.css (CSS variables for theming)
-│   │   ├── contexts/
-│   │   │   └── ThemeContext.jsx (theme state management)
-│   │   ├── components/
-│   │   │   ├── CaseIntakeForm.jsx (tenant case intake)
-│   │   │   ├── AttorneyIntakeForm.jsx (attorney application)
-│   │   │   ├── ContactPage.jsx (contact form)
-│   │   │   └── ThemeSwitcher.jsx (theme selection UI)
-│   │   └── assets/ (images, logos)
-│   ├── dist/ (build output, not in version control)
-│   ├── package.json (dependencies)
-│   └── vite.config.js (build configuration)
-├── src/
-│   ├── main.py (Flask application entry point)
-│   ├── models/
-│   │   ├── user.py (User model and shared db instance)
-│   │   ├── case.py (Case model)
-│   │   └── attorney.py (Attorney model)
-│   ├── routes/
-│   │   ├── user.py (user-related routes)
-│   │   ├── attorney.py (attorney-related routes)
-│   │   └── contact.py (contact form route)
-│   └── static/ (served static files from frontend build)
-├── database/
-│   └── tenantguard.db (SQLite database file)
-├── .gitignore (excludes dist/, venv/, database/)
-└── README.md (project documentation)
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── pages/                 # Next.js pages (file-based routing)
+│   ├── components/            # Shared React components
+│   ├── lib/                   # API client, utilities
+│   ├── styles/                # Global styles
+│   ├── public/                # Static assets
+│   └── types/                 # TypeScript type definitions
+├── nginx/                     # Reverse proxy configuration
+├── docs/
+│   ├── control-plane/         # Agent directives, governance, schemas
+│   └── deployment/            # Deploy workflow reference
+├── knowledge-repo/            # Knowledge base for AI/content workflows
+└── scripts/                   # Utility scripts
 ```
 
 ---
 
-## Database Schema
+## Database Models (Django)
 
-### Table: users
+### Core Auth
+- Django's built-in `User` model (extended with roles)
 
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| id | Integer (PK) | Unique user ID |
-| email | String | User email address |
-| password_hash | String | Hashed password |
-| role | String | User role (tenant, attorney, admin) |
-| created_at | DateTime | Account creation timestamp |
+### Intake App
+- **IntakeSubmission** — Full tenant/attorney intake: role, status, contact info, demographics, rental/property info, landlord info, issue/dispute details, timeline/urgency, desired outcome, representation preferences, consent fields, attorney-specific fields, timestamps, payment_status, stripe_session_id
+- **IntakeDocument** — Document uploads: type, file, original filename, extracted text, timestamp, linked to IntakeSubmission
+- **CaseNotebook** — AI-generated case analysis: summary, facts, timeline, key terms, disputed points, open questions, urgent deadlines, recommended next steps, raw output
+- **IntakeChatLog** — Permanent web/SMS intake conversation records
+- **SMSSession** — Maps inbound phone numbers to active intake submissions
 
-### Table: cases
+### Blog App
+- **Category** — Blog categories
+- **Post** — Blog posts with SEO fields, images, tags, status, rich text
+- **Comment** — User comments on posts
 
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| id | Integer (PK) | Unique case ID |
-| case_number | String (Unique) | Case number (TD2025XXXXXX) |
-| tenant_name | String | Tenant's full name |
-| tenant_email | String | Tenant's email |
-| tenant_phone | String | Tenant's phone number |
-| property_address | String | Address of the rental property |
-| landlord_name | String | Landlord's name |
-| dispute_type | String | Type of dispute (eviction, deposit, etc.) |
-| description | Text | Detailed description of the case |
-| status | String | Case status (intake_submitted, matched, etc.) |
-| created_at | DateTime | Case creation timestamp |
-| updated_at | DateTime | Last update timestamp |
+### Chat App
+- **Message** — User-linked legal assistant chat messages
 
-### Table: attorneys
-
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| id | Integer (PK) | Unique attorney ID |
-| application_id | String (Unique) | Application ID (ATT2025XXXXXX) |
-| name | String | Attorney's full name |
-| email | String | Attorney's email |
-| phone | String | Attorney's phone number |
-| bar_number | String | Bar association number |
-| expertise | String | Areas of legal expertise |
-| budget | String | Lead generation budget range |
-| status | String | Application status (pending, approved, etc.) |
-| created_at | DateTime | Application timestamp |
+### Staff Todo App
+- **Todo** — Internal staff tasks
+- **TodoComment** — Comments on todos
+- **TodoActivity** — Activity log for todos
 
 ---
 
-## Features Implemented
+## Authentication Architecture
 
-### Core Features
+Three-layer auth system:
 
-1. **Tenant Case Intake**
-   - 8-step guided form
-   - Document upload capability
-   - Unique case number generation
-   - Data stored in SQLite database
-
-2. **Attorney Application**
-   - 7-step professional intake form
-   - Budget and preference configuration
-   - Unique application ID generation
-   - Data stored in SQLite database
-
-3. **Contact Form**
-   - Professional contact modal
-   - Fields: Name, Email, Phone, Subject, Message
-   - Backend API endpoint (currently logs to console)
-   - Email functionality ready for SMTP configuration
-
-4. **Theme System**
-   - 4 color schemes: Light, Dark, Blue Professional, Green Legal
-   - Theme switcher in navigation bar
-   - Persistent theme selection (localStorage)
-   - Smooth transitions between themes
-   - CSS variables for dynamic theming
-
-5. **Responsive Design**
-   - Mobile-friendly layout
-   - Tailwind CSS for responsive styling
-   - Works on all modern devices
+1. **NextAuth** (`frontend/pages/api/auth/[...nextauth].js`) — Session management, token storage, OAuth provider callbacks (Google, GitHub)
+2. **Axios client** (`frontend/lib/api.ts`) — Attaches `Authorization: Bearer <token>` headers; handles token refresh before expiry
+3. **Django backend** (`backend/authentication/`) — Issues and validates JWT tokens (45-min access, 7-day refresh) via `djangorestframework-simplejwt`; OAuth social login via `django-allauth`
 
 ---
 
-## Features Not Yet Implemented
+## AI Blog Generation Pipeline
 
-1. **User Authentication**
-   - Login/logout functionality
-   - Session management
-   - Password reset
+Located in `backend/blog/ai_agents.py`. Admin triggers via `/admin/ai-generator/`.
 
-2. **Attorney Matching Algorithm**
-   - Automated case assignment
-   - Matching based on expertise, availability, budget
-
-3. **Case Management Dashboard**
-   - Tenant workspace (view cases, documents, messages)
-   - Attorney workspace (manage cases, tasks, KPIs)
-
-4. **Communication System**
-   - In-platform messaging between tenants and attorneys
-   - Email notifications
-
-5. **Payment System**
-   - Attorney compensation
-   - Subscription or per-case billing
-
-6. **Analytics and Reporting**
-   - Key metrics tracking (time to match, resolution rate)
-   - Performance dashboards
+Multi-agent pipeline:
+1. **ContextualResearcherAgent** — Reads `docs/` and `knowledge-repo/` for brand/legal alignment context
+2. **TopicsAgent** — Suggests 5 blog topic ideas
+3. **BlogAuthorAgent** — Writes full article from research brief
+4. Agents extend a `BaseAgent` class, use OpenAI (`gpt-4o-mini`), fall back to simulated responses if no API key
 
 ---
 
-## Known Issues and Limitations
+## Deployment Architecture
 
-### Current Limitations
+### CI/CD Flow
 
-1. **Email Functionality:** Contact form logs to console instead of sending emails (SMTP not configured)
-2. **No User Authentication:** Users cannot create accounts or log in
-3. **No Case Matching:** Cases are not automatically assigned to attorneys
-4. **SQLite Scalability:** May not scale for high-traffic production use
-5. **No Staging Environment:** Changes are deployed directly to the testing server
+| Trigger | Target |
+| :--- | :--- |
+| Push to `main` | Staging VM (automatic) |
+| Git tag `v*` | Production VM (automatic) |
 
-### Recently Fixed Issues
+Pipeline steps:
+1. GitHub Actions builds backend + frontend Docker images
+2. Pushes images to Google Artifact Registry
+3. SSHes into target VM
+4. Fetches env files from GCS bucket
+5. Runs `docker compose pull`
+6. Runs Django migrations
+7. Restarts Docker Compose services
+8. Seeds test accounts (staging only)
 
-1. ✅ Navigation links now use onClick handlers instead of broken href links
-2. ✅ Button spacing fixed (Tenants and Attorneys buttons properly grouped)
-3. ✅ "Join as Attorney" button visibility fixed
-4. ✅ Database initialization error in Case model resolved
-5. ✅ Database permissions fixed (www-data ownership)
-6. ✅ Deployment script properly excludes venv/ and dist/ from version control
-7. ✅ Frontend build process integrated into deployment workflow
+### GitHub Actions Secrets Required
 
----
+| Secret | Purpose |
+| :--- | :--- |
+| `GCP_SA_KEY` | Service account JSON (Artifact Registry + Cloud SQL) |
+| `STAGING_HOST` | Staging VM IP |
+| `STAGING_SSH_USER` | SSH user for staging |
+| `STAGING_SSH_KEY` | Private SSH key for staging |
+| `PROD_HOST` | Production VM IP |
+| `PROD_SSH_USER` | SSH user for production |
+| `PROD_SSH_KEY` | Private SSH key for production |
+| `CLOUD_SQL_INSTANCE_CONNECTION_NAME` | Cloud SQL connection string |
 
-## Deployment Process
+### GitHub Actions Variables
 
-### Current Deployment Workflow
-
-1. **Develop Locally:** Make changes in the sandbox environment
-2. **Test:** Build frontend and test functionality
-3. **Commit:** Commit changes to Git with descriptive message
-4. **Push:** Push changes to GitHub
-5. **Deploy:** Run `./deploy_fixed.sh` on the server
-6. **Verify:** Check service status and test live site
-
-### Deployment Script Features
-
-- Pulls latest code from GitHub
-- Builds frontend with pnpm
-- Copies files to production directory
-- Excludes venv/, dist/, and database/ from overwriting
-- Fixes database permissions
-- Restarts systemd service
-- Creates timestamped backups
-- Includes error handling
+| Variable | Purpose |
+| :--- | :--- |
+| `ARTIFACT_REGISTRY_URL` | Container registry URL |
+| `ARTIFACT_REGISTRY_REGION` | GCP region |
+| `NEXT_PUBLIC_API_URL` | Public API base URL (baked into frontend) |
 
 ---
 
-## Configuration Files
+## Environment Variables
 
-### Environment Variables (on server)
-
-- Database path
-- Secret keys
-- SMTP settings (to be configured)
-
-### Nginx Configuration
-
-- Location: `/etc/nginx/sites-available/tenantguard`
-- Proxies requests to Flask on port 5000
-- Serves static files from `/var/www/tenantguard/src/static`
-- HTTPS configured
-
-### Systemd Service
-
-- Service name: `tenantguard`
-- Location: `/etc/systemd/system/tenantguard.service`
-- Runs Flask app with Python virtual environment
-- User: `www-data`
-
----
-
-## Git Repository State
-
-### Recent Commits
-
-1. `9a1253d6` - Fix tenant intake form database error
-2. `a080949d` - Fix Join as Attorney button visibility
-3. `d9481968` - Remove dist folder from git, add to gitignore
-4. `5a5cdf9b` - Fix navigation, button spacing, add contact page
-5. (Earlier) - Add theme system with 4 color schemes
-
-### Branches
-
-- `main` (default branch, deployed to testing server)
-
-### .gitignore Contents
-
+### Backend (`backend/.env`)
 ```
-frontend/dist/
-venv/
-database/
-node_modules/
-__pycache__/
-*.pyc
-.env
+SECRET_KEY=
+OPENAI_API_KEY=
+DB_NAME=tenantguard_db
+DB_USER=
+DB_PASSWORD=
+DB_HOST=localhost
+DB_PORT=5432
+GCS_BUCKET_NAME=
+STRIPE_SECRET_KEY=
+INTAKE_ANALYSIS_PRICE_CENTS=4900
+```
+
+### Frontend (`frontend/.env.local`)
+```
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_BACKEND_URL=http://127.0.0.1:8000/api/
+NEXT_PUBLIC_API_URL=http://localhost:8000
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GITHUB_ID=
+GITHUB_SECRET=
 ```
 
 ---
 
-## Access and Credentials
+## Key API Routes
 
-### Server Access
+```
+POST  /api/auth/register/
+POST  /api/auth/login/
+POST  /api/auth/google/
+POST  /api/auth/github/
+POST  /api/auth/token/refresh/
 
-- **SSH:** `ssh manus@35.237.102.136`
-- **Authentication:** SSH key (passwordless)
-- **Sudo:** Full sudo access with NOPASSWD
+GET   /api/blog/posts/           (supports ?search=)
+GET   /api/blog/posts/<slug>/
+GET   /api/blog/categories/
+POST  /api/blog/posts/<slug>/comments/
 
-### GitHub Repository
+GET   /api/chat/messages/        (requires auth)
 
-- **Repository:** `Orangemangocat/tenantguard`
-- **Access:** Configured via GitHub CLI (`gh`)
+GET   /api/intake/submissions/   (requires auth)
+POST  /api/intake/submissions/
+GET   /api/intake/case-notebook/<id>/
 
----
+GET   /api/seed-test-users/      (staging only)
 
-## Next Steps and Priorities
-
-### Immediate Priorities
-
-1. Configure SMTP for email functionality
-2. Implement user authentication system
-3. Create tenant and attorney dashboards
-4. Implement attorney matching algorithm
-
-### Medium-Term Priorities
-
-1. Add in-platform messaging
-2. Implement payment system
-3. Add analytics and reporting
-4. Migrate to PostgreSQL or MySQL
-
-### Long-Term Priorities
-
-1. Expand to additional jurisdictions
-2. Build mobile apps
-3. Add advanced features (document automation, AI-powered matching)
-4. Scale infrastructure for production use
+GET   /admin/ai-generator/       (AI blog generation UI)
+POST  /admin/blog/ai-generate-api/
+GET   /admin/seo-dashboard/      (Google Search Console)
+```
 
 ---
 
-## Documentation Artifacts
+## Frontend Pages
 
-### Created During This Session
-
-1. `tenantguard_analysis.md` - Platform analysis
-2. `DEPLOYMENT_GUIDE.md` - Deployment documentation
-3. `DEPLOYMENT_QUICK_REFERENCE.md` - Quick reference
-4. `deploy_tenantguard_fixed.sh` - Deployment script
-5. `THEME_SYSTEM_SUCCESS_REPORT.md` - Theme implementation report
-6. `TenantGuard_Workspace_Design_Report.md` - Workspace design research
-7. `tenant_dashboard_mockup.png` - Tenant dashboard mockup
-8. `attorney_dashboard_mockup.png` - Attorney dashboard mockup
-9. Various verification and testing reports
-
----
-
-## Key Learnings and Insights
-
-1. **Deployment Challenges:** The deployment process required multiple iterations to handle frontend builds, file permissions, and virtual environment preservation correctly.
-
-2. **Database Architecture:** Sharing a single SQLAlchemy instance across models is critical to avoid initialization errors.
-
-3. **User Experience:** Small details like button spacing, theme options, and clear navigation significantly impact user experience.
-
-4. **Documentation Value:** Comprehensive documentation is essential for project continuity and knowledge transfer.
-
-5. **Iterative Development:** Building quickly, testing, and iterating based on feedback is more effective than trying to build everything perfectly the first time.
+| Path | Purpose |
+| :--- | :--- |
+| `/` | Landing page (hero, features, tenant challenges) |
+| `/blog`, `/blog/[slug]` | Blog index + post detail |
+| `/intake` | Guided intake form |
+| `/tenant-intake` | Tenant-specific intake |
+| `/attorney-intake` | Attorney-specific intake |
+| `/dashboard` | User dashboard |
+| `/case/[id]` | Case detail view |
+| `/case/[id]/documents` | Case documents |
+| `/case/[id]/motions` | Case motions |
+| `/case/[id]/actions` | Case actions |
+| `/case/[id]/alerts` | Case alerts |
+| `/profile` | User profile |
+| `/auth/signin` | Sign-in page |
+| `/privacy` | Privacy policy |
+| `/terms` | Terms of service |
 
 ---
 
-## Success Metrics
+## Known Improvement Areas
 
-### Platform Goals (from documentation)
-
-- **60% cost reduction** for tenants
-- **70% time savings** for attorneys (case setup time reduced from 4.5 hours to under 1 hour)
-- **90% case preparation completeness**
-
-### Current Achievement
-
-- Platform is functional and deployed
-- Core intake forms are working
-- Theme system enhances user experience
-- Deployment process is automated and reliable
+1. **Security:** Move any hardcoded Django SECRET_KEY/JWT signing material to environment variables; rotate any exposed values
+2. **Deployment:** Production deploy workflow references `STAGING_SSH_PASSWORD` in the production SSH step — verify and fix
+3. **SSL:** Replace snakeoil SSL certificate paths in nginx config with real mounted certificate paths
+4. **Testing:** No automated test suites configured — add unit/integration tests
+5. **Features in progress:** Complete authentication flows, tenant/attorney dashboards, attorney matching, email notifications, payment system, analytics, monitoring, backups, rate limiting, CSRF/security hardening, accessibility checks, legal compliance review
 
 ---
 
-## Project Health
+## Legacy Architecture (Archived)
 
-**Overall Status:** Healthy and progressing
+The prior implementation used:
+- Flask + SQLAlchemy + SQLite
+- React + Vite + Tailwind + Shadcn/UI
+- Direct deployment to a single GCE VM (35.237.102.136)
+- Custom bash deployment script (`deploy_fixed.sh`)
+- Systemd service management
+- Nginx proxying to Flask on port 5000
 
-**Strengths:**
-- Solid technical foundation
-- Clean, maintainable codebase
-- Automated deployment process
-- User-centric design
-
-**Areas for Improvement:**
-- Need to implement authentication
-- Need to add dashboard functionality
-- Need to configure email system
-- Need to plan for scalability
-
-**Risk Level:** Low to Medium
-- Technical risks are manageable
-- Main risks are around user adoption and legal compliance
+This architecture is preserved on the `legacy/flask-vite` branch. **Do not follow legacy deployment instructions.** The current architecture is Django + Next.js + PostgreSQL + Docker + GCP as described above.
