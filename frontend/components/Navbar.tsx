@@ -52,6 +52,7 @@ const Navbar = ({
 
   const navItems = [
     { id: 'home', label: 'Home' },
+    { id: 'get-help', label: 'Get Help' },
     { id: 'features', label: 'Features' },
     { id: 'how-it-works', label: 'How It Works' },
     { id: 'blog', label: 'Blog' },
@@ -59,7 +60,9 @@ const Navbar = ({
   ]
 
   const handleNavClick = (sectionId: string) => {
-    if (sectionId === 'blog') {
+    if (sectionId === 'get-help') {
+      router.push('/get-help')
+    } else if (sectionId === 'blog') {
       router.push('/blog')
     } else if (router.pathname !== '/') {
       // If not on home page, navigate home first then maybe scroll

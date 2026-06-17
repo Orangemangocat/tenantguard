@@ -115,8 +115,13 @@ export default function Home({ recentPosts }: { recentPosts: any[] }) {
                 </motion.p>
                 <motion.div variants={fadeUp} custom={4} className="flex flex-col sm:flex-row gap-4">
                   <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                    <Button size="lg" className="bg-gradient-to-r from-red-700 to-orange-600 text-white hover:opacity-90 w-full sm:w-auto shadow-lg" onClick={() => router.push('/get-help')}>
+                      Get Help Now <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                     <Button size="lg" className="bg-red-800 text-white hover:opacity-90 w-full sm:w-auto" onClick={() => handleStartIntake('tenant')}>
-                      Start Your Case <ArrowRight className="ml-2 h-4 w-4" />
+                      Start Your Case
                     </Button>
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
