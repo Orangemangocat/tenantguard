@@ -17,10 +17,11 @@ TenantGuard is a legal-tech platform for tenant protection and eviction defense 
 4. `TEST_ACCOUNTS.md` — Staging test credentials
 
 **For deeper context:**
+- `knowledge-repo/knowledge/CONTEXT.md` — **MASTER STATE FILE** with all credentials, CaseLink login, user preferences, and current project status
+- `knowledge-repo/integrations/CASELINK.md` — Davidson County CaseLink court records integration (credentials, data structure, scraping strategy)
 - `knowledge-repo/knowledge/PROJECT_STATE_RECONSTRUCTED.md` — Full current project state
 - `knowledge-repo/project/SYSTEM_ARCHITECTURE.md` — Architecture details
 - `knowledge-repo/knowledge/WORKFLOW_MODEL.md` — Development and deployment workflows
-- `knowledge-repo/knowledge/CONTEXT.md` — User preferences and standing instructions
 - `docs/control-plane/` — Agent directives, governance, output schemas
 
 ---
