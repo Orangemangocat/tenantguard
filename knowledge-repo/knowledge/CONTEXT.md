@@ -4,90 +4,81 @@ This document captures persistent context about the project owner, communication
 
 ---
 
-## Project Owner
+## 1. Project Architecture (Current)
 
-**Name:** John Bransford
+We have permanently migrated away from the old Flask + SQLite + Vite stack.
 
-**GitHub Accounts:** KarlHaines82, Orangemangocat
+- **Frontend:** Next.js 16 + TypeScript, Pages Router, NextAuth, Chakra UI + Tailwind CSS, Framer Motion, Lucide icons
+- **Backend:** Django 5.0.3 + DRF, JWT auth, allauth OAuth, Jazzmin admin
+- **Database:** PostgreSQL 16 (Docker on staging, Cloud SQL on production)
+- **Deployment:** Docker Compose (nginx, backend, frontend, db)
+- **AI:** OpenAI GPT-4o for document analysis (vision), GPT-4o-mini for chat
 
-**Role:** Owner, operator, and product lead for TenantGuard
+## 2. Server Environments
 
-**Location/Timezone:** United States, America/Chicago (Central Time)
+### Staging (Testing Environment)
+- **Domain:** staging.tenantguard.net
+- **IP:** 34.138.86.218
+- **Role:** ALWAYS test changes here first before touching production.
+- **Access:** Available via `cloud-pc` mount at `/mnt/ayz08yrkeo06udbs712gzoko9/ubuntu/repos/tenantguard-staging/`
 
-**Responsibilities:** Product direction, deployment coordination, repository management, legal-tech workflow design, frontend/backend iteration, documentation, and server operations
+### Production (Live Environment)
+- **Domain:** tenantguard.net
+- **IP:** 34.75.162.207 (GCP)
+- **Role:** Do not touch unless explicitly authorized.
+- **SSH:** `ssh -i ~/.ssh/id_ed25519_gcp manus@34.75.162.207`
 
-**Professional Skills:** Web application development, deployment troubleshooting, Git/GitHub workflow, documentation, product design, legal-tech domain modeling, and AI-assisted development
+## 3. GitHub Repositories
 
----
+- **Canonical Repo:** `Orangemangocat/tenantguard` (main branch) — All commits MUST go here.
+- **Mirror Repo:** `KarlHaines82/tenantguard2` — Used only because the CI/CD `deploy.yml` lives here.
+- **Known Bug:** The `deploy.yml` in the mirror repo has an SSH password bug where the production step uses `STAGING_SSH_PASSWORD` instead of `PROD_SSH_KEY`.
+- **Git Identity:** John Bransford <gigipennyjohn@gmail.com>
 
-## Communication Preferences
+## 4. User Preferences & Idiosyncrasies (CRITICAL)
 
-The project owner has consistent communication patterns that agents should respect:
+1. **Design-First Approach:** The user ALWAYS wants to see a design mockup or plan before ANY code is written or implemented. Never build a feature without asking for design approval first.
+2. **Staging First:** Implement everything on the staging site first. Only push to production after the user tests and approves it.
+3. **Smartphone Mirroring:** The user prefers graphical sophistication akin to "bizee", specifically mirroring forms inside a smartphone mockup (as done on the `/get-help` page).
+4. **Reassuring Tone:** AI must NEVER scare tenants, NEVER tell them to contact the landlord's attorney, and NEVER suggest moving out unless absolutely legally required.
+5. **Extract-and-Confirm:** AI should read uploaded documents and present extracted info for confirmation ("I see the address is X — is that correct?") rather than asking blank questions.
+6. **Model-Agnostic:** Architecture should not be wedded to any single AI provider.
+7. **Full-Stack Delivery:** The user expects to see live webpages on staging, not just code snippets.
 
-| Preference | Description |
-| :--- | :--- |
-| Task start | Concise acknowledgment; do not over-explain before starting |
-| Task completion | Comprehensive reports with results, links, commands, examples |
-| Transparency | Be direct about what works, what failed, what was fixed, what remains |
-| Documentation style | Structured headings and tables for comparisons in longer docs |
-| Problem-solving | Proactive; investigate and fix rather than only describe problems |
-| Verification | Always verify deployed changes directly on the live/staging site |
+## 5. CaseLink Integration (Davidson County)
 
----
+CaseLink is the official electronic court records system for Davidson County General Sessions Civil Court. We use this to scrape court dates, pleadings, and judgments.
 
-## Standing Instructions
+- **URL:** caselink.nashville.gov
+- **Login Email:** bransfordbacktwo@gmail.com
+- **Password:** Orangemango+4034044
+- **Subscription #:** 72228 ($25.56/month via LexisNexis, Visa ending in 6069)
+- **Renewal:** ~18th of each month (Reminder set for the 15th)
+- **Case Format:** `24GT10013` (Year + Type + Number)
+- **More Info:** See `knowledge-repo/integrations/CASELINK.md` for full tab structure and scraping strategy.
 
-These instructions apply to all development sessions on TenantGuard:
+## 6. Current Status & Next Steps
 
-1. **Test before deploying.** Never ship untested changes.
-2. **Commit frequently** with clear, descriptive messages.
-3. **Follow established codebase patterns.** Do not introduce new patterns without justification.
-4. **Avoid unnecessary dependencies.** Use what Django/Next.js provide before adding packages.
-5. **Never commit secrets.** No API keys, passwords, tokens, or credentials in source files.
-6. **Deploy to staging first.** Production only after staging verification.
-7. **Prioritize in this order:** User experience > Stability > Security > Maintainability > Performance.
-8. **Document after major work.** Update AGENTS.md, knowledge-repo, or docs as appropriate.
-9. **Ask before production deployment.** Always confirm with the owner before tagging for production.
+### Recently Completed (June 18, 2026)
+- Built `/get-help` landing page with smartphone mockup and AI chat.
+- Fixed AI document analysis to use GPT-4o with vision (converts scanned PDFs to images via `pdftoppm`).
+- Created CaseLink integration documentation.
 
----
+### Currently In Progress
+- Enhancing the User Workspace (`case/[id].tsx`) on the staging server to include:
+  - Payment Tiers ($50 / $250 / $500)
+  - Case Status Timeline
+  - Evidence Locker (photos/recordings)
+  - Diary/Notes
+  - Communication Log
 
-## Known Dislikes and Constraints
-
-- **Do not** hide errors or give vague reports
-- **Do not** ship untested changes
-- **Do not** commit secrets to the repository
-- **Do not** mix legacy architecture (Flask/SQLite) with current architecture (Django/PostgreSQL)
-- **Do not** over-engineer; prefer the simplest correct solution
-- **Do not** make changes without reading the relevant code first
-
----
-
-## Recurring Workflow Patterns
-
-The typical development cycle observed across sessions:
-
-1. Iterative development with frequent commits
-2. Local testing before any deployment
-3. GitHub commits with clear messages
-4. Live-site verification after deployment
-5. Deployment troubleshooting when issues arise
-6. Durable documentation after major work
-
----
-
-## Repository Cross-References
-
-| Repository | Purpose | Status |
-| :--- | :--- | :--- |
-| Orangemangocat/tenantguard | Primary development repo (this repo) | Active |
-| Orangemangocat/tennantdefend | Reserved secondary repo | Empty |
-| KarlHaines82/tenantguard2 | Same codebase, alternate account | Active mirror |
-
-The `KarlHaines82/tenantguard2` repository contains the same Django/Next.js codebase and may have commits not yet in `Orangemangocat/tenantguard`. When in doubt, check both for the latest state.
+### Launch Target
+- **July 7, 2026** (First week of July)
+- Need to finalize the AI Memory Core (Rules, Identity, Tennessee Law, Document Patterns).
 
 ---
 
-## Geographic and Legal Context
+## 7. Geographic and Legal Context
 
 TenantGuard operates in the Tennessee landlord-tenant legal space:
 
@@ -98,7 +89,7 @@ TenantGuard operates in the Tennessee landlord-tenant legal space:
 
 ---
 
-## AI-Assisted Development Context
+## 8. AI-Assisted Development Context
 
 The project uses AI agents (Codex, Claude Code, Manus) for development. Key principles:
 
