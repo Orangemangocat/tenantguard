@@ -63,14 +63,21 @@ CaseLink is the official electronic court records system for Davidson County Gen
 - Built `/get-help` landing page with smartphone mockup and AI chat.
 - Fixed AI document analysis to use GPT-4o with vision (converts scanned PDFs to images via `pdftoppm`).
 - Created CaseLink integration documentation.
+- **Built `/workspace-demo` page** — fully functional demo workspace with:
+  - CaseLink Court Records panel (pleadings table + court dates table, live from case 24GT10013)
+  - Evidence Locker (photos/recordings with annotations and timestamps)
+  - Diary/Notes (date-stamped personal entries)
+  - Communication Log (sent/received with direction badges)
+  - Case Status Timeline (visual progress tracker)
+  - Payment Tier badge (Basic $50 / Standard $250 / Premium $500)
+  - Right rail with plan details, court countdown, case stats, CaseLink sync status
+  - All names redacted for promotional screenshots
+  - **Live at:** https://staging.tenantguard.net/workspace-demo
 
 ### Currently In Progress
-- Enhancing the User Workspace (`case/[id].tsx`) on the staging server to include:
-  - Payment Tiers ($50 / $250 / $500)
-  - Case Status Timeline
-  - Evidence Locker (photos/recordings)
-  - Diary/Notes
-  - Communication Log
+- Integrating workspace features into the real `case/[id].tsx` page (backend API endpoints needed)
+- CaseLink automated scraping (scheduled pull of court records into our database)
+- Payment tier selection UI in the real checkout flow
 
 ### Launch Target
 - **July 7, 2026** (First week of July)
