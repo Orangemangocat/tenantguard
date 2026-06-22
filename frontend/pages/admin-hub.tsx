@@ -181,7 +181,7 @@ export default function AdminHub() {
             </p>
           </div>
           <div className="text-right text-sm text-red-200">
-            <p className="font-medium text-white">{session.user?.name || session.user?.email}</p>
+            <p className="font-medium text-white">{(session.user as any)?.username || session.user?.email}</p>
             <p>{session.user?.email}</p>
             {isStaff && (
               <span className="inline-block mt-1 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded">
