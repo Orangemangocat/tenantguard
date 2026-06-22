@@ -46,11 +46,11 @@ async function uploadFileToOpenAI(
 
     const footer = `${CRLF}--${boundary}--${CRLF}`
 
-    const body = Buffer.concat([
-      Buffer.from(header, 'utf8'),
-      fileBuffer,
-      Buffer.from(footer, 'utf8'),
-    ])
+    const headerBuf = Buffer.from(header, 'utf8')
+    const footerBuf = Buffer.from(footer, 'utf8')
+    const body = Buffer.concat([headerBuf, fileBuffer, footerBuf])
+    // Convert to Uint8Array to satisfy TypeScript's BodyInit constraint
+    const bodyUint8 = new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
 
     const uploadResponse = await fetch('https://api.openai.com/v1/files', {
       method: 'POST',
@@ -59,7 +59,7 @@ async function uploadFileToOpenAI(
         'Content-Type': `multipart/form-data; boundary=${boundary}`,
         'Content-Length': String(body.length),
       },
-      body: body as unknown as BodyInit,
+      body: bodyUint8,
     })
 
     if (!uploadResponse.ok) {
