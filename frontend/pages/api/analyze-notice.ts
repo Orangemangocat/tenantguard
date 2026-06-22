@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import formidable from 'formidable'
 import fs from 'fs'
-import path from 'path'
 
 export const config = {
   api: {
@@ -18,70 +17,6 @@ const SYSTEM_PROMPT = `You are a Tennessee tenant rights legal document analyzer
 - recommendedActions: An array of 3-4 specific recommended next steps
 
 Always respond with valid JSON only, no markdown formatting.`
-
-/**
- * Upload a file to OpenAI Files API using Node.js built-in fetch with manual multipart body.
- */
-async function uploadFileToOpenAI(
-  fileBuffer: Buffer,
-  filename: string,
-  mimeType: string,
-  openaiKey: string
-): Promise<string | null> {
-  try {
-    const boundary = `----FormBoundary${Date.now().toString(16)}`
-    const CRLF = '\r\n'
-
-    const header = [
-      `--${boundary}`,
-      `Content-Disposition: form-data; name="purpose"`,
-      '',
-      'assistants',
-      `--${boundary}`,
-      `Content-Disposition: form-data; name="file"; filename="${filename}"`,
-      `Content-Type: ${mimeType}`,
-      '',
-      '',
-    ].join(CRLF)
-
-    const footer = `${CRLF}--${boundary}--${CRLF}`
-
-    const headerBuf = Buffer.from(header, 'utf8')
-    const footerBuf = Buffer.from(footer, 'utf8')
-    const body = Buffer.concat([headerBuf, fileBuffer, footerBuf])
-    // Convert to Uint8Array to satisfy TypeScript's BodyInit constraint
-    const bodyUint8 = new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
-
-    const uploadResponse = await fetch('https://api.openai.com/v1/files', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        'Content-Type': `multipart/form-data; boundary=${boundary}`,
-        'Content-Length': String(body.length),
-      },
-      body: bodyUint8,
-    })
-
-    if (!uploadResponse.ok) {
-      const err = await uploadResponse.text()
-      console.error('OpenAI file upload failed:', uploadResponse.status, err)
-      return null
-    }
-
-    const data = await uploadResponse.json()
-    return data.id as string
-  } catch (e) {
-    console.error('uploadFileToOpenAI error:', e)
-    return null
-  }
-}
-
-async function deleteOpenAIFile(fileId: string, openaiKey: string) {
-  fetch(`https://api.openai.com/v1/files/${fileId}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${openaiKey}` },
-  }).catch(() => {})
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -109,80 +44,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isImage = mimeType.startsWith('image/')
     const filename = uploadedFile.originalFilename || (isPdf ? 'document.pdf' : 'document.jpg')
     const fileBuffer = fs.readFileSync(uploadedFile.filepath)
+    const base64File = fileBuffer.toString('base64')
 
-    let messages: object[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let userContent: any[]
 
     if (isPdf) {
-      // Try to upload to OpenAI Files API for native PDF reading
-      const fileId = await uploadFileToOpenAI(fileBuffer, filename, 'application/pdf', openaiKey)
-
-      if (fileId) {
-        // Use the file_id in the message
-        messages = [
-          { role: 'system', content: SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: 'Please analyze this legal notice document and provide the structured analysis.' },
-              { type: 'file', file: { file_id: fileId } },
-            ],
-          },
-        ]
-
-        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${openaiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o',
-            messages,
-            temperature: 0.3,
-            max_tokens: 1000,
-            response_format: { type: 'json_object' },
-          }),
-        })
-
-        deleteOpenAIFile(fileId, openaiKey)
-
-        if (openaiResponse.ok) {
-          const result = await openaiResponse.json()
-          const analysis = JSON.parse(result.choices[0].message.content)
-          try { fs.unlinkSync(uploadedFile.filepath) } catch {}
-          return res.status(200).json(analysis)
-        }
-
-        // If file-based call failed, fall through to text-only fallback
-        console.log('gpt-4o file call failed, using text fallback')
-      }
-
-      // Fallback: ask GPT to analyze based on filename/context alone
-      messages = [
-        { role: 'system', content: SYSTEM_PROMPT },
+      // For PDFs: send as base64 data URL — gpt-4o can read PDFs via the file content type
+      userContent = [
+        { type: 'text', text: `Please analyze this legal notice document (${filename}) and provide the structured analysis.` },
         {
-          role: 'user',
-          content: `Please analyze this legal notice document (filename: ${filename}). This is a Tennessee landlord-tenant legal notice. Provide a structured analysis as if this is a standard eviction notice.`,
+          type: 'file',
+          file: {
+            filename,
+            file_data: `data:application/pdf;base64,${base64File}`,
+          },
         },
       ]
     } else if (isImage) {
-      // Images: use vision with base64
-      const base64File = fileBuffer.toString('base64')
-      messages = [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Please analyze this legal notice document and provide the structured analysis.' },
-            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64File}` } },
-          ],
-        },
+      // For images: use vision with base64
+      userContent = [
+        { type: 'text', text: 'Please analyze this legal notice document and provide the structured analysis.' },
+        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64File}` } },
       ]
     } else {
       return res.status(400).json({ error: 'Unsupported file type. Please upload a PDF or image.' })
     }
 
-    // Standard chat completions (images and PDF fallback)
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -191,7 +79,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       body: JSON.stringify({
         model: 'gpt-4o',
-        messages,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
         temperature: 0.3,
         max_tokens: 1000,
         response_format: { type: 'json_object' },
@@ -201,6 +92,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!openaiResponse.ok) {
       const errBody = await openaiResponse.text()
       console.error('OpenAI API error:', openaiResponse.status, errBody)
+
+      // If file content type not supported, fall back to text-only description
+      if (openaiResponse.status === 400 && isPdf) {
+        const fallbackResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${openaiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              {
+                role: 'user',
+                content: `Please analyze this Tennessee legal notice document (filename: ${filename}). This appears to be a landlord-tenant notice. Based on the filename and context, provide a structured analysis assuming this is a standard eviction or pay-or-quit notice.`,
+              },
+            ],
+            temperature: 0.3,
+            max_tokens: 1000,
+            response_format: { type: 'json_object' },
+          }),
+        })
+
+        if (fallbackResponse.ok) {
+          const fallbackResult = await fallbackResponse.json()
+          const analysis = JSON.parse(fallbackResult.choices[0].message.content)
+          try { fs.unlinkSync(uploadedFile.filepath) } catch {}
+          return res.status(200).json(analysis)
+        }
+      }
+
       throw new Error(`AI analysis failed: ${openaiResponse.status}`)
     }
 
@@ -210,8 +133,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try { fs.unlinkSync(uploadedFile.filepath) } catch {}
 
     return res.status(200).json(analysis)
-  } catch (error: any) {
-    console.error('Analysis error:', error)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Analysis error:', msg)
     return res.status(500).json({ error: 'Analysis failed. Please try again.' })
   }
 }
