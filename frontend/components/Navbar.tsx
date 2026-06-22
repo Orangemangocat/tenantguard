@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ChevronDown, User, LogOut, Shield, FolderOpen, HelpCircle } from 'lucide-react'
+import { ChevronDown, User, LogOut, Shield, FolderOpen, HelpCircle, Settings } from 'lucide-react'
 import { useSession, signIn, signOut } from "next-auth/react"
 import { useRouter } from 'next/router'
 import axios from 'axios'
@@ -211,6 +211,14 @@ const Navbar = ({
                         <FolderOpen className="mr-2 h-4 w-4" />
                         <span>My Dashboard</span>
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => router.push('/profile')}
+                        className="cursor-pointer justify-end text-right sm:justify-start sm:text-left"
+                        style={{ color: 'var(--color-text)' }}
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>My Profile</span>
+                      </DropdownMenuItem>
                       {openCaseId !== null && (
                         <DropdownMenuItem
                           onClick={() => router.push(`/case/${openCaseId}`)}
@@ -369,6 +377,18 @@ const Navbar = ({
                               >
                                 <FolderOpen className="mr-2 h-4 w-4" />
                                 My Dashboard
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                className="w-full justify-start h-11"
+                                onClick={() => {
+                                  setIsMobileMenuOpen(false)
+                                  setIsMobileUserOpen(false)
+                                  router.push('/profile')
+                                }}
+                              >
+                                <Settings className="mr-2 h-4 w-4" />
+                                My Profile
                               </Button>
                               {openCaseId !== null && (
                                 <Button

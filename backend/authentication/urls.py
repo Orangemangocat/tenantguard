@@ -5,6 +5,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenVerifyView
 
 from authentication.views import GoogleLogin, GitHubLogin
+from authentication.profile_views import ProfileView, ProfileSummaryView, ProfileDeleteView
 
 urlpatterns = [
     path("register/", RegisterView.as_view(), name="rest_register"),
@@ -15,4 +16,8 @@ urlpatterns = [
     path("github/", GitHubLogin.as_view(), name="github_login"),
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("token/refresh/", get_refresh_view().as_view(), name="token_refresh"),
+    # Profile endpoints
+    path("profile/", ProfileView.as_view(), name="user_profile"),
+    path("profile/summary/", ProfileSummaryView.as_view(), name="profile_summary"),
+    path("profile/delete/", ProfileDeleteView.as_view(), name="profile_delete"),
 ]
