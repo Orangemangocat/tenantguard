@@ -16,17 +16,19 @@ We have permanently migrated away from the old Flask + SQLite + Vite stack.
 
 ## 2. Server Environments
 
-### Staging (Testing Environment)
+### Development/Staging (Testing Environment)
 - **Domain:** staging.tenantguard.net
-- **IP:** 34.138.86.218
+- **IP:** 34.23.105.126 (GCP VM name: `web-development`, us-east1-d)
+- **⚠️ CORRECTED 2026-06-22:** Old IP `34.138.86.218` was stale/wrong. Verified correct IP is `34.23.105.126`.
 - **Role:** ALWAYS test changes here first before touching production.
-- **Access:** Available via `cloud-pc` mount at `/mnt/ayz08yrkeo06udbs712gzoko9/ubuntu/repos/tenantguard-staging/`
+- **Access:** SSH as `manus-tenantguard-agent` using key from `tenantguard-manus-retained/secrets/tenantguard_prod`. (Old cloud-pc mount path is no longer valid.)
+- **⚠️ WARNING:** App at `/opt/tenantguard` on this VM is the **old March 2026 Flask/Vite stack** owned by user `karl`. The current Django/Next.js stack lives only on production and in GitHub `main`. This VM needs migration before it can serve as a true staging environment.
 
 ### Production (Live Environment)
 - **Domain:** tenantguard.net
 - **IP:** 34.75.162.207 (GCP)
 - **Role:** Do not touch unless explicitly authorized.
-- **SSH:** `ssh -i ~/.ssh/id_ed25519_gcp manus@34.75.162.207`
+- **SSH:** `ssh -i ~/.ssh/tenantguard_prod manus-tenantguard-agent@34.75.162.207` (key stored in `tenantguard-manus-retained/secrets/tenantguard_prod`)
 
 ## 3. GitHub Repositories
 
