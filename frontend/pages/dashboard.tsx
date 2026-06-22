@@ -288,7 +288,7 @@ export default function DashboardPage() {
                         }`}>
                           {deadline.days_remaining} day{deadline.days_remaining !== 1 ? 's' : ''}
                         </p>
-                        <Link href={`/case/${deadline.case_id}`} className="text-xs text-teal hover:underline">
+                        <Link href={`/workspace/${deadline.case_id}`} className="text-xs text-teal hover:underline">
                           View Case
                         </Link>
                       </div>
@@ -340,7 +340,7 @@ export default function DashboardPage() {
                 ) : (
                   <div className="space-y-3">
                     {submissions.map((sub) => (
-                      <Link key={sub.id} href={`/case/${sub.id}`}>
+                      <Link key={sub.id} href={`/workspace/${sub.id}`}>
                         <div className="flex items-center justify-between p-4 border border-border rounded-sm hover:bg-background-secondary transition-colors cursor-pointer">
                           <div className="flex items-center gap-4">
                             <div className="h-10 w-10 rounded-sm bg-navy/5 flex items-center justify-center">
