@@ -276,6 +276,30 @@ export default function Home({ recentPosts }: { recentPosts: any[] }) {
                 </motion.div>
               </AnimatePresence>
             </div>
+
+            {/* ── Live Demo CTA ── */}
+            <motion.div
+              className="mt-14 flex flex-col items-center gap-3"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+            >
+              <p className="text-sm text-gray-500 uppercase tracking-widest font-medium">Want to see exactly what you get?</p>
+              <Link
+                href="/workspace-demo"
+                className="group inline-flex items-center gap-3 bg-white border-2 border-red-800 text-red-800 font-semibold text-base px-8 py-4 rounded-xl shadow-md hover:bg-red-800 hover:text-white transition-all duration-200"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                See Your Full Case Dashboard — Live Demo
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </motion.div>
+
           </div>
         </section>
 
