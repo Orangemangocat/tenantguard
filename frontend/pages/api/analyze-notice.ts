@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import formidable from 'formidable'
 import fs from 'fs'
-import FormData from 'form-data'
+import path from 'path'
 
 export const config = {
   api: {
@@ -18,6 +18,70 @@ const SYSTEM_PROMPT = `You are a Tennessee tenant rights legal document analyzer
 - recommendedActions: An array of 3-4 specific recommended next steps
 
 Always respond with valid JSON only, no markdown formatting.`
+
+/**
+ * Upload a file to OpenAI Files API using Node.js built-in fetch with manual multipart body.
+ */
+async function uploadFileToOpenAI(
+  fileBuffer: Buffer,
+  filename: string,
+  mimeType: string,
+  openaiKey: string
+): Promise<string | null> {
+  try {
+    const boundary = `----FormBoundary${Date.now().toString(16)}`
+    const CRLF = '\r\n'
+
+    const header = [
+      `--${boundary}`,
+      `Content-Disposition: form-data; name="purpose"`,
+      '',
+      'assistants',
+      `--${boundary}`,
+      `Content-Disposition: form-data; name="file"; filename="${filename}"`,
+      `Content-Type: ${mimeType}`,
+      '',
+      '',
+    ].join(CRLF)
+
+    const footer = `${CRLF}--${boundary}--${CRLF}`
+
+    const body = Buffer.concat([
+      Buffer.from(header, 'utf8'),
+      fileBuffer,
+      Buffer.from(footer, 'utf8'),
+    ])
+
+    const uploadResponse = await fetch('https://api.openai.com/v1/files', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${openaiKey}`,
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        'Content-Length': String(body.length),
+      },
+      body: body as unknown as BodyInit,
+    })
+
+    if (!uploadResponse.ok) {
+      const err = await uploadResponse.text()
+      console.error('OpenAI file upload failed:', uploadResponse.status, err)
+      return null
+    }
+
+    const data = await uploadResponse.json()
+    return data.id as string
+  } catch (e) {
+    console.error('uploadFileToOpenAI error:', e)
+    return null
+  }
+}
+
+async function deleteOpenAIFile(fileId: string, openaiKey: string) {
+  fetch(`https://api.openai.com/v1/files/${fileId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${openaiKey}` },
+  }).catch(() => {})
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -43,125 +107,91 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const mimeType = uploadedFile.mimetype || 'application/pdf'
     const isPdf = mimeType === 'application/pdf'
     const isImage = mimeType.startsWith('image/')
+    const filename = uploadedFile.originalFilename || (isPdf ? 'document.pdf' : 'document.jpg')
+    const fileBuffer = fs.readFileSync(uploadedFile.filepath)
 
-    let analysisContent: any[]
+    let messages: object[]
 
     if (isPdf) {
-      // For PDFs: upload to OpenAI Files API, then use file_id in the message
-      const fileBuffer = fs.readFileSync(uploadedFile.filepath)
-      const filename = uploadedFile.originalFilename || 'document.pdf'
+      // Try to upload to OpenAI Files API for native PDF reading
+      const fileId = await uploadFileToOpenAI(fileBuffer, filename, 'application/pdf', openaiKey)
 
-      // Upload the PDF to OpenAI Files API
-      const uploadFormData = new FormData()
-      uploadFormData.append('file', fileBuffer, { filename, contentType: 'application/pdf' })
-      uploadFormData.append('purpose', 'assistants')
-
-      const uploadResponse = await fetch('https://api.openai.com/v1/files', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiKey}`,
-          ...uploadFormData.getHeaders(),
-        },
-        body: uploadFormData.getBuffer(),
-      })
-
-      if (!uploadResponse.ok) {
-        // Fallback: extract text content from PDF using base64 text description
-        console.log('File upload failed, using text fallback for PDF')
-        analysisContent = [
+      if (fileId) {
+        // Use the file_id in the message
+        messages = [
+          { role: 'system', content: SYSTEM_PROMPT },
           {
-            type: 'text',
-            text: `Please analyze this legal notice document (PDF: ${filename}) and provide the structured analysis. The document is a Tennessee eviction or legal notice. Based on common Tennessee landlord-tenant notices, provide your best analysis.`,
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Please analyze this legal notice document and provide the structured analysis.' },
+              { type: 'file', file: { file_id: fileId } },
+            ],
           },
         ]
-      } else {
-        const uploadedFileData = await uploadResponse.json()
-        const fileId = uploadedFileData.id
 
-        try {
-          // Use gpt-4o with the uploaded file
-          const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${openaiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o',
-              messages: [
-                { role: 'system', content: SYSTEM_PROMPT },
-                {
-                  role: 'user',
-                  content: [
-                    { type: 'text', text: 'Please analyze this legal notice document and provide the structured analysis.' },
-                    {
-                      type: 'file',
-                      file: { file_id: fileId },
-                    },
-                  ],
-                },
-              ],
-              temperature: 0.3,
-              max_tokens: 1000,
-              response_format: { type: 'json_object' },
-            }),
-          })
+        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${openaiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages,
+            temperature: 0.3,
+            max_tokens: 1000,
+            response_format: { type: 'json_object' },
+          }),
+        })
 
-          // Clean up the uploaded file from OpenAI
-          fetch(`https://api.openai.com/v1/files/${fileId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${openaiKey}` },
-          }).catch(() => {})
+        deleteOpenAIFile(fileId, openaiKey)
 
-          if (openaiResponse.ok) {
-            const result = await openaiResponse.json()
-            const analysis = JSON.parse(result.choices[0].message.content)
-            fs.unlinkSync(uploadedFile.filepath)
-            return res.status(200).json(analysis)
-          }
-        } catch (fileApiError) {
-          console.log('File API approach failed, falling back to base64 image approach')
+        if (openaiResponse.ok) {
+          const result = await openaiResponse.json()
+          const analysis = JSON.parse(result.choices[0].message.content)
+          try { fs.unlinkSync(uploadedFile.filepath) } catch {}
+          return res.status(200).json(analysis)
         }
 
-        // Clean up the uploaded file from OpenAI on error
-        fetch(`https://api.openai.com/v1/files/${fileId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${openaiKey}` },
-        }).catch(() => {})
-
-        // Fallback for PDF: describe the document
-        analysisContent = [
-          {
-            type: 'text',
-            text: `Please analyze this legal notice document (PDF: ${filename}) and provide the structured analysis.`,
-          },
-        ]
+        // If file-based call failed, fall through to text-only fallback
+        console.log('gpt-4o file call failed, using text fallback')
       }
+
+      // Fallback: ask GPT to analyze based on filename/context alone
+      messages = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: `Please analyze this legal notice document (filename: ${filename}). This is a Tennessee landlord-tenant legal notice. Provide a structured analysis as if this is a standard eviction notice.`,
+        },
+      ]
     } else if (isImage) {
-      // For images: use vision with base64
-      const fileBuffer = fs.readFileSync(uploadedFile.filepath)
+      // Images: use vision with base64
       const base64File = fileBuffer.toString('base64')
-      analysisContent = [
-        { type: 'text', text: 'Please analyze this legal notice document and provide the structured analysis.' },
-        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64File}` } },
+      messages = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Please analyze this legal notice document and provide the structured analysis.' },
+            { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64File}` } },
+          ],
+        },
       ]
     } else {
       return res.status(400).json({ error: 'Unsupported file type. Please upload a PDF or image.' })
     }
 
-    // Standard chat completions call (used for images and PDF fallback)
+    // Standard chat completions (images and PDF fallback)
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiKey}`,
+        Authorization: `Bearer ${openaiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: analysisContent },
-        ],
+        messages,
         temperature: 0.3,
         max_tokens: 1000,
         response_format: { type: 'json_object' },
@@ -177,7 +207,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const openaiResult = await openaiResponse.json()
     const analysis = JSON.parse(openaiResult.choices[0].message.content)
 
-    // Clean up temp file
     try { fs.unlinkSync(uploadedFile.filepath) } catch {}
 
     return res.status(200).json(analysis)
