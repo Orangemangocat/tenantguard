@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 #Nextjs stuff
-package-lock.json
+# package-lock.json intentionally tracked (fix: removed from gitignore 2026-06-22 to enable Docker npm ci builds)
 node_modules/
 ssl_certs/
 
