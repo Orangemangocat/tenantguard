@@ -141,7 +141,7 @@ const Navbar = ({
             <Button
               size="sm"
               className="hidden md:inline-flex bg-primary hover:opacity-90 text-white"
-              onClick={() => router.push('/intake')}
+              onClick={() => router.push('/get-help')}
             >
               Get Help Now
             </Button>
@@ -323,7 +323,7 @@ const Navbar = ({
               <div className="flex flex-col gap-2 pb-4 px-2">
                 <Button
                   className="w-full bg-primary hover:opacity-90 text-white h-11"
-                  onClick={() => { router.push('/intake'); setIsMobileMenuOpen(false) }}
+                  onClick={() => { router.push('/get-help'); setIsMobileMenuOpen(false) }}
                 >
                   Get Help Now
                 </Button>
