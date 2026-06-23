@@ -48,6 +48,8 @@ else:
 
 # Trust the X-Forwarded-Proto header from nginx so Django knows requests are HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Trust the X-Forwarded-Host header so Django builds correct absolute URLs (fixes localhost:8000 in admin redirects)
+USE_X_FORWARDED_HOST = True
 
 # Required for CSRF to work when Django is behind an HTTPS reverse proxy
 CSRF_TRUSTED_ORIGINS = [
