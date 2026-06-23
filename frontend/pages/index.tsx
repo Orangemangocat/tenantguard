@@ -144,6 +144,28 @@ export default function Home({ recentPosts }: { recentPosts: any[] }) {
           </div>
         </section>
 
+        {/* ── Demo CTA Banner ───────────────────────────────────────────────────── */}
+        <section className="py-8 bg-red-900">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <p className="text-red-200 text-xs uppercase tracking-widest font-semibold mb-1">See it in action</p>
+              <p className="text-white text-xl font-bold">This is exactly what your dashboard looks like</p>
+            </div>
+            <Link
+              href="/workspace-demo"
+              className="shrink-0 inline-flex items-center gap-3 bg-white text-red-900 font-black text-base px-8 py-4 rounded-xl shadow-lg hover:bg-red-50 transition-all duration-200 group"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Open Full Case Dashboard Demo
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        </section>
+
         {/* ── What You'll Get (social proof / value prop) ──────────────────── */}
         <section className="py-12 bg-white border-y border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
