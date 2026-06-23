@@ -31,8 +31,8 @@ const Navbar = ({
 
   const isStaff = (session as any)?.user?.is_staff === true
 
-  const adminUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/')
-    .replace(/\/api\/?$/, '/admin/')
+  // Admin is always at /admin/ on the same origin — never derive from API URL
+  const adminUrl = '/admin/'
 
   React.useEffect(() => {
     if (!session || isStaff) return
