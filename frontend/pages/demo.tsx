@@ -344,6 +344,16 @@ export default function DemoPage() {
                       </Link>
                     </div>
                   </div>
+                  {/* Large prominent CTA button below the card */}
+                  <Link
+                    href="/workspace-demo"
+                    target="_blank"
+                    className="flex items-center justify-center gap-3 w-full bg-white hover:bg-gray-100 border-2 border-white/20 text-gray-900 font-black text-xl py-5 rounded-2xl shadow-2xl transition-all group"
+                  >
+                    <LayoutDashboard className="h-6 w-6 text-red-700 shrink-0" />
+                    Open Full Dashboard Demo
+                    <ExternalLink className="h-5 w-5 text-gray-500 group-hover:text-red-700 transition-colors" />
+                  </Link>
                 </div>
               )}
 
