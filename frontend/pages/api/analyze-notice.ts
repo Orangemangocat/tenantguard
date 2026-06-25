@@ -100,7 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: userContent },
@@ -124,7 +124,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4-turbo',
+            model: 'gpt-4o',
             messages: [
               { role: 'system', content: SYSTEM_PROMPT },
               {
