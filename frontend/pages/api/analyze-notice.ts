@@ -5,6 +5,23 @@ import fs from 'fs'
 import pdfParse from 'pdf-parse'
 import { logTrainingDataToGitHub } from '../../lib/githubLogger'
 
+// HEIC/HEIF MIME types — Apple iPhone default format
+const HEIC_MIME_TYPES = new Set(['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'])
+
+/**
+ * Convert a HEIC/HEIF buffer to JPEG using sharp.
+ * Returns the converted JPEG buffer, or null if sharp is not available.
+ */
+async function convertHeicToJpeg(buffer: Buffer): Promise<Buffer | null> {
+  try {
+    // sharp is an optional peer dep — import lazily so the app still boots without it
+    const sharp = (await import('sharp')).default
+    return await sharp(buffer).jpeg({ quality: 90 }).toBuffer()
+  } catch {
+    return null
+  }
+}
+
 // Hardcode system prompt to avoid import issues
 const SYSTEM_PROMPT = `You are a calm, factual, and empowering legal assistant analyzing Tennessee eviction notices.
 YOUR DIRECTIVE:
@@ -43,11 +60,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!uploadedFile) {
       return res.status(400).json({ error: 'No document provided' })
     }
-    const mimeType = uploadedFile.mimetype || 'application/pdf'
+    let mimeType = uploadedFile.mimetype || 'application/pdf'
+    const originalFilename = uploadedFile.originalFilename || ''
+    // Detect HEIC/HEIF by extension as well — some browsers send generic MIME for HEIC
+    const isHeicByExtension = /\.(heic|heif)$/i.test(originalFilename)
+    if (isHeicByExtension && !HEIC_MIME_TYPES.has(mimeType)) {
+      mimeType = 'image/heic'
+    }
     const isPdf = mimeType === 'application/pdf'
+    const isHeic = HEIC_MIME_TYPES.has(mimeType)
     const isImage = mimeType.startsWith('image/')
-    const filename = uploadedFile.originalFilename || (isPdf ? 'document.pdf' : 'document.jpg')
-    const fileBuffer = fs.readFileSync(uploadedFile.filepath)
+    const filename = originalFilename || (isPdf ? 'document.pdf' : 'document.jpg')
+    let fileBuffer = fs.readFileSync(uploadedFile.filepath)
+    let effectiveMimeType = mimeType
+
+    // Convert HEIC/HEIF → JPEG before sending to gpt-4o (which does not support HEIC)
+    if (isHeic) {
+      const converted = await convertHeicToJpeg(fileBuffer)
+      if (converted) {
+        fileBuffer = converted
+        effectiveMimeType = 'image/jpeg'
+      } else {
+        console.warn('sharp not available — sending HEIC directly to gpt-4o (may fail)')
+      }
+    }
+
     const base64File = fileBuffer.toString('base64')
     
     // Extract text for logging
@@ -86,7 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           type: 'text',
           text: 'Please analyze this Tennessee landlord-tenant legal notice document. Read it carefully and apply Tennessee law to determine the correct urgency level and response. Remember: a notice without a court date is LOW urgency — it cannot remove the tenant by itself.',
         },
-        { type: 'image_url', image_url: { url: `data:${mimeType};base64,${base64File}` } },
+        { type: 'image_url', image_url: { url: `data:${effectiveMimeType};base64,${base64File}` } },
       ]
     } else {
       return res.status(400).json({ error: 'Unsupported file type. Please upload a PDF or image.' })

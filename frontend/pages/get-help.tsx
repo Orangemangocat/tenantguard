@@ -69,10 +69,12 @@ export default function GetHelpPage() {
   // ─── File Upload Handlers ──────────────────────────────────────────────
   const handleFileSelect = (selectedFile: File) => {
     const maxSize = 10 * 1024 * 1024 // 10MB
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence']
+    // Also allow HEIC/HEIF by extension when browser reports a generic MIME type
+    const isHeicByExt = /\.(heic|heif)$/i.test(selectedFile.name)
 
-    if (!allowedTypes.includes(selectedFile.type)) {
-      setUploadError('Please upload a PDF, JPG, or PNG file.')
+    if (!allowedTypes.includes(selectedFile.type) && !isHeicByExt) {
+      setUploadError('Please upload a PDF, JPG, PNG, or HEIC (iPhone photo) file.')
       return
     }
     if (selectedFile.size > maxSize) {
@@ -433,7 +435,7 @@ export default function GetHelpPage() {
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
+                        accept=".pdf,.jpg,.jpeg,.png,.heic,.heif"
                         className="hidden"
                         onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
                       />
@@ -454,7 +456,7 @@ export default function GetHelpPage() {
                           <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-8 py-6 text-base shadow-lg">
                             Analyze My Notice — Free
                           </Button>
-                          <p className="text-xs text-gray-400 mt-4">PDF, JPG, PNG, or phone photo • Max 10MB</p>
+                          <p className="text-xs text-gray-400 mt-4">PDF, JPG, PNG, HEIC (iPhone) • Max 10MB</p>
                           <div className="flex items-center justify-center gap-2 mt-3 text-xs text-gray-500">
                             <Shield className="w-3.5 h-3.5 text-green-600" />
                             Encrypted & confidential — we never share your documents

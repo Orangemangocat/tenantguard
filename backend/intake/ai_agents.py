@@ -95,7 +95,11 @@ class CaseNotebookAgent(BaseAgent):
 def extract_text_from_file(file_field) -> str:
     """
     Attempts to extract plain text from an uploaded file.
-    Supports: .txt, .pdf (via pypdf if installed), .md
+    Supports:
+      - .txt, .md  — direct UTF-8 decode
+      - .pdf       — pypdf text extraction
+      - .jpg/.jpeg/.png — pytesseract OCR via Pillow
+      - .heic/.heif — pillow-heif conversion to RGB, then pytesseract OCR
     Falls back to filename + metadata for unsupported types.
     """
     filename = file_field.name.lower()
@@ -115,7 +119,43 @@ def extract_text_from_file(file_field) -> str:
             except ImportError:
                 return f"[PDF file: {os.path.basename(filename)} — install pypdf to extract text]"
 
-        # Images, docx, etc. — return metadata only
+        # HEIC/HEIF — Apple iPhone default format
+        # Convert to RGB PIL image first using pillow-heif, then OCR
+        if filename.endswith(".heic") or filename.endswith(".heif"):
+            try:
+                import pillow_heif
+                from PIL import Image
+                import pytesseract
+
+                file_field.seek(0)
+                raw = file_field.read()
+                heif_file = pillow_heif.read_heif(raw)
+                image = Image.frombytes(
+                    heif_file.mode,
+                    heif_file.size,
+                    heif_file.data,
+                    "raw",
+                )
+                text = pytesseract.image_to_string(image)
+                return text.strip() or f"[HEIC/HEIF image: {os.path.basename(filename)} — OCR returned no text]"
+            except ImportError as e:
+                return f"[HEIC/HEIF file: {os.path.basename(filename)} — install pillow-heif and pytesseract: {e}]"
+
+        # JPEG / PNG — OCR via pytesseract
+        if any(filename.endswith(ext) for ext in (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tiff", ".tif")):
+            try:
+                from PIL import Image
+                import pytesseract
+                import io
+
+                file_field.seek(0)
+                image = Image.open(io.BytesIO(file_field.read())).convert("RGB")
+                text = pytesseract.image_to_string(image)
+                return text.strip() or f"[Image file: {os.path.basename(filename)} — OCR returned no text]"
+            except ImportError as e:
+                return f"[Image file: {os.path.basename(filename)} — install Pillow and pytesseract: {e}]"
+
+        # Unsupported format
         return f"[Binary file: {os.path.basename(filename)} — text extraction not supported for this format]"
 
     except Exception as e:

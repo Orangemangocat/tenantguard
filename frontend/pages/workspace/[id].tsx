@@ -308,8 +308,8 @@ function EvidenceTab({ submissionId, token }: { submissionId: number; token: str
               <Upload className="h-6 w-6 text-teal mb-2" />
             )}
             <span className="text-sm text-gray-600">{uploading ? 'Analyzing...' : 'Click to upload PDF or image'}</span>
-            <span className="text-xs text-gray-400 mt-1">PDF, JPG, PNG up to 20MB</span>
-            <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleUpload} disabled={uploading} />
+            <span className="text-xs text-gray-400 mt-1">PDF, JPG, PNG, HEIC up to 20MB</span>
+            <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif" onChange={handleUpload} disabled={uploading} />
           </label>
           {uploadSuccess && (
             <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-sm p-3">
