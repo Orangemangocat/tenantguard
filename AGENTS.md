@@ -683,3 +683,48 @@ Act like a senior engineer joining an existing production codebase:
 - document clearly
 
 When in doubt, choose the simpler, safer, more conventional path.
+
+---
+
+## Cursor Cloud specific instructions
+
+This section captures non-obvious, durable caveats for running TenantGuard in the Cloud Agent VM.
+Dependency installation (Python venv + `pip install -r backend/requirements.txt`, `npm install` in
+`frontend/`) is handled automatically by the startup update script — do not repeat it here. System
+packages already provisioned in the VM image: `postgresql` (v16), `python3.12-venv`, and
+`tesseract-ocr` (needed by the `pytesseract` backend dependency).
+
+### Services and how to run them (dev)
+
+| Service | Command | Port |
+| :--- | :--- | :--- |
+| PostgreSQL | `sudo pg_ctlcluster 16 main start` (not auto-started on boot) | 5432 |
+| Django backend | `cd backend && ./venv/bin/python manage.py runserver` | 8000 |
+| Next.js frontend | `cd frontend && npm run dev` | 3000 |
+
+`make dev` runs the backend + frontend together. Local env files (`backend/.env`,
+`frontend/.env.local`) are gitignored and must exist; if missing, copy the `.example` files. The
+frontend's `NEXT_PUBLIC_API_URL` / `NEXTAUTH_BACKEND_URL` must end in `/api/`.
+
+### Non-obvious gotchas
+
+- **Postgres is mandatory — there is no SQLite fallback.** `core/settings.py` hardcodes the
+  `postgresql` engine. The dev DB/user are `tenantguard_db` / `tenantguard` (password `tenantguard`).
+  Postgres is NOT started automatically; start the cluster before running the backend.
+- **The `blog`, `chat`, `intake`, `stafftodo`, and `seo` apps ship with NO migration files.** A plain
+  `python manage.py migrate` will leave their tables missing and the API will 500 (e.g.
+  `relation "blog_post" does not exist`). Create their tables with:
+  `./venv/bin/python manage.py migrate --run-syncdb`. Only `authentication` has committed migrations.
+- **`DEBUG` is hardcoded to `False` in `settings.py` and is NOT read from the environment.** Setting
+  `DEBUG=True` in `backend/.env` has no effect, so API errors return generic 500/400 pages with no
+  traceback. To see a real traceback locally, reproduce the request through the Django test client
+  under `override_settings(DEBUG=True, ALLOWED_HOSTS=[...])`.
+- **`npm run lint` is broken under Next.js 16** — the `next lint` subcommand was removed, so the
+  script errors with `Invalid project directory provided, no such directory: .../lint`. Use
+  `npm run build` (which also type-checks) to validate the frontend.
+- **Seed test accounts** with `./venv/bin/python manage.py seed_test_users` (creates `superadmin` /
+  `SuperAdmin123!`, `testtenant` / `TestTenant123!`, `testattorney` / `TestAttorney123!`). See
+  `TEST_ACCOUNTS.md`.
+- Optional integrations (OpenAI, Stripe, Twilio, GCS, Google/GitHub OAuth, Search Console) all
+  degrade gracefully when their env vars are unset — email/password JWT auth and the core intake flow
+  work without them.
