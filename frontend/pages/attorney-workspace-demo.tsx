@@ -30,28 +30,28 @@ const DEMO_ATTORNEY = {
 
 const DEMO_CLIENTS = [
   {
-    id: 1042, caseNumber: '24GT10013', name: 'Jane D.', status: 'active',
+    id: 1042, caseNum: '24GT10013', name: 'Jane D.', status: 'active',
     issue: 'Eviction — Lease Violation', courtDate: '2026-07-15', daysLeft: 18,
     landlord: 'Metro Property Partners, LLC', county: 'Davidson',
     urgency: 'high', lastActivity: '2h ago', motionsPending: 1,
     summary: 'Strong retaliation defense. Motion to Quash filed. Multiple continuances granted.',
   },
   {
-    id: 1038, caseNumber: '24GT09847', name: 'Marcus T.', status: 'active',
+    id: 1038, caseNum: '24GT09847', name: 'Marcus T.', status: 'active',
     issue: 'Eviction — Non-Payment', courtDate: '2026-07-08', daysLeft: 11,
     landlord: 'Greenfield Properties', county: 'Davidson',
     urgency: 'critical', lastActivity: '1d ago', motionsPending: 2,
     summary: 'Client disputes $340 in fees not in lease. Habitability counterclaim viable.',
   },
   {
-    id: 1031, caseNumber: '24GT08901', name: 'Rosa L.', status: 'active',
+    id: 1031, caseNum: '24GT08901', name: 'Rosa L.', status: 'active',
     issue: 'Eviction — Unauthorized Occupant', courtDate: '2026-07-22', daysLeft: 25,
     landlord: 'Polo Park Apartments', county: 'Davidson',
     urgency: 'medium', lastActivity: '3d ago', motionsPending: 0,
     summary: 'Occupant is a minor child. Tennessee law protects against this eviction basis.',
   },
   {
-    id: 1019, caseNumber: '24GT07234', name: 'David K.', status: 'resolved',
+    id: 1019, caseNum: '24GT07234', name: 'David K.', status: 'resolved',
     issue: 'Eviction — Dismissed', courtDate: '2026-06-10', daysLeft: 0,
     landlord: 'Riverside Rentals', county: 'Davidson',
     urgency: 'none', lastActivity: '17d ago', motionsPending: 0,
@@ -524,7 +524,7 @@ function CaseDetailTab({ clientId, onBack }: { clientId: number; onBack: () => v
                 <h2 className="text-lg font-bold text-navy" style={{ fontFamily: 'var(--font-heading)' }}>{client.name}</h2>
                 <UrgencyBadge urgency={client.urgency} />
               </div>
-              <p className="text-xs text-gray-500 font-mono">{client.caseNumber} · {client.county} County</p>
+              <p className="text-xs text-gray-500 font-mono">{client.caseNum} · {client.county} County</p>
             </div>
           </div>
           <div className="flex gap-2">
