@@ -29,12 +29,13 @@ YOUR DIRECTIVE:
 2. If there is NO court date on the document, it is LOW urgency. A landlord cannot evict without a court order.
 3. Provide actionable, accurate Tennessee law (T.C.A. Title 66 Chapter 28).
 
-OUTPUT JSON FORMAT:
+OUTPUT JSON FORMAT (use EXACTLY these field names, lowercase urgency):
 {
-  "urgencyLevel": "LOW" | "MEDIUM" | "HIGH",
+  "urgencyLevel": "low" | "medium" | "high",
   "documentType": "string",
   "summary": "string",
-  "tenantRights": ["string"],
+  "deadline": "string (e.g. '14 days from notice date' or 'No court date — no immediate deadline')",
+  "rights": ["string"],
   "recommendedActions": ["string"]
 }`;
 

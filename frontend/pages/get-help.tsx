@@ -109,7 +109,16 @@ export default function GetHelpPage() {
 
       if (!response.ok) throw new Error('Analysis failed')
 
-      const result = await response.json()
+      const raw = await response.json()
+      // Normalize API response — defensively map all known field name variants
+      const result: AnalysisResult = {
+        documentType: raw.documentType || 'Legal Document',
+        urgencyLevel: (raw.urgencyLevel || 'low').toLowerCase() as AnalysisResult['urgencyLevel'],
+        deadline: raw.deadline || 'Review your notice for any stated deadlines',
+        summary: raw.summary || '',
+        rights: raw.rights || raw.tenantRights || [],
+        recommendedActions: raw.recommendedActions || [],
+      }
       setAnalysisResult(result)
 
       // Auto-open chat after analysis
