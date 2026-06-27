@@ -1,9 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import formidable from 'formidable'
 import fs from 'fs'
-// @ts-ignore
-import pdfParse from 'pdf-parse'
 import { logTrainingDataToGitHub } from '../../lib/githubLogger'
+
+// Lazy-load pdf-parse to avoid DOMMatrix crash in some Node environments.
+// Text extraction is only used for logging/fallback — the primary path sends
+// the PDF as base64 to GPT-4o which reads it natively. If this fails, we
+// skip text extraction gracefully rather than crashing the whole request.
+async function extractPdfText(buffer: Buffer): Promise<string> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const pdfParse = require('pdf-parse')
+    const data = await pdfParse(buffer)
+    return data.text || 'No text extracted'
+  } catch {
+    return 'PDF text extraction unavailable in this environment.'
+  }
+}
 
 // HEIC/HEIF MIME types — Apple iPhone default format
 const HEIC_MIME_TYPES = new Set(['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'])
@@ -91,13 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Extract text for logging
     let extractedText = 'No text extracted';
     if (isPdf) {
-      try {
-        const pdfData = await (pdfParse as any)(fileBuffer);
-        extractedText = pdfData.text;
-      } catch (e) {
-        console.warn('Could not extract text from PDF', e);
-        extractedText = 'PDF text extraction failed. File was likely an image-only PDF.';
-      }
+      extractedText = await extractPdfText(fileBuffer);
     } else if (isImage) {
       extractedText = '[Image uploaded. OCR text extraction requires Vision API processing which is handled natively by the model below. Raw text not available before request.]';
     }
