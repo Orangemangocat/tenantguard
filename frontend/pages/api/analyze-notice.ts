@@ -3,19 +3,34 @@ import formidable from 'formidable'
 import fs from 'fs'
 import { logTrainingDataToGitHub } from '../../lib/githubLogger'
 
-// Lazy-load pdf-parse to avoid DOMMatrix crash in some Node environments.
+// Use pdf2json for server-safe PDF text extraction (no browser API dependencies).
 // Text extraction is only used for logging/fallback — the primary path sends
-// the PDF as base64 to GPT-4o which reads it natively. If this fails, we
-// skip text extraction gracefully rather than crashing the whole request.
+// the PDF as base64 to GPT-4o which reads it natively.
 async function extractPdfText(buffer: Buffer): Promise<string> {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const pdfParse = require('pdf-parse')
-    const data = await pdfParse(buffer)
-    return data.text || 'No text extracted'
-  } catch {
-    return 'PDF text extraction unavailable in this environment.'
-  }
+  return new Promise((resolve) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const PDFParser = require('pdf2json')
+      const pdfParser = new PDFParser(null, 1)
+      pdfParser.on('pdfParser_dataReady', (pdfData: { Pages?: Array<{ Texts?: Array<{ R?: Array<{ T?: string }> }> }> }) => {
+        try {
+          const pages = pdfData?.Pages || []
+          const text = pages.map((page) =>
+            (page.Texts || []).map((t) =>
+              (t.R || []).map((r) => decodeURIComponent(r.T || '')).join('')
+            ).join(' ')
+          ).join('\n')
+          resolve(text || 'No text extracted')
+        } catch {
+          resolve('PDF text extraction failed.')
+        }
+      })
+      pdfParser.on('pdfParser_dataError', () => resolve('PDF text extraction failed.'))
+      pdfParser.parseBuffer(buffer)
+    } catch {
+      resolve('PDF text extraction unavailable in this environment.')
+    }
+  })
 }
 
 // HEIC/HEIF MIME types — Apple iPhone default format
