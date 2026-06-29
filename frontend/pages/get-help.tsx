@@ -18,11 +18,17 @@ interface ChatMessage {
 
 interface AnalysisResult {
   documentType: string
+  bucketId: 'B1' | 'B2' | 'B3' | 'B4' | 'B5' | 'B6' | 'B7' | 'B8' | 'B9' | 'OUTSIDE'
+  bucketName: string
   urgencyLevel: 'critical' | 'high' | 'medium' | 'low'
-  deadline: string
+  deadline: string | null
+  deadlineDays: number | null
   summary: string
   rights: string[]
   recommendedActions: string[]
+  legalBasis: string | null
+  isCourtDocument: boolean
+  requiresImmediateAttorney: boolean
 }
 
 interface UserProfile {
@@ -113,11 +119,17 @@ export default function GetHelpPage() {
       // Normalize API response — defensively map all known field name variants
       const result: AnalysisResult = {
         documentType: raw.documentType || 'Legal Document',
+        bucketId: raw.bucketId || 'OUTSIDE',
+        bucketName: raw.bucketName || 'Unknown Document Type',
         urgencyLevel: (raw.urgencyLevel || 'low').toLowerCase() as AnalysisResult['urgencyLevel'],
-        deadline: raw.deadline || 'Review your notice for any stated deadlines',
+        deadline: raw.deadline || null,
+        deadlineDays: raw.deadlineDays || null,
         summary: raw.summary || '',
         rights: raw.rights || raw.tenantRights || [],
         recommendedActions: raw.recommendedActions || [],
+        legalBasis: raw.legalBasis || null,
+        isCourtDocument: raw.isCourtDocument === true,
+        requiresImmediateAttorney: raw.requiresImmediateAttorney === true,
       }
       setAnalysisResult(result)
 
@@ -482,56 +494,119 @@ export default function GetHelpPage() {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <Card className="border border-gray-200 shadow-xl overflow-hidden">
-                    <div className="bg-gradient-to-r from-red-700 to-red-800 px-6 py-4 flex items-center justify-between">
+                    {/* Header bar — color reflects urgency */}
+                    <div className={`px-6 py-4 flex items-center justify-between ${
+                      analysisResult.urgencyLevel === 'critical' ? 'bg-red-800' :
+                      analysisResult.urgencyLevel === 'high' ? 'bg-orange-600' :
+                      analysisResult.urgencyLevel === 'medium' ? 'bg-amber-500' :
+                      'bg-green-700'
+                    }`}>
                       <h3 className="text-white font-bold text-lg">Analysis Complete</h3>
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${urgencyColors[analysisResult.urgencyLevel]}`}>
+                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/20 text-white">
                         {analysisResult.urgencyLevel.toUpperCase()}
                       </span>
                     </div>
+
                     <CardContent className="p-6 space-y-5">
+
+                      {/* Court document warning — B8/B9 */}
+                      {analysisResult.isCourtDocument && (
+                        <div className="bg-red-50 border border-red-300 rounded-xl p-4 flex items-start gap-3">
+                          <AlertTriangle className="h-5 w-5 text-red-700 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-sm font-bold text-red-800">This is an official court document.</p>
+                            <p className="text-xs text-red-700 mt-1">A court case has been filed against you. You must appear on the date shown or a default judgment will be entered. Contact Legal Aid immediately: <strong>(615) 244-6610</strong></p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Attorney alert — B5 7/3-day, B8, B9 */}
+                      {analysisResult.requiresImmediateAttorney && !analysisResult.isCourtDocument && (
+                        <div className="bg-orange-50 border border-orange-300 rounded-xl p-4 flex items-start gap-3">
+                          <AlertTriangle className="h-5 w-5 text-orange-700 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-sm font-bold text-orange-800">An attorney should review this immediately.</p>
+                            <p className="text-xs text-orange-700 mt-1">This notice type has a very short response window. Contact Legal Aid of Middle Tennessee: <strong>(615) 244-6610</strong></p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Bucket classification badge */}
+                      {analysisResult.bucketId && analysisResult.bucketId !== 'OUTSIDE' && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold px-2 py-1 rounded bg-gray-100 text-gray-600 font-mono">{analysisResult.bucketId}</span>
+                          <span className="text-xs text-gray-500">{analysisResult.bucketName}</span>
+                        </div>
+                      )}
+
                       {/* Document info */}
                       <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                         <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Document Type</p>
                           <p className="text-lg font-bold text-gray-900">{analysisResult.documentType}</p>
                         </div>
-                        <div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Response Deadline</p>
-                          <p className="text-lg font-bold text-red-800">{analysisResult.deadline}</p>
-                        </div>
+                        {analysisResult.deadline && (
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Response Deadline</p>
+                            <p className={`text-lg font-bold ${
+                              analysisResult.urgencyLevel === 'critical' ? 'text-red-800' :
+                              analysisResult.urgencyLevel === 'high' ? 'text-orange-700' :
+                              'text-gray-800'
+                            }`}>
+                              {analysisResult.deadline}
+                              {analysisResult.deadlineDays && (
+                                <span className="ml-2 text-sm font-normal text-gray-500">({analysisResult.deadlineDays} days)</span>
+                              )}
+                            </p>
+                          </div>
+                        )}
                         <div>
                           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Summary</p>
                           <p className="text-sm text-gray-700">{analysisResult.summary}</p>
                         </div>
+                        {analysisResult.legalBasis && (
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Governing Law</p>
+                            <p className="text-xs text-gray-500 font-mono">{analysisResult.legalBasis}</p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Rights */}
-                      <div>
-                        <p className="text-sm font-bold text-gray-900 mb-2">Your Rights</p>
-                        <ul className="space-y-2">
-                          {analysisResult.rights.map((right, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                              <Shield className="h-4 w-4 text-red-700 mt-0.5 shrink-0" />
-                              <span>{right}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      {analysisResult.rights.length > 0 && (
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 mb-2">Your Rights</p>
+                          <ul className="space-y-2">
+                            {analysisResult.rights.map((right, i) => (
+                              <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                                <Shield className="h-4 w-4 text-red-700 mt-0.5 shrink-0" />
+                                <span>{right}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
                       {/* Actions */}
-                      <div>
-                        <p className="text-sm font-bold text-gray-900 mb-2">Recommended Next Steps</p>
-                        <ul className="space-y-2">
-                          {analysisResult.recommendedActions.map((action, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                              <span className="bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                                {i + 1}
-                              </span>
-                              <span>{action}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      {analysisResult.recommendedActions.length > 0 && (
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 mb-2">Recommended Next Steps</p>
+                          <ul className="space-y-2">
+                            {analysisResult.recommendedActions.map((action, i) => (
+                              <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                                <span className={`text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${
+                                  analysisResult.urgencyLevel === 'critical' ? 'bg-red-700' :
+                                  analysisResult.urgencyLevel === 'high' ? 'bg-orange-600' :
+                                  'bg-gray-600'
+                                }`}>
+                                  {i + 1}
+                                </span>
+                                <span>{action}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
                       {/* CTAs */}
                       <div className="flex flex-col gap-3 pt-2">
