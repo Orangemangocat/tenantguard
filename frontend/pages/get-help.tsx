@@ -68,7 +68,7 @@ export default function GetHelpPage() {
 
   // ─── File Upload Handlers ──────────────────────────────────────────────
   const handleFileSelect = (selectedFile: File) => {
-    const maxSize = 10 * 1024 * 1024 // 10MB
+    const maxSize = 50 * 1024 * 1024 // 50MB
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence']
     // Also allow HEIC/HEIF by extension when browser reports a generic MIME type
     const isHeicByExt = /\.(heic|heif)$/i.test(selectedFile.name)
@@ -78,7 +78,7 @@ export default function GetHelpPage() {
       return
     }
     if (selectedFile.size > maxSize) {
-      setUploadError('File must be under 10MB.')
+      setUploadError('File must be under 50MB.')
       return
     }
 
@@ -465,7 +465,7 @@ export default function GetHelpPage() {
                           <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-8 py-6 text-base shadow-lg">
                             Analyze My Notice — Free
                           </Button>
-                          <p className="text-xs text-gray-400 mt-4">PDF, JPG, PNG, HEIC (iPhone) • Max 10MB</p>
+                          <p className="text-xs text-gray-400 mt-4">PDF, JPG, PNG, HEIC (iPhone) • Max 50MB</p>
                           <div className="flex items-center justify-center gap-2 mt-3 text-xs text-gray-500">
                             <Shield className="w-3.5 h-3.5 text-green-600" />
                             Encrypted & confidential — we never share your documents

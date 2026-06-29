@@ -70,6 +70,8 @@ OUTPUT JSON FORMAT (use EXACTLY these field names, lowercase urgency):
 export const config = {
   api: {
     bodyParser: false,
+    responseLimit: false,
+    sizeLimit: '50mb',
   },
 }
 
@@ -83,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Analysis service temporarily unavailable' })
   }
   try {
-    const form = formidable({ maxFileSize: 20 * 1024 * 1024 })
+    const form = formidable({ maxFileSize: 50 * 1024 * 1024 })
     const [, files] = await form.parse(req)
     const uploadedFile = files.document?.[0]
     if (!uploadedFile) {
